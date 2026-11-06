@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thenerean Selvabankumar - Das GIBB Abenteuer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- Canvas Layer (Full viewport scaling) -->
+        <canvas id="gameCanvas" width="1280" height="720"></canvas>
+
+        <!-- Top UI Bar -->
+        <div id="ui-bar" class="hidden">
+            <div class="ui-panel ui-left">
+                <div class="avatar-box">
+                    <img id="player-avatar" src="assets/sprites/thenerean_avatar.png" alt="Thenerean">
+                </div>
+                <div class="stats-box">
+                    <div class="char-name">Thenerean Selvabankumar</div>
+                    <div class="bar-container">
+                        <span class="bar-label">GEDULD / HP:</span>
+                        <div class="progress-bar-bg">
+                            <div id="hp-bar" class="progress-bar-fill hp-fill"></div>
+                        </div>
+                    </div>
+                    <div class="bar-container">
+                        <span class="bar-label">MEGA-ENERGIE:</span>
+                        <div class="progress-bar-bg">
+                            <div id="energy-bar" class="progress-bar-fill energy-fill"></div>
+                        </div>
+                    </div>
+                    <div class="bar-container">
+                        <span class="bar-label">FORTSCHRITT:</span>
+                        <div class="progress-bar-bg">
+                            <div id="progress-bar" class="progress-bar-fill prog-fill"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ui-panel ui-center">
+                <div id="current-year-badge">1. LEHRJAHR</div>
+                <div id="level-name">GIBB Eingang & Verspätungspanik</div>
+            </div>
+
+            <div class="ui-panel ui-right">
+                <div class="stat-counter">
+                    <span class="stat-icon">📜</span>
+                    <span class="stat-title">NOTENSCHNITT:</span>
+                    <span id="score-val" class="stat-num">5.5</span>
+                </div>
+                <div class="stat-counter">
+                    <span class="stat-icon">⏱️</span>
+                    <span class="stat-title">ZEIT:</span>
+                    <span id="time-val" class="stat-num">00:00</span>
+                </div>
+                <button id="btn-fullscreen-toggle" class="btn-icon" title="Vollbild umschalten (F11)">⛶</button>
+                <button id="btn-sound-toggle" class="btn-icon" title="Ton umschalten">🔊</button>
+            </div>
+        </div>
+
+        <!-- Dialogue Overlay / Face-to-Face Encounter Box -->
+        <div id="dialogue-box" class="hidden">
+            <div class="dialogue-avatar-wrap">
+                <img id="dialogue-avatar" src="assets/sprites/adam_avatar.png" alt="Sprecher">
+            </div>
+            <div class="dialogue-content">
+                <div id="dialogue-speaker" class="dialogue-speaker">Herr Adam</div>
+                <div id="dialogue-text" class="dialogue-text">"Silvankumar, ist der Thenerean da?"</div>
+                <div class="dialogue-hint">Drücke [LEERTASTE] oder [ENTER] zum Fortfahren</div>
+            </div>
+        </div>
+
+        <!-- Meme Reaction Banner (Pop up when audio triggers) -->
+        <div id="meme-popup" class="hidden">
+            <span id="meme-text">"HERR ADAM, ICH STAH DOCH DA!"</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- 30-SEKUNDEN EPIC CINEMATIC INTRO OVERLAY      -->
+        <!-- ============================================== -->
+        <div id="screen-intro" class="screen-overlay hidden">
+            <div class="intro-container">
+                <div class="intro-header">
+                    <span class="badge-gibb">GIBB BERN • 2022 - 2026</span>
+                    <h1 class="intro-title">THENEREAN SELVABANKUMAR</h1>
+                    <div class="intro-subtitle">DIE WAHRE GESCHICHTE DER 4-JÄHRIGEN INFORMATIK-LEHRE</div>
+                </div>
+
+                <div class="intro-visual-stage">
+                    <div class="intro-character-spotlight" id="intro-spotlight">
+                        <img id="intro-img" src="assets/sprites/photo_IMG_20260119_133741.jpg" alt="Thenerean">
+                    </div>
+                    <div class="intro-text-box">
+                        <div id="intro-step-title" class="intro-step-title">KAPITEL 1: DER TRAUM VOM EFZ</div>
+                        <p id="intro-speech-text" class="intro-speech-text">Es begann alles an der Berufsschule GIBB Bern...</p>
+                        <div class="intro-quote-box" id="intro-quote">"Pünktlichkeit ist oberste Gebot!"</div>
+                    </div>
+                </div>
+
+                <!-- 30s Progress Bar -->
+                <div class="intro-progress-wrap">
+                    <div id="intro-timer-bar" class="intro-timer-fill"></div>
+                </div>
+
+                <div class="intro-footer">
+                    <button id="btn-skip-intro" class="btn btn-secondary">Überspringen [ESC / LEERTASTE]</button>
+                    <span class="intro-time-hint">Cinematic Story: ~30s</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Menu Screen -->
+        <div id="screen-menu" class="screen-overlay">
+            <div class="menu-card">
+                <div class="game-badge">GIBB BERUFSSCHULE BERN • 4 JAHRE INFORMATIK</div>
+                <h1 class="game-title">THENEREAN<br><span class="highlight">SELVABANKUMAR</span></h1>
+                <p class="game-subtitle">Der epische Kampf um das Informatik EFZ Diplom!</p>
+                
+                <div class="hero-showcase">
+                    <div class="char-card">
+                        <img src="assets/sprites/thenerean_avatar.png" alt="Thenerean">
+                        <span>Thenerean</span>
+                    </div>
+                    <div class="vs-text">VS</div>
+                    <div class="char-card">
+                        <img src="assets/sprites/monika_avatar.png" alt="Monika Schneider">
+                        <span>Monika Schneider</span>
+                    </div>
+                    <div class="char-card">
+                        <img src="assets/sprites/adam_avatar.png" alt="Herr Adam">
+                        <span>Herr Adam</span>
+                    </div>
+                </div>
+
+                <div class="controls-guide">
+                    <div class="key-item"><kbd>A</kbd><kbd>D</kbd> / <kbd>←</kbd><kbd>→</kbd> : Bewegen</div>
+                    <div class="key-item"><kbd>LEERTASTE</kbd> : Springen / Dialog weiter</div>
+                    <div class="key-item"><kbd>E</kbd> : Gesetzestext (Geradeaus)</div>
+                    <div class="key-item"><kbd>Q</kbd> / <kbd>SHIFT</kbd> : "ICH STAH DOCH DA!" Mega-Schock</div>
+                </div>
+
+                <div class="menu-actions">
+                    <button id="btn-start" class="btn btn-primary">🎮 LEHRE STARTEN (MIT INTRO)</button>
+                    <button id="btn-level-select" class="btn btn-secondary">📚 LEHRJAHR WÄHLEN</button>
+                    <button id="btn-story" class="btn btn-secondary">🎬 STORY & FOTOS</button>
+                    <button id="btn-fullscreen-menu" class="btn btn-secondary">⛶ VOLLBILD</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Level Select Modal -->
+        <div id="screen-level-select" class="screen-overlay hidden">
+            <div class="menu-card modal-card">
+                <h2>WÄHLE DEIN LEHRJAHR AN DER GIBB</h2>
+                <div class="level-grid"></div>
+                <button id="btn-close-lvl" class="btn btn-secondary">ZURÜCK</button>
+            </div>
+        </div>
+
+        <!-- Story / Memes Modal -->
+        <div id="screen-story" class="screen-overlay hidden">
+            <div class="menu-card modal-card">
+                <h2>DIE LEGENDE VON THENEREAN</h2>
+                <div class="story-body">
+                    <p><strong>Thenerean Selvabankumar</strong> will einfach nur seine 4-jährige Informatik-Lehre an der GIBB Bern mit Bestnote 6.0 abschliessen.</p>
+                    <p>Doch zwei legendäre Lehrpersonen machen ihm das Leben zur Hölle:</p>
+                    <ul>
+                        <li><strong>Monika Schneider:</strong> Die Herrscherin über Pünktlichkeit. Selbst 2.54 Sekunden Verspätung werden nicht toleriert (*"Gang uf die Platz!"*).</li>
+                        <li><strong>Herr Adam:</strong> Fragt ständig die Klasse: <em>"Silvankumar, ist der Thenerean da?!"</em> — worauf Thenerean immer verzweifelt zurückschreit: <em>"Herr Adam, ich stah doch da!"</em></li>
+                    </ul>
+                    <div class="story-gallery">
+                        <img src="assets/sprites/photo_IMG_20260119_133741.jpg" alt="Thenerean Real 1">
+                        <img src="assets/sprites/photo_IMG_20260317_114652.jpg" alt="Thenerean Real 2">
+                        <img src="assets/sprites/photo_IMG_20260616_144535.jpg" alt="Thenerean Real 3">
+                        <img src="assets/sprites/photo_IMG_20260623_113237.jpg" alt="Thenerean Real 4">
+                    </div>
+                </div>
+                <button id="btn-close-story" class="btn btn-secondary">ZURÜCK ZUM MENÜ</button>
+            </div>
+        </div>
+
+        <!-- Level Win Screen -->
+        <div id="screen-win" class="screen-overlay hidden">
+            <div class="menu-card">
+                <h1 class="win-title">🎉 LEHRJAHR BESTANDEN!</h1>
+                <p id="win-desc" class="game-subtitle">Thenerean hat den Dozenten die Stirn geboten!</p>
+                <div class="win-stats">
+                    <div>Notenschnitt: <strong id="win-grade">5.8</strong></div>
+                    <div>Verbleibende Geduld: <strong id="win-hp">100%</strong></div>
+                </div>
+                <button id="btn-next-lvl" class="btn btn-primary">NÄCHSTES LEHRJAHR ANTRETIEN</button>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="screen-lose" class="screen-overlay hidden">
+            <div class="menu-card lose-card">
+                <h1 class="lose-title">💀 VERWARNUNG ERHALTEN!</h1>
+                <p id="lose-reason">Monika Schneider hat dich wegen Verspätung nach Hause geschickt!</p>
+                <div class="lose-quote">"Pünktlichkeit ist oberste Gebot! Ohne Disziplin lernt man nicht!"</div>
+                <button id="btn-retry" class="btn btn-danger">NOCHMAL VERSUCHEN</button>
+                <button id="btn-lose-menu" class="btn btn-secondary">HAUPTMENÜ</button>
+            </div>
+        </div>
+
+        <!-- Victory Screen (EFZ Diploma) -->
+        <div id="screen-victory" class="screen-overlay hidden">
+            <div class="menu-card victory-card">
+                <h1 class="gold-title">🏆 HERZLICHEN GLÜCKWUNSCH!</h1>
+                <h2>INFORMATIKER EFZ - BESTANDEN!</h2>
+                <img src="assets/sprites/item_diplom.png" class="diploma-img" alt="Diplom">
+                <p class="victory-speech">Thenerean Selvabankumar hat nach 4 harten Jahren, hunderten von Frisbees und endlosen Pünktlichkeits-Predigten von Monika Schneider und Herr Adam erfolgreich sein Diplom an der GIBB geholt!</p>
+                <div class="victory-quote">"HERR ADAM, ICH BIN DOCH IMMER NOCH DA - MIT NOTE 6.0!"</div>
+                <button id="btn-victory-restart" class="btn btn-primary">VON VORNE SPIELEN</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="audio.js"></script>
+    <script src="levels.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

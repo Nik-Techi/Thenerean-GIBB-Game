@@ -1,0 +1,7 @@
+# Temporary & cache files
+temp_*.wav
+*.pyc
+__pycache__/
+
+# Large raw video assets (optional - uncomment if you only want the ready-to-play game repository)
+# Videos/
