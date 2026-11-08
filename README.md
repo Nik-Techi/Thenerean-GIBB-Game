@@ -19,14 +19,6 @@ Ein humorvolles 2D-Action-Game über Thenerean Selvabankumar, der an der Berufss
   - `F`: **„DA HAST DU 20 FRISBEES!“** 20-Frisbee-Salve mit Original-Sound abfeuern.
   - `R`: **Schild-Block:** Thenerean aktiviert ein taktisches Schild mit Energie-Aura (*„Niemert chunt an mir verbi!“* / *„Ich stah bis zum Schluss!“*) und wehrt Angriffe komplett ab (0 Schaden).
   - `CTRL`: **Ducken:** Thenerean duckt sich geschmeidig unter Projektilen und Hindernissen durch.
-  - **Perfekt-Block:** `R` genau im letzten Moment vor einem Treffer drücken wirft das Projektil mit doppeltem Schaden zurück, betäubt den Boss, lädt den Schild sofort nach und gibt Mega-Energie.
-  - **Schock-Kombo:** Ein betäubter Boss nimmt durch die Mega-Schockwelle (`Q`) 1.6x Schaden.
-- **Boss-Phasen & Angriffsmuster:**
-  - Jeder Boss hat eigene Angriffe, die mit einem „!“ und einer roten Gefahrenzone angekündigt werden (⬆ Springen, ⬇ Ducken, 🛡 Blocken).
-  - **Monika:** Rote Karten im Bogen, Absenzen-Welle (springen) und in Phase 2 der „Gang uf d'Platz!“-Schrei, der dich zurückstösst (blocken).
-  - **Herr Adam:** Frisbee-Salven oben (ducken) oder unten (springen), springende Basketbälle und in Phase 2 ein Pfiff, der dich betäubt (ducken).
-  - **TukTuk:** Rast quer über den Bildschirm (drüberspringen) und überhitzt danach. In Phase 2 hinterlässt die GPU Feuer auf dem Boden.
-  - **Phase 2 ab 50% HP:** Bosse werden wütend, schneller und bekommen neue Angriffe. Im Finale wird der übrig gebliebene Boss noch wütender, wenn der Partner fällt.
   - **Trainingsraum (Demo-Modus):** Direkt vom Hauptmenü aus alle Fähigkeiten und Abwehrmechaniken ausprobieren.
 - **Dedizierte Sound- & Musiksteuerung:**
   - Musik kann separat ein- oder ausgeschaltet werden.
@@ -59,7 +51,7 @@ Das Spiel öffnet sich automatisch im Browser unter `http://localhost:8080`.
 | `A` / `D` oder `←` / `→` | Laufen (kein Zwangs-Lauf) |
 | `LEERTASTE` | Springen / Dialog weiter |
 | `CTRL` | Ducken (weicht hohen Angriffen aus) |
-| `R` | Schild-Block (*„Niemert chunt an mir verbi!“*). Kurz vor dem Treffer gedrückt = **Perfekt-Block** |
+| `R` | Schild-Block (*„Niemert chunt an mir verbi!“*) |
 | `E` / Linksklick | Gesetzestext werfen (28 DMG) |
 | `Q` / `Shift` | „ICH STAH DOCH DA!“ Mega-Schockwelle (70 DMG) |
 | `F` | „Da hast du 20 Frisbees!“ (20x Salve) |

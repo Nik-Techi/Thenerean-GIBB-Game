@@ -373,24 +373,12 @@ html, body {
 }
 
 .boss-hp-track {
-    position: relative;
     width: 100%;
     height: 11px;
     background: rgba(0, 0, 0, 0.7);
     border-radius: 6px;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.16);
-}
-
-/* Phase 2 threshold marker at 50% HP */
-.boss-hp-track::after {
-    content: '';
-    position: absolute;
-    left: 50%;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: rgba(255, 255, 255, 0.85);
 }
 
 .boss-hp-fill {

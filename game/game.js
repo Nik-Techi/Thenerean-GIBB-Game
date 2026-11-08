@@ -9,7 +9,6 @@
  * - Attack 1 (E): Straight-ahead Gesetzestext (28 DMG)
  * - Attack 2 (Q / Shift): "ICH STAH DOCH DA!" Mega Shockwave (70 DMG)
  * - Attack 3 (F): "DA HAST DU 20 FRISBEES!" 20-Frisbee Machine-Gun Barrage (12 DMG x 20)
- * - Boss phases, telegraphed attack patterns & perfect block / shout combo: see boss_ai.js
  * - 10s Meme-Spam Opening Intro -> Main Menu -> Demo Training Room -> 30s Story Intro -> 6 Levels
  */
 
@@ -143,11 +142,8 @@ class Game {
             isDucking: false,
             invulnerableTime: 0,
             attackAnimTimer: 0,
-            banterTimer: 240,
-            stunTimer: 0,
-            pushVx: 0
+            banterTimer: 240
         };
-        this.hazards = [];
 
         this.worldDistance = 0;
         this.menuPan = 0;
@@ -164,7 +160,6 @@ class Game {
 
         this.demoComboHits = 0;
         this.demoTotalDamage = 0;
-        this.resetCombatExtras();
 
         // 10-Second Meme Spam Opening Intro
         this.openingState = {
@@ -377,7 +372,7 @@ class Game {
                 if (lower === 'q' || e.code === 'ShiftLeft') this.playerAttackMegaShout();
                 if (lower === 'f') this.playerAttackFrisbeeVolley();
                 if (lower === 'r') this.playerBlock();
-            } else if ((this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT) && !this.isPlayerStunned()) {
+            } else if (this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT) {
                 if (e.code === 'Space') this.playerJump();
                 if (lower === 'e') this.playerAttackLawBook();
                 if (lower === 'q' || e.code === 'ShiftLeft') this.playerAttackMegaShout();
@@ -402,7 +397,7 @@ class Game {
                 this.skipIntro();
             } else if (this.state === GAME_STATE.PRE_BOSS_DIALOGUE) {
                 this.advancePreBossDialogue();
-            } else if ((this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) && !this.isPlayerStunned()) {
+            } else if (this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) {
                 if (e.button === 0) this.playerAttackLawBook();
                 else if (e.button === 2) this.playerAttackMegaShout();
                 else if (e.button === 1) this.playerAttackFrisbeeVolley();
@@ -659,7 +654,6 @@ class Game {
         this.floatingTexts = [];
         this.demoComboHits = 0;
         this.demoTotalDamage = 0;
-        this.resetCombatExtras();
 
         this.ui.screenMenu.classList.add('hidden');
         this.ui.screenIntro.classList.add('hidden');
@@ -763,17 +757,11 @@ class Game {
             if (this.boss.attackAnimTimer > 0) this.boss.attackAnimTimer--;
 
             this.boss.facing = this.player.x < this.boss.x ? -1 : 1;
-            // A perfect-block reflect stuns the dummy so the shout combo can be practised
-            const dummyStunned = this.isBossStunned(this.boss);
-            if (dummyStunned) {
-                this.boss.ai.stun--;
-            } else {
-                this.boss.x += this.boss.moveDir * 1.6;
-            }
+            this.boss.x += this.boss.moveDir * 1.6;
             if (this.boss.x < canvas.width * 0.58) this.boss.moveDir = 1;
             else if (this.boss.x > canvas.width - 150) this.boss.moveDir = -1;
 
-            if (!dummyStunned) this.boss.attackTimer--;
+            this.boss.attackTimer--;
             if (this.boss.attackTimer <= 0) {
                 this.boss.attackTimer = 175;
                 this.boss.attackAnimTimer = 20;
@@ -1053,7 +1041,6 @@ class Game {
         this.floatingTexts = [];
         this.boss = null;
         this.duoPartner = null;
-        this.resetCombatExtras();
 
         this.ui.screenMenu.classList.add('hidden');
         this.ui.screenIntro.classList.add('hidden');
@@ -1344,7 +1331,6 @@ class Game {
         const scale = Math.max(0.78, Math.min(1.38, canvas.height / 720));
         const isDuo = this.level.bossType === 'duo';
         const isTukTuk = this.level.bossType === 'tuktuk_gpu';
-        this.resetCombatExtras();
         const bossH = Math.round((isTukTuk ? 195 : 162) * scale);
         const bossW = Math.round((isTukTuk ? 175 : 94) * scale);
 
@@ -1373,7 +1359,6 @@ class Game {
             this.duoPartner = {
                 name: "Herr Adam",
                 type: "adam",
-                isDuoPartner: true,
                 avatar: 'assets/sprites/adam_avatar.png',
                 x: canvas.width * 0.86,
                 y: groundPos - pH,
@@ -1746,7 +1731,6 @@ class Game {
             this.player.vx *= 0.52;
         }
 
-        this.applyPlayerStatus();
         this.player.x += this.player.vx;
         if (this.player.x < 28) this.player.x = 28;
         if (this.player.x > canvas.width - 110) this.player.x = canvas.width - 110;
@@ -1772,7 +1756,7 @@ class Game {
 
             this.boss.facing = this.player.x < this.boss.x ? -1 : 1;
             const spd = this.boss.type === 'tuktuk_gpu' ? 3.5 : 3.0;
-            if (this.bossCanMove(this.boss)) this.boss.x += this.boss.moveDir * spd * this.bossSpeedMult(this.boss);
+            this.boss.x += this.boss.moveDir * spd;
             if (this.boss.x < canvas.width * 0.46) this.boss.moveDir = 1;
             else if (this.boss.x > canvas.width - this.boss.w - 30) this.boss.moveDir = -1;
 
@@ -1790,7 +1774,11 @@ class Game {
                 });
             }
 
-            this.updateBossAI(this.boss, this.duoPartner);
+            this.boss.attackTimer--;
+            if (this.boss.attackTimer <= 0) {
+                this.boss.attackTimer = 54 + Math.random() * 42;
+                this.bossFireAttack(this.boss);
+            }
 
             this.boss.banterTimer--;
             if (this.boss.banterTimer <= 0) {
@@ -1809,11 +1797,15 @@ class Game {
             if (this.duoPartner.banterAnimTimer > 0) this.duoPartner.banterAnimTimer--;
 
             this.duoPartner.facing = this.player.x < this.duoPartner.x ? -1 : 1;
-            if (this.bossCanMove(this.duoPartner)) this.duoPartner.x += this.duoPartner.moveDir * 3.3 * this.bossSpeedMult(this.duoPartner);
+            this.duoPartner.x += this.duoPartner.moveDir * 3.3;
             if (this.duoPartner.x < canvas.width * 0.52) this.duoPartner.moveDir = 1;
             else if (this.duoPartner.x > canvas.width - this.duoPartner.w - 25) this.duoPartner.moveDir = -1;
 
-            this.updateBossAI(this.duoPartner, this.boss);
+            this.duoPartner.attackTimer--;
+            if (this.duoPartner.attackTimer <= 0) {
+                this.duoPartner.attackTimer = 64 + Math.random() * 44;
+                this.bossFireAttack(this.duoPartner);
+            }
 
             if (!this.boss || this.boss.hp <= 0) {
                 this.duoPartner.banterTimer = (this.duoPartner.banterTimer || 140) - 1;
@@ -1829,9 +1821,6 @@ class Game {
             }
         }
 
-        this.checkDuoEnrage();
-        this.updateBossHazards();
-
         if (this.boss && this.boss.hp <= 0 && (!this.duoPartner || this.duoPartner.hp <= 0)) {
             this.triggerLevelWin();
         }
@@ -1840,11 +1829,11 @@ class Game {
         this.updateProjectiles();
     }
 
-    bossFireAttack(bossEntity, forcedType) {
+    bossFireAttack(bossEntity) {
         bossEntity.attackAnimTimer = 22;
-        const type = forcedType || (bossEntity.name.includes("Adam") ? 'frisbee' : (bossEntity.type === 'tuktuk_gpu' ? 'broken_cable' : 'red_card'));
-        const isAdam = type === 'frisbee';
-        const isTukTuk = type === 'broken_cable';
+        const isAdam = bossEntity.name.includes("Adam");
+        const isTukTuk = bossEntity.type === 'tuktuk_gpu';
+        const type = isAdam ? 'frisbee' : (isTukTuk ? 'broken_cable' : 'red_card');
         const dir = this.player.x < bossEntity.x ? -1 : 1;
 
         this.projectiles.push({
@@ -1875,11 +1864,7 @@ class Game {
             const p = this.projectiles[i];
             p.x += p.vx;
             p.y += p.vy;
-            if (p.type !== 'mega_beam' && !p.noSpin) p.rotation += 0.2;
-            if (this.applyProjectileGravity(p)) {
-                this.projectiles.splice(i, 1);
-                continue;
-            }
+            if (p.type !== 'mega_beam') p.rotation += 0.2;
 
             // Emit subtle projectile wake particles
             if (Math.random() > 0.45) {
@@ -1898,14 +1883,13 @@ class Game {
             // Player projectile hits primary Boss
             if (p.isPlayer && this.boss && this.boss.hp > 0) {
                 if (this.checkCollision(p.x, p.y, p.w, p.h, this.boss.x, this.boss.y, this.boss.w, this.boss.h)) {
-                    const dmg = this.resolvePlayerHit(this.boss, p);
-                    this.boss.hp = Math.max(0, this.boss.hp - dmg);
+                    this.boss.hp = Math.max(0, this.boss.hp - p.damage);
                     this.boss.hitFlash = 9;
                     this.screenShake = p.type === 'mega_beam' ? 12 : 5;
                     window.soundManager.playHit();
                     this.spawnBurst(p.x + p.w * 0.5, p.y + p.h * 0.5, p.type === 'mega_beam' ? 18 : 8, p.trailColor || '#ffd32a', 7, 16);
                     this.addFloatingText(
-                        `-${dmg}`,
+                        `-${p.damage}`,
                         this.boss.x + this.boss.w * 0.5 + (Math.random() - 0.5) * 26,
                         this.boss.y + 15 + (Math.random() - 0.5) * 20,
                         p.type === 'mega_beam' ? '#00d2d3' : (p.type === 'frisbee' ? '#ffd32a' : '#ff6b81'),
@@ -1914,7 +1898,7 @@ class Game {
 
                     if (this.state === GAME_STATE.DEMO) {
                         this.demoComboHits += 1;
-                        this.demoTotalDamage += dmg;
+                        this.demoTotalDamage += p.damage;
                     }
                     if (this.boss.hp <= 0 && !this.boss.defeated) {
                         this.boss.defeated = true;
@@ -1930,13 +1914,12 @@ class Game {
             // Player projectile hits Duo Partner (Level 6 Herr Adam)
             if (p.isPlayer && this.duoPartner && this.duoPartner.hp > 0) {
                 if (this.checkCollision(p.x, p.y, p.w, p.h, this.duoPartner.x, this.duoPartner.y, this.duoPartner.w, this.duoPartner.h)) {
-                    const dmg = this.resolvePlayerHit(this.duoPartner, p);
-                    this.duoPartner.hp = Math.max(0, this.duoPartner.hp - dmg);
+                    this.duoPartner.hp = Math.max(0, this.duoPartner.hp - p.damage);
                     this.duoPartner.hitFlash = 9;
                     this.screenShake = p.type === 'mega_beam' ? 12 : 5;
                     window.soundManager.playHit();
                     this.spawnBurst(p.x + p.w * 0.5, p.y + p.h * 0.5, 10, '#00d2d3', 7, 16);
-                    this.addFloatingText(`-${dmg}`, this.duoPartner.x + this.duoPartner.w * 0.5, this.duoPartner.y + 15, '#ff4757', 22);
+                    this.addFloatingText(`-${p.damage}`, this.duoPartner.x + this.duoPartner.w * 0.5, this.duoPartner.y + 15, '#ff4757', 22);
                     if (this.duoPartner.hp <= 0 && !this.duoPartner.defeated) {
                         this.duoPartner.defeated = true;
                         this.spawnBurst(this.duoPartner.x + this.duoPartner.w * 0.5, this.duoPartner.y + this.duoPartner.h * 0.5, 28, '#00d2d3', 9, 28);
@@ -1966,15 +1949,11 @@ class Game {
 
                 if (this.checkCollision(p.x, p.y, p.w, p.h, this.player.x + 10, pHitY, this.player.w - 20, pHitH)) {
                     if (this.player.isBlocking) {
-                        if (this.isPerfectBlockTiming()) {
-                            this.reflectProjectile(p);
-                            continue;
-                        }
                         this.onBlockSuccess(p.x, p.y);
                         this.projectiles.splice(i, 1);
                         continue;
                     }
-                    if (this.onPlayerHit(p.damage, p.type)) this.applyHitEffect(p);
+                    this.onPlayerHit(p.damage, p.type);
                     this.projectiles.splice(i, 1);
                     continue;
                 }
@@ -1986,9 +1965,8 @@ class Game {
         }
     }
 
-    // Returns true if the hit landed (false while invulnerable).
     onPlayerHit(damage, reason) {
-        if (this.player.invulnerableTime > 0) return false;
+        if (this.player.invulnerableTime > 0) return;
         this.player.hp = Math.max(0, this.player.hp - damage);
         this.player.invulnerableTime = 52;
         this.player.score = Math.max(1.0, +(this.player.score - 0.2).toFixed(1));
@@ -2002,7 +1980,6 @@ class Game {
         if (this.player.hp <= 0 && this.state !== GAME_STATE.DEMO) {
             this.triggerGameOver();
         }
-        return true;
     }
 
     onCollectItem(type) {
@@ -2141,7 +2118,6 @@ class Game {
 
         // Layer 3: Foreground Ground Accent & Scrolling Markers
         this.drawGroundOverlay();
-        this.drawHazards();
 
         // Collectibles & Obstacles
         if (this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.DEMO) {
@@ -2166,7 +2142,6 @@ class Game {
 
         // Player Character Sprite
         this.drawPlayer();
-        this.drawPlayerStatus();
 
         // Flying Projectiles + Trails
         this.drawProjectiles();
@@ -2481,8 +2456,6 @@ class Game {
     drawBoss(bossEntity) {
         const isAdam = bossEntity.name.includes("Adam") || bossEntity.type === 'adam' || bossEntity.type === 'adam_miniboss' || bossEntity.isDummy;
         const isTukTuk = bossEntity.type === 'tuktuk_gpu';
-        const ai = bossEntity.ai;
-        const telegraphing = !!(ai && ai.telegraph);
 
         const footX = bossEntity.x + bossEntity.w / 2;
         const footY = bossEntity.y + bossEntity.h;
@@ -2498,7 +2471,7 @@ class Game {
         let sx = 1.0, sy = 1.0, tilt = 0;
 
         if (isTukTuk) {
-            const isRage = bossEntity.attackAnimTimer > 0 || bossEntity.hp < bossEntity.maxHp * 0.5 || telegraphing || !!(ai && ai.charge);
+            const isRage = bossEntity.attackAnimTimer > 0 || bossEntity.hp < bossEntity.maxHp * 0.5;
             spriteKey = isRage ? 'tuktuk_rage' : 'tuktuk_idle';
             const rumble = Math.sin(this.animClock * (isRage ? 28 : 14));
             sy = 1.0 + 0.02 * rumble;
@@ -2506,7 +2479,7 @@ class Game {
         } else if (isAdam) {
             if (bossEntity.attackAnimTimer > 0) {
                 spriteKey = 'adam_throw';
-            } else if (telegraphing || (!ai && bossEntity.attackTimer > 0 && bossEntity.attackTimer <= 18)) {
+            } else if (bossEntity.attackTimer > 0 && bossEntity.attackTimer <= 18) {
                 spriteKey = 'adam_windup';
                 sx = 1.03;
             } else {
@@ -2518,7 +2491,7 @@ class Game {
             // Monika Schneider
             if (bossEntity.attackAnimTimer > 0) {
                 spriteKey = 'monika_attack';
-            } else if (bossEntity.banterAnimTimer > 0 || telegraphing) {
+            } else if (bossEntity.banterAnimTimer > 0) {
                 spriteKey = 'monika_point';
             } else {
                 const walkCycle = Math.sin(this.animClock * 9);
@@ -2531,8 +2504,6 @@ class Game {
         // So flip horizontally only if facing becomes +1 (player jumped behind boss).
         const spriteFlip = bossEntity.facing > 0 ? -1 : 1;
         const img = images[spriteKey] || images.monika_idle;
-        if (ai && ai.stun > 0) tilt = Math.sin(this.animClock * 7) * 0.08;
-        this.drawBossRageAura(bossEntity, footX, footY);
         this.drawCharacterSprite(img, footX, footY, bossEntity.h, spriteFlip, bossEntity.hitFlash, sx, sy, tilt);
 
         // Crisp Floating Overhead HP Bar
@@ -2566,16 +2537,9 @@ class Game {
         ctx.roundRect(barX, barY, barW, barH, 4);
         ctx.stroke();
 
-        // Phase 2 threshold marker
-        if (!bossEntity.isDummy) {
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(barX + barW * 0.5 - 1, barY - 2, 2, barH + 4);
-        }
-
         const shortName = bossEntity.name.replace(/\s*\(.*?\)/g, '');
         const label = bossEntity.isDummy ? `DUMMY (HP: ${bossEntity.hp})` : shortName;
         this.drawNamePill(label, footX, barY - 8, '#ffffff');
-        this.drawBossStatus(bossEntity, footX, barY);
     }
 
     drawNamePill(text, cx, y, color) {
@@ -2664,7 +2628,6 @@ class Game {
 
     drawProjectiles() {
         for (const p of this.projectiles) {
-            if (this.drawSpecialProjectile(p)) continue;
             ctx.save();
             const cx = p.x + p.w / 2;
             const cy = p.y + p.h / 2;
@@ -2684,7 +2647,20 @@ class Game {
                 ctx.rotate(p.rotation);
             }
 
-            const img = this.getProjectileImage(p);
+            let img = null;
+            if (p.isPlayer) {
+                img = p.type === 'mega_beam'
+                    ? images.projectile_mega
+                    : p.type === 'frisbee'
+                        ? images.frisbee
+                        : images.item_gesetz;
+            } else {
+                img = p.type === 'frisbee'
+                    ? images.frisbee
+                    : p.type === 'broken_cable'
+                        ? images.broken_cable
+                        : images.red_card;
+            }
 
             if (img && img.complete && img.naturalWidth > 0) {
                 ctx.drawImage(img, -p.w / 2, -p.h / 2, p.w, p.h);
