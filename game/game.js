@@ -622,7 +622,7 @@ class Game {
         // Right Thumb: Actions
         bindTouchBtn(this.ui.touchBtnJump,
             () => {
-                if (this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) {
+                if ((this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) && !this.isPlayerStunned()) {
                     this.playerJump();
                 } else if (this.state === GAME_STATE.PRE_BOSS_DIALOGUE) {
                     this.advancePreBossDialogue();
@@ -638,7 +638,7 @@ class Game {
 
         bindTouchBtn(this.ui.touchBtnBlock,
             () => {
-                if (this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) {
+                if ((this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) && !this.isPlayerStunned()) {
                     this.playerBlock();
                 }
             },
@@ -647,7 +647,7 @@ class Game {
 
         bindTouchBtn(this.ui.touchBtnAttack,
             () => {
-                if (this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) {
+                if ((this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) && !this.isPlayerStunned()) {
                     this.playerAttackLawBook();
                 }
             },
@@ -656,7 +656,7 @@ class Game {
 
         bindTouchBtn(this.ui.touchBtnMega,
             () => {
-                if (this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) {
+                if ((this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) && !this.isPlayerStunned()) {
                     this.playerAttackMegaShout();
                 }
             },
@@ -665,7 +665,7 @@ class Game {
 
         bindTouchBtn(this.ui.touchBtnFrisbee,
             () => {
-                if (this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) {
+                if ((this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) && !this.isPlayerStunned()) {
                     this.playerAttackFrisbeeVolley();
                 }
             },
