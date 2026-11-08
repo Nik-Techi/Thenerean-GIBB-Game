@@ -126,6 +126,7 @@ class Game {
             facing: 1,
             speed: 6.8,
             jumpPower: -15.2,
+            jumpBuffered: false,
             groundY: 530,
             isGrounded: true,
             hp: 100,
@@ -144,6 +145,9 @@ class Game {
             attackAnimTimer: 0,
             banterTimer: 240
         };
+
+        const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
+        this.touchControlsEnabled = isTouch;
 
         this.worldDistance = 0;
         this.menuPan = 0;
@@ -234,6 +238,17 @@ class Game {
             hudFrisbeeFill: document.getElementById('hud-frisbee-fill'),
             hudShieldFill: document.getElementById('hud-shield-fill'),
             controlHintPill: document.getElementById('control-hint-pill'),
+
+            btnTouchToggle: document.getElementById('btn-touch-toggle'),
+            touchOverlay: document.getElementById('mobile-touch-overlay'),
+            touchBtnLeft: document.getElementById('touch-btn-left'),
+            touchBtnRight: document.getElementById('touch-btn-right'),
+            touchBtnJump: document.getElementById('touch-btn-jump'),
+            touchBtnDuck: document.getElementById('touch-btn-duck'),
+            touchBtnBlock: document.getElementById('touch-btn-block'),
+            touchBtnAttack: document.getElementById('touch-btn-attack'),
+            touchBtnMega: document.getElementById('touch-btn-mega'),
+            touchBtnFrisbee: document.getElementById('touch-btn-frisbee'),
 
             btnMusicToggle: document.getElementById('btn-music-toggle'),
             sliderMusicVol: document.getElementById('slider-music-vol'),
@@ -565,6 +580,120 @@ class Game {
                 }
             });
         }
+
+        // =================================================================
+        // MOBILE TOUCH CONTROLS EVENT HANDLERS
+        // =================================================================
+        const bindTouchBtn = (btn, onDown, onUp) => {
+            if (!btn) return;
+            const startHandler = (e) => {
+                e.preventDefault();
+                btn.classList.add('active');
+                if (onDown) onDown();
+            };
+            const endHandler = (e) => {
+                e.preventDefault();
+                btn.classList.remove('active');
+                if (onUp) onUp();
+            };
+            btn.addEventListener('touchstart', startHandler, { passive: false });
+            btn.addEventListener('touchend', endHandler, { passive: false });
+            btn.addEventListener('touchcancel', endHandler, { passive: false });
+            btn.addEventListener('mousedown', startHandler);
+            btn.addEventListener('mouseup', endHandler);
+            btn.addEventListener('mouseleave', endHandler);
+        };
+
+        // Left Thumb: Movement
+        bindTouchBtn(this.ui.touchBtnLeft,
+            () => { this.keys['arrowleft'] = true; this.keys['a'] = true; },
+            () => { this.keys['arrowleft'] = false; this.keys['a'] = false; }
+        );
+        bindTouchBtn(this.ui.touchBtnRight,
+            () => { this.keys['arrowright'] = true; this.keys['d'] = true; },
+            () => { this.keys['arrowright'] = false; this.keys['d'] = false; }
+        );
+
+        // Right Thumb: Actions
+        bindTouchBtn(this.ui.touchBtnJump,
+            () => {
+                if (this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) {
+                    this.playerJump();
+                } else if (this.state === GAME_STATE.PRE_BOSS_DIALOGUE) {
+                    this.advancePreBossDialogue();
+                }
+            },
+            null
+        );
+
+        bindTouchBtn(this.ui.touchBtnDuck,
+            () => { this.player.isDucking = true; },
+            () => { this.player.isDucking = false; }
+        );
+
+        bindTouchBtn(this.ui.touchBtnBlock,
+            () => {
+                if (this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) {
+                    this.playerBlock();
+                }
+            },
+            null
+        );
+
+        bindTouchBtn(this.ui.touchBtnAttack,
+            () => {
+                if (this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) {
+                    this.playerAttackLawBook();
+                }
+            },
+            null
+        );
+
+        bindTouchBtn(this.ui.touchBtnMega,
+            () => {
+                if (this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) {
+                    this.playerAttackMegaShout();
+                }
+            },
+            null
+        );
+
+        bindTouchBtn(this.ui.touchBtnFrisbee,
+            () => {
+                if (this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) {
+                    this.playerAttackFrisbeeVolley();
+                }
+            },
+            null
+        );
+
+        // Toggle Touch Controls Button
+        if (this.ui.btnTouchToggle) {
+            this.ui.btnTouchToggle.addEventListener('click', () => {
+                this.touchControlsEnabled = !this.touchControlsEnabled;
+                this.updateTouchControlsVisibility();
+                this.addFloatingText(this.touchControlsEnabled ? "Touch-Buttons AN 📱" : "Touch-Buttons AUS", canvas.width / 2, canvas.height * 0.45, '#38bdf8', 22);
+            });
+        }
+
+        // Tap Dialogue Box to advance dialogue on touch screens
+        if (this.ui.dialogueBox) {
+            this.ui.dialogueBox.addEventListener('click', () => {
+                if (this.state === GAME_STATE.PRE_BOSS_DIALOGUE) {
+                    this.advancePreBossDialogue();
+                }
+            });
+        }
+    }
+
+    updateTouchControlsVisibility() {
+        if (!this.ui.touchOverlay) return;
+        const inAction = this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO || this.state === GAME_STATE.PRE_BOSS_WALK || this.state === GAME_STATE.PRE_BOSS_DIALOGUE;
+        if (this.touchControlsEnabled && inAction) {
+            this.ui.touchOverlay.classList.remove('hidden');
+        } else {
+            this.ui.touchOverlay.classList.add('hidden');
+        }
     }
 
     returnToMenu() {
@@ -587,6 +716,7 @@ class Game {
         this.ui.abilityDock.classList.add('hidden');
         this.ui.controlHintPill.classList.add('hidden');
         this.ui.dialogueBox.classList.add('hidden');
+        if (this.ui.touchOverlay) this.ui.touchOverlay.classList.add('hidden');
         if (this.ui.btnDemoExit) this.ui.btnDemoExit.classList.add('hidden');
     }
 
@@ -676,6 +806,7 @@ class Game {
         this.ui.demoHitsVal.textContent = "0";
         this.ui.demoDmgVal.textContent = "0";
         this.updateBars();
+        this.updateTouchControlsVisibility();
 
         window.soundManager.setMusicQuietMode(false);
         window.soundManager.playMusic('assets/music/Thanuran_Takeover.mp3');
@@ -743,6 +874,10 @@ class Game {
             this.player.y = this.player.groundY - this.player.h;
             this.player.vy = 0;
             this.player.isGrounded = true;
+            if (this.player.jumpBuffered) {
+                this.player.jumpBuffered = false;
+                this.playerJump();
+            }
         }
 
         // Instant free recharge in Demo Mode
@@ -1072,6 +1207,7 @@ class Game {
 
         this.generateLevelObstacles();
         this.state = GAME_STATE.RUNNING;
+        this.updateTouchControlsVisibility();
     }
 
     generateLevelObstacles() {
@@ -1314,8 +1450,14 @@ class Game {
         if (this.player.isGrounded) {
             this.player.vy = this.player.jumpPower;
             this.player.isGrounded = false;
+            this.player.jumpBuffered = false;
             this.spawnRunDust(this.player.x + this.player.w * 0.4, this.player.groundY);
             window.soundManager.playJump();
+        } else {
+            // Mobile jump buffer: if tapped right before landing, jump instantly on touchdown
+            if (this.player.y >= this.player.groundY - this.player.h - 60) {
+                this.player.jumpBuffered = true;
+            }
         }
     }
 
@@ -1621,6 +1763,10 @@ class Game {
             this.player.y = this.player.groundY - this.player.h;
             this.player.vy = 0;
             this.player.isGrounded = true;
+            if (this.player.jumpBuffered) {
+                this.player.jumpBuffered = false;
+                this.playerJump();
+            }
         }
 
         this.tickPlayerBanter();
@@ -1643,7 +1789,8 @@ class Game {
                     if (this.player.isBlocking) {
                         this.onBlockSuccess(screenX, obs.y);
                     } else {
-                        this.onPlayerHit(14, obs.type);
+                        const dmg = this.touchControlsEnabled ? 10 : 14;
+                        this.onPlayerHit(dmg, obs.type);
                     }
                 }
                 if (!obs.cleared && screenX + obs.w < this.player.x) {
@@ -1657,7 +1804,8 @@ class Game {
             if (col.collected) continue;
             const screenX = col.x - this.worldDistance;
             if (screenX > -100 && screenX < canvas.width + 100) {
-                if (this.checkCollision(this.player.x, this.player.y, this.player.w, this.player.h, screenX, col.y, col.w, col.h)) {
+                const grabPadding = this.touchControlsEnabled ? 24 : 8;
+                if (this.checkCollision(this.player.x - grabPadding, this.player.y - grabPadding, this.player.w + grabPadding * 2, this.player.h + grabPadding * 2, screenX, col.y, col.w, col.h)) {
                     col.collected = true;
                     this.onCollectItem(col.type);
                 }
@@ -1713,6 +1861,10 @@ class Game {
             this.player.y = this.player.groundY - this.player.h;
             this.player.vy = 0;
             this.player.isGrounded = true;
+            if (this.player.jumpBuffered) {
+                this.player.jumpBuffered = false;
+                this.playerJump();
+            }
         }
     }
 
@@ -1745,6 +1897,10 @@ class Game {
             this.player.y = this.player.groundY - this.player.h;
             this.player.vy = 0;
             this.player.isGrounded = true;
+            if (this.player.jumpBuffered) {
+                this.player.jumpBuffered = false;
+                this.playerJump();
+            }
         }
 
         this.tickPlayerBanter();

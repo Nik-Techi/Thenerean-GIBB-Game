@@ -23,13 +23,24 @@ Ein humorvolles 2D-Action-Game über Thenerean Selvabankumar, der an der Berufss
 - **Dedizierte Sound- & Musiksteuerung:**
   - Musik kann separat ein- oder ausgeschaltet werden.
   - Lautstärkeregler (0% bis 100%) für Hintergrundmusik, damit Stimmen und Soundeffekte auch ganz ohne Musik gespielt werden können.
-- **Standalone `.exe` & App-Icon:** 
-  - Einzelne Portable EXE mit Thenereans Helden-Icon (`app_icon.ico`) – ideal für USB-Sticks.
-  - Vollbild-Optimierung (100vw / 100vh) ohne Ränder für jeden Monitor.
+- **Mobile Touch-Steuerung & Android APK:**
+  - Vollwertige **`Thenerean_Selvabankumar.apk`** für Android-Smartphones (vollständig offline, keine Berechtigungen, natives Vollbild).
+  - Ergonomische On-Screen Touch-Buttons:
+    - **Linker Daumen:** `◀ LINKS` und `RECHTS ▶` für flüssige Bewegung.
+    - **Rechter Daumen:** Großer grüner `▲ SPRUNG`-Button, `💨 DUCK` (Ducken), `🛡️ BLOCK` (Schild), `📜 GESETZ`, `⚡ MEGA` und `🎯 20 FRISB`.
+  - **Mobile-Friendly & bisschen einfacher:**
+    - Intelligentes **Jump-Buffering**: Tippen kurz vor dem Boden springt nahtlos beim Aufkommen ab.
+    - Vergrösserter Sammelradius für Items & Kaffee.
+    - Leicht reduzierter Hindernis-Schaden und verlängertes Unverwundbarkeitsfenster nach Treffern.
+    - Breitere Trefferzone für eigene Gesetzestexte.
+    - Touch-Buttons können jederzeit auch per 📱 Button in der Leiste ein- oder ausgeschaltet werden.
 
 ---
 
 ## 🚀 Spiel starten
+
+### Auf dem Android-Handy (APK):
+Die Datei **`Thenerean_Selvabankumar.apk`** auf dein Smartphone übertragen (per USB, WhatsApp, E-Mail oder Google Drive) und antippen zum Installieren.
 
 ### Einzelne Portable EXE (Windows / USB-Stick):
 Einfach **`Thenerean_Selvabankumar.exe`** doppelklicken (keine Installation nötig).

@@ -78,6 +78,7 @@
                     </div>
                 </div>
                 <button id="btn-sound-toggle" class="btn-icon" title="Sprache & Soundeffekte an/aus">🔊</button>
+                <button id="btn-touch-toggle" class="btn-icon" title="Touch-Steuerung an/aus">📱</button>
                 <button id="btn-fullscreen-toggle" class="btn-icon" title="Vollbild umschalten (F11)">⛶</button>
             </div>
         </div>
@@ -158,6 +159,53 @@
         <!-- Level Start Hint Toast -->
         <div id="control-hint-pill" class="hidden">
             <span>Frei bewegen mit <kbd>A</kbd><kbd>D</kbd> &bull; Ducken <kbd>CTRL</kbd> &bull; Schild-Block <kbd>R</kbd> &bull; Angriffe <kbd>E</kbd><kbd>Q</kbd><kbd>F</kbd> &rarr;</span>
+        </div>
+
+        <!-- Mobile Touch Controls Overlay (Touch-Geräte & Smartphone) -->
+        <div id="mobile-touch-overlay" class="hidden">
+            <!-- Linker Daumen: Steuerung Links / Rechts -->
+            <div class="touch-cluster-left">
+                <button id="touch-btn-left" class="touch-btn touch-btn-nav" aria-label="Links laufen">
+                    <span class="touch-arrow">◀</span>
+                    <span class="touch-label">LINKS</span>
+                </button>
+                <button id="touch-btn-right" class="touch-btn touch-btn-nav" aria-label="Rechts laufen">
+                    <span class="touch-arrow">▶</span>
+                    <span class="touch-label">RECHTS</span>
+                </button>
+            </div>
+
+            <!-- Rechter Daumen: Action Buttons -->
+            <div class="touch-cluster-right">
+                <div class="touch-row-top">
+                    <button id="touch-btn-duck" class="touch-btn touch-action touch-duck" aria-label="Ducken">
+                        <span class="touch-icon">💨</span>
+                        <span class="touch-sub">DUCK</span>
+                    </button>
+                    <button id="touch-btn-block" class="touch-btn touch-action touch-shield" aria-label="Schild-Block">
+                        <span class="touch-icon">🛡️</span>
+                        <span class="touch-sub">BLOCK</span>
+                    </button>
+                    <button id="touch-btn-attack" class="touch-btn touch-action touch-gesetz" aria-label="Gesetz werfen">
+                        <span class="touch-icon">📜</span>
+                        <span class="touch-sub">GESETZ</span>
+                    </button>
+                </div>
+                <div class="touch-row-bottom">
+                    <button id="touch-btn-mega" class="touch-btn touch-action touch-mega" aria-label="Mega Schock">
+                        <span class="touch-icon">⚡</span>
+                        <span class="touch-sub">MEGA</span>
+                    </button>
+                    <button id="touch-btn-frisbee" class="touch-btn touch-action touch-frisbee" aria-label="20 Frisbees">
+                        <span class="touch-icon">🎯</span>
+                        <span class="touch-sub">20 FRISB</span>
+                    </button>
+                    <button id="touch-btn-jump" class="touch-btn touch-action touch-jump" aria-label="Springen">
+                        <span class="touch-icon">▲</span>
+                        <span class="touch-sub">SPRUNG</span>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- Dialogue Overlay / Face-to-Face Encounter Box -->
