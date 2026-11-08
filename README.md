@@ -13,16 +13,21 @@ Ein humorvolles 2D-Action-Game über Thenerean Selvabankumar, der an der Berufss
   - *"Pünktlichkeit ist oberste Gebot!"*
   - *"Da git es nüt z dischputiere! Gang auf die Platz!"*
   - *"Da hast du 20 Frisbees!"*
-- **Kampfsystem:**
+- **Kampfsystem & Demo-Modus:**
   - `E`: Gesetzestext geradeaus schleudern.
   - `Q` / `Shift`: **„ICH STAH DOCH DA!“** Mega-Schockwelle abfeuern.
-- **Vollbild & Responsive:** Passt sich automatisch nahtlos an jede Bildschirmauflösung an.
+  - `F`: **„DA HAST DU 20 FRISBEES!“** 20-Frisbee-Salve mit Original-Sound abfeuern.
+  - **Trainingsraum (Demo-Modus):** Direkt vom Hauptmenü aus alle Attacken testen.
+- **Standalone `.exe` & Browser-Vollbild:** Läuft wahlweise über `Thenerean_Selvabankumar.exe` (USB-Stick tauglich) oder im Browser (`100vw / 100vh`) mit automatischer Anpassung an jeden Bildschirm.
 
 ---
 
 ## 🚀 Spiel starten
 
-### Schnellstart (Windows):
+### Einzelne Portable EXE (Windows / USB-Stick):
+Einfach **`Thenerean_Selvabankumar.exe`** doppelklicken (keine Installation nötig).
+
+### Schnellstart (Browser):
 Einfach die Datei **`START_SPIEL.bat`** doppelklicken.
 
 ### Alternativ per Terminal:
@@ -36,8 +41,9 @@ Das Spiel öffnet sich automatisch im Browser unter `http://localhost:8080`.
 ## ⌨️ Steuerung
 | Taste | Aktion |
 | --- | --- |
-| `A` / `D` oder `←` / `→` | Laufen |
+| `A` / `D` oder `←` / `→` | Laufen (kein Zwangs-Lauf) |
 | `LEERTASTE` | Springen / Dialog weiter |
-| `E` | Gesetzestext werfen |
-| `Q` / `Shift` / Rechtsklick | Mega-Schockwelle |
+| `E` / Linksklick | Gesetzestext werfen |
+| `Q` / `Shift` / Rechtsklick | „ICH STAH DOCH DA!“ Mega-Schockwelle |
+| `F` / Mittelklick | „Da hast du 20 Frisbees!“ (20x Salve) |
 | `F11` oder ⛶ Button | Vollbild ein/aus |

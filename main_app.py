@@ -4,6 +4,10 @@ import threading
 import socket
 import http.server
 import socketserver
+
+# Allow instant audio playback during the 10-second opening splash inside Edge WebView2
+os.environ.setdefault("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", "--autoplay-policy=no-user-gesture-required")
+
 import webview
 
 def get_base_dir():
@@ -24,7 +28,7 @@ def run_server(directory, port):
         def log_message(self, format, *args):
             pass # suppress console logging
 
-    with socketserver.TCPServer(("", port), QuietHandler) as httpd:
+    with socketserver.TCPServer(("127.0.0.1", port), QuietHandler) as httpd:
         httpd.serve_forever()
 
 def main():
@@ -45,6 +49,7 @@ def main():
         height=760,
         min_size=(960, 540),
         resizable=True,
+        maximized=True,
         fullscreen=False
     )
     webview.start(gui="edgechromium")
