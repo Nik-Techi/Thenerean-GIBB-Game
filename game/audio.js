@@ -9,10 +9,13 @@
 class SoundManager {
     constructor() {
         this.enabled = true;
+        this.musicEnabled = true;
+        this.musicVolumePercent = 50;
+        this.isQuietMode = false;
         this.currentMusic = null;
         this.currentMusicSrc = '';
-        this.musicVolume = 0.42;
-        this.targetMusicVolume = 0.42;
+        this.musicVolume = 0.32;
+        this.targetMusicVolume = 0.32;
         this.activeVoices = new Set();
         this.lastThrowSfxTime = 0;
 
@@ -61,7 +64,11 @@ class SoundManager {
             thenerean_ultra: 'assets/audio/thenerean_ultra_shout.mp3',
             thenerean_ultra_frisbee: 'assets/audio/thenerean_ultra_frisbee.mp3',
             thenerean_sport_spaet: 'assets/audio/thenerean_sport_spaet.mp3',
-            thenerean_srilanka: 'assets/audio/thenerean_srilanka.mp3'
+            thenerean_srilanka: 'assets/audio/thenerean_srilanka.mp3',
+            thenerean_niemert_verbi: 'assets/audio/thenerean_niemert_verbi.mp3',
+            thenerean_chasch_mi_schlah: 'assets/audio/thenerean_chasch_mi_schlah.mp3',
+            thenerean_stah_bis_schluss: 'assets/audio/thenerean_stah_bis_schluss.mp3',
+            thenerean_block_impact: 'assets/audio/thenerean_block_impact.mp3'
         };
 
         // Preload unique Audio buffers into browser cache
@@ -171,6 +178,30 @@ class SoundManager {
         } catch (e) {}
     }
 
+    playBlockSfx() {
+        if (!this.enabled) return;
+        // 1. Play metallic shield clang clip
+        this.playClip('thenerean_block_impact', null, 0.95);
+
+        // 2. Synthesize high-tech crystalline shield deflection chime
+        if (this.ctx) {
+            try {
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, now);
+                osc.frequency.exponentialRampToValueAtTime(1760, now + 0.18);
+                gain.gain.setValueAtTime(0.28, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.22);
+            } catch (e) {}
+        }
+    }
+
     playMegaBeam() {
         if (!this.enabled || !this.ctx) return;
         try {
@@ -240,6 +271,43 @@ class SoundManager {
         this.activeVoices.clear();
     }
 
+    getEffectiveMusicVolume() {
+        if (!this.enabled || !this.musicEnabled) return 0;
+        const norm = Math.max(0, Math.min(100, this.musicVolumePercent)) / 100.0;
+        // Normal max level is ~0.55; quiet mode is ~18% of user volume
+        const maxGain = this.isQuietMode ? 0.08 : 0.52;
+        return norm * maxGain;
+    }
+
+    setMusicEnabled(enabled) {
+        this.musicEnabled = Boolean(enabled);
+        this.targetMusicVolume = this.getEffectiveMusicVolume();
+        if (!this.musicEnabled && this.currentMusic) {
+            this.currentMusic.pause();
+        } else if (this.musicEnabled && this.currentMusic && this.enabled) {
+            this.currentMusic.volume = this.targetMusicVolume;
+            this.currentMusic.play().catch(() => {});
+        }
+    }
+
+    setMusicVolumePercent(pct) {
+        this.musicVolumePercent = Math.max(0, Math.min(100, Math.round(pct)));
+        this.targetMusicVolume = this.getEffectiveMusicVolume();
+        if (this.currentMusic && this.musicEnabled && this.enabled) {
+            if (this.musicVolumePercent === 0) {
+                this.currentMusic.pause();
+            } else if (this.currentMusic.paused) {
+                this.currentMusic.volume = this.targetMusicVolume;
+                this.currentMusic.play().catch(() => {});
+            }
+        }
+    }
+
+    toggleMusic() {
+        this.setMusicEnabled(!this.musicEnabled);
+        return this.musicEnabled;
+    }
+
     playMusicForLevel(levelNum) {
         if (!this.enabled) return;
         const index = levelNum % this.musicTracks.length;
@@ -252,7 +320,6 @@ class SoundManager {
     }
 
     playMusic(src) {
-        if (!this.enabled) return;
         const safeSrc = encodeURI(src);
         if (this.currentMusic && this.currentMusicSrc === safeSrc && !this.currentMusic.paused) {
             return;
@@ -263,18 +330,27 @@ class SoundManager {
         this.currentMusicSrc = safeSrc;
         this.currentMusic = new Audio(safeSrc);
         this.currentMusic.loop = true;
+        this.targetMusicVolume = this.getEffectiveMusicVolume();
         this.musicVolume = this.targetMusicVolume;
         this.currentMusic.volume = this.musicVolume;
-        this.currentMusic.play().catch(() => {});
+
+        if (this.enabled && this.musicEnabled && this.musicVolumePercent > 0) {
+            this.currentMusic.play().catch(() => {});
+        }
     }
 
-    // Dynamic music volume: quiet (~5%) during boss encounter & dialogue so voice lines shine
+    // Dynamic music volume: duck during boss encounter & dialogue so voice lines shine
     setMusicQuietMode(quiet = true) {
-        this.targetMusicVolume = quiet ? 0.06 : 0.42;
+        this.isQuietMode = Boolean(quiet);
+        this.targetMusicVolume = this.getEffectiveMusicVolume();
     }
 
     updateMusicFade() {
         if (!this.currentMusic) return;
+        if (!this.enabled || !this.musicEnabled || this.musicVolumePercent === 0) {
+            if (!this.currentMusic.paused) this.currentMusic.volume = 0;
+            return;
+        }
         if (Math.abs(this.musicVolume - this.targetMusicVolume) > 0.015) {
             if (this.musicVolume < this.targetMusicVolume) {
                 this.musicVolume = Math.min(this.targetMusicVolume, this.musicVolume + 0.035);
@@ -291,7 +367,9 @@ class SoundManager {
             if (this.currentMusic) this.currentMusic.pause();
             this.stopAllClips();
         } else {
-            if (this.currentMusic) this.currentMusic.play().catch(() => {});
+            if (this.currentMusic && this.musicEnabled && this.musicVolumePercent > 0) {
+                this.currentMusic.play().catch(() => {});
+            }
         }
         return this.enabled;
     }

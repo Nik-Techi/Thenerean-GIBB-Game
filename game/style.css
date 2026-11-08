@@ -282,6 +282,39 @@ html, body {
     filter: brightness(1.1);
 }
 
+.music-control-group {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 10px;
+    padding: 1px 8px 1px 1px;
+    gap: 6px;
+}
+
+.music-slider-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.music-slider-wrap input[type="range"] {
+    width: 68px;
+    height: 5px;
+    accent-color: #00d2d3;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+
+.vol-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #00d2d3;
+    min-width: 28px;
+    text-align: right;
+}
+
 /* ===================================================================== */
 /* BOSS HEALTH HUD BANNER                                                */
 /* ===================================================================== */
@@ -441,6 +474,11 @@ html, body {
     box-shadow: 0 0 16px rgba(255, 71, 87, 0.35);
 }
 
+.ability-slot#slot-shield.ready {
+    border-color: rgba(0, 210, 211, 0.85);
+    box-shadow: 0 0 16px rgba(0, 210, 211, 0.35);
+}
+
 .ability-slot#slot-mega.ready {
     border-color: rgba(255, 211, 42, 0.85);
     box-shadow: 0 0 16px rgba(255, 211, 42, 0.3);
@@ -463,6 +501,10 @@ html, body {
 
 .key-red {
     background: linear-gradient(135deg, #ff4757, #c0392b);
+}
+
+.key-shield {
+    background: linear-gradient(135deg, #00d2d3, #0984e3);
 }
 
 .ability-slot img {
@@ -510,6 +552,10 @@ html, body {
 
 .frisbee-mini {
     background: linear-gradient(90deg, #ff6b81, #ff4757);
+}
+
+.shield-mini {
+    background: linear-gradient(90deg, #00d2d3, #0984e3);
 }
 
 #control-hint-pill {
@@ -1088,10 +1134,58 @@ html, body {
     justify-content: center;
     flex-wrap: wrap;
     gap: 14px 20px;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
     font-size: 12.5px;
     font-weight: 700;
     color: #dfe4ea;
+}
+
+.menu-audio-settings {
+    background: rgba(12, 16, 28, 0.72);
+    border: 1.5px solid rgba(0, 210, 211, 0.35);
+    border-radius: 14px;
+    padding: 8px 18px;
+    margin: 0 auto 16px auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    max-width: 680px;
+}
+
+.audio-setting-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.audio-set-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #9ba5b8;
+    letter-spacing: 0.5px;
+}
+
+.menu-slider-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.menu-slider-wrap input[type="range"] {
+    width: 105px;
+    height: 6px;
+    accent-color: #00d2d3;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 4px;
+}
+
+.btn-sm {
+    padding: 6px 14px;
+    font-size: 12px;
+    border-radius: 8px;
 }
 
 kbd {

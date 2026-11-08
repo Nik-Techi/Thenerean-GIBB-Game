@@ -49,6 +49,8 @@ const imageSources = {
     thenerean_run: 'assets/sprites/characters/thenerean_run.png',
     thenerean_jump: 'assets/sprites/characters/thenerean_jump.png',
     thenerean_attack: 'assets/sprites/characters/thenerean_attack.png',
+    thenerean_block: 'assets/sprites/characters/thenerean_block.png',
+    thenerean_duck: 'assets/sprites/characters/thenerean_duck.png',
 
     monika_idle: 'assets/sprites/characters/monika_idle.png',
     monika_walk: 'assets/sprites/characters/monika_walk.png',
@@ -91,7 +93,8 @@ const imageSources = {
     traffic_cone: 'assets/sprites/traffic_cone.png',
     broken_cable: 'assets/sprites/broken_cable.png',
     server_stack: 'assets/sprites/server_stack.png',
-    item_clock: 'assets/sprites/item_clock.png'
+    item_clock: 'assets/sprites/item_clock.png',
+    item_shield: 'assets/sprites/item_shield.png'
 };
 
 for (const [key, src] of Object.entries(imageSources)) {
@@ -132,6 +135,11 @@ class Game {
             maxMegaEnergy: 100,
             frisbeeCooldown: 0,
             maxFrisbeeCooldown: 140,
+            isBlocking: false,
+            blockTimer: 0,
+            blockCooldown: 0,
+            maxBlockCooldown: 48,
+            isDucking: false,
             invulnerableTime: 0,
             attackAnimTimer: 0,
             banterTimer: 240
@@ -221,9 +229,19 @@ class Game {
             abilityDock: document.getElementById('ability-dock'),
             slotMega: document.getElementById('slot-mega'),
             slotFrisbee: document.getElementById('slot-frisbee'),
+            slotShield: document.getElementById('slot-shield'),
             hudEnergyFill: document.getElementById('hud-energy-fill'),
             hudFrisbeeFill: document.getElementById('hud-frisbee-fill'),
+            hudShieldFill: document.getElementById('hud-shield-fill'),
             controlHintPill: document.getElementById('control-hint-pill'),
+
+            btnMusicToggle: document.getElementById('btn-music-toggle'),
+            sliderMusicVol: document.getElementById('slider-music-vol'),
+            labelMusicVol: document.getElementById('label-music-vol'),
+            btnMenuMusicToggle: document.getElementById('btn-menu-music-toggle'),
+            sliderMenuMusicVol: document.getElementById('slider-menu-music-vol'),
+            labelMenuMusicVol: document.getElementById('label-menu-music-vol'),
+            btnMenuSoundToggle: document.getElementById('btn-menu-sound-toggle'),
 
             dialogueBox: document.getElementById('dialogue-box'),
             dialogueAvatar: document.getElementById('dialogue-avatar'),
@@ -325,6 +343,15 @@ class Game {
             this.keys[lower] = true;
             this.keys[e.code] = true;
 
+            // Prevent unwanted browser shortcuts while playing
+            if (e.ctrlKey && (lower === 'r' || lower === 'w' || lower === 's')) {
+                e.preventDefault();
+            }
+            if (e.key === 'Control' || e.code === 'ControlLeft' || e.code === 'ControlRight') {
+                this.player.isDucking = true;
+                e.preventDefault();
+            }
+
             if (this.state === GAME_STATE.OPENING) {
                 window.soundManager.initWebAudio();
                 if (e.code === 'Space' || e.key === 'Escape' || e.key === 'Enter') {
@@ -344,17 +371,22 @@ class Game {
                 if (lower === 'e') this.playerAttackLawBook();
                 if (lower === 'q' || e.code === 'ShiftLeft') this.playerAttackMegaShout();
                 if (lower === 'f') this.playerAttackFrisbeeVolley();
+                if (lower === 'r') this.playerBlock();
             } else if (this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT) {
                 if (e.code === 'Space') this.playerJump();
                 if (lower === 'e') this.playerAttackLawBook();
                 if (lower === 'q' || e.code === 'ShiftLeft') this.playerAttackMegaShout();
                 if (lower === 'f') this.playerAttackFrisbeeVolley();
+                if (lower === 'r') this.playerBlock();
             }
         });
 
         window.addEventListener('keyup', (e) => {
             this.keys[e.key.toLowerCase()] = false;
             this.keys[e.code] = false;
+            if (e.key === 'Control' || e.code === 'ControlLeft' || e.code === 'ControlRight') {
+                this.player.isDucking = false;
+            }
         });
 
         canvas.addEventListener('mousedown', (e) => {
@@ -465,10 +497,74 @@ class Game {
         document.getElementById('btn-lose-menu').addEventListener('click', () => this.returnToMenu());
         document.getElementById('btn-victory-restart').addEventListener('click', () => this.returnToMenu());
 
-        document.getElementById('btn-sound-toggle').addEventListener('click', (e) => {
+        // Dedicated Music Controls (ON/OFF and % Slider)
+        const updateMusicUI = (on, pct) => {
+            const pctStr = `${pct}%`;
+            if (this.ui.btnMusicToggle) this.ui.btnMusicToggle.textContent = on && pct > 0 ? '🎵' : '🔇';
+            if (this.ui.sliderMusicVol) this.ui.sliderMusicVol.value = pct;
+            if (this.ui.labelMusicVol) this.ui.labelMusicVol.textContent = pctStr;
+            if (this.ui.btnMenuMusicToggle) this.ui.btnMenuMusicToggle.textContent = on && pct > 0 ? `🎵 MUSIK: AN (${pctStr})` : '🎵 MUSIK: AUS';
+            if (this.ui.sliderMenuMusicVol) this.ui.sliderMenuMusicVol.value = pct;
+            if (this.ui.labelMenuMusicVol) this.ui.labelMenuMusicVol.textContent = pctStr;
+        };
+
+        if (this.ui.btnMusicToggle) {
+            this.ui.btnMusicToggle.addEventListener('click', () => {
+                const on = window.soundManager.toggleMusic();
+                updateMusicUI(on, window.soundManager.musicVolumePercent);
+            });
+        }
+        if (this.ui.btnMenuMusicToggle) {
+            this.ui.btnMenuMusicToggle.addEventListener('click', () => {
+                const on = window.soundManager.toggleMusic();
+                updateMusicUI(on, window.soundManager.musicVolumePercent);
+            });
+        }
+
+        const handleMusicSlider = (val) => {
+            const num = parseInt(val, 10);
+            window.soundManager.setMusicVolumePercent(num);
+            if (num > 0 && !window.soundManager.musicEnabled) {
+                window.soundManager.setMusicEnabled(true);
+            }
+            updateMusicUI(window.soundManager.musicEnabled, num);
+        };
+
+        if (this.ui.sliderMusicVol) {
+            this.ui.sliderMusicVol.addEventListener('input', (e) => handleMusicSlider(e.target.value));
+            this.ui.sliderMusicVol.addEventListener('change', () => this.ui.sliderMusicVol.blur());
+        }
+        if (this.ui.sliderMenuMusicVol) {
+            this.ui.sliderMenuMusicVol.addEventListener('input', (e) => handleMusicSlider(e.target.value));
+            this.ui.sliderMenuMusicVol.addEventListener('change', () => this.ui.sliderMenuMusicVol.blur());
+        }
+
+        // Master Sound Effects & Voices Toggle
+        const updateSoundUI = (on) => {
+            const icon = on ? '🔊' : '🔇';
+            const btn = document.getElementById('btn-sound-toggle');
+            if (btn) btn.textContent = icon;
+            if (this.ui.btnMenuSoundToggle) this.ui.btnMenuSoundToggle.textContent = on ? '🔊 SPRACHE & EFFEKTE: AN' : '🔇 SPRACHE & EFFEKTE: AUS';
+        };
+
+        document.getElementById('btn-sound-toggle').addEventListener('click', () => {
             const on = window.soundManager.toggleMute();
-            e.target.textContent = on ? '🔊' : '🔇';
+            updateSoundUI(on);
         });
+        if (this.ui.btnMenuSoundToggle) {
+            this.ui.btnMenuSoundToggle.addEventListener('click', () => {
+                const on = window.soundManager.toggleMute();
+                updateSoundUI(on);
+            });
+        }
+
+        if (this.ui.slotShield) {
+            this.ui.slotShield.addEventListener('click', () => {
+                if (this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) {
+                    this.playerBlock();
+                }
+            });
+        }
     }
 
     returnToMenu() {
@@ -629,6 +725,10 @@ class Game {
             this.player.vx = 0;
         }
 
+        if (this.player.isDucking && this.player.isGrounded) {
+            this.player.vx *= 0.52;
+        }
+
         this.player.x += this.player.vx;
         if (this.player.x < 30) this.player.x = 30;
         if (this.player.x > canvas.width - 110) this.player.x = canvas.width - 110;
@@ -649,6 +749,7 @@ class Game {
         this.player.hp = 100;
         this.player.megaEnergy = 100;
         if (this.player.frisbeeCooldown > 0) this.player.frisbeeCooldown = Math.max(0, this.player.frisbeeCooldown - 5);
+        if (this.player.blockCooldown > 0) this.player.blockCooldown = 0;
         this.updateBars();
 
         if (this.boss) {
@@ -685,8 +786,14 @@ class Game {
         }
 
         for (const obs of this.obstacles) {
-            if (this.checkCollision(this.player.x + 12, this.player.y + 10, this.player.w - 24, this.player.h - 14, obs.x, obs.y, obs.w, obs.h)) {
-                this.onPlayerHit(5, obs.type);
+            const pHitY = (this.player.isDucking && this.player.isGrounded) ? this.player.y + this.player.h * 0.44 : this.player.y + 10;
+            const pHitH = (this.player.isDucking && this.player.isGrounded) ? this.player.h * 0.54 : this.player.h - 14;
+            if (this.checkCollision(this.player.x + 12, pHitY, this.player.w - 24, pHitH, obs.x, obs.y, obs.w, obs.h)) {
+                if (this.player.isBlocking) {
+                    this.onBlockSuccess(obs.x, obs.y);
+                } else {
+                    this.onPlayerHit(5, obs.type);
+                }
             }
             if (!obs.cleared && obs.x + obs.w < this.player.x) {
                 obs.cleared = true;
@@ -1135,6 +1242,74 @@ class Game {
         this.spawnBurst(cx, cy, 24, '#ff4757', 7, 22);
     }
 
+    // DEFENSE (R): Tactical Shield Block ("Niemert chunt an mir verbi!")
+    playerBlock() {
+        if (this.player.blockCooldown > 0 && this.state !== GAME_STATE.DEMO) {
+            this.addFloatingText("Schild lädt nach...", this.player.x + 20, this.player.y - 14, '#00d2d3', 17);
+            return;
+        }
+
+        this.player.isBlocking = true;
+        this.player.blockTimer = 34; // ~0.55s active blocking
+        if (this.state !== GAME_STATE.DEMO) {
+            this.player.blockCooldown = this.player.maxBlockCooldown;
+        }
+        this.player.attackAnimTimer = 30;
+
+        window.soundManager.playBlockSfx();
+        const blockVocals = ['thenerean_niemert_verbi', 'thenerean_stah_bis_schluss', 'thenerean_chasch_mi_schlah'];
+        const chosenVocal = blockVocals[Math.floor(Math.random() * blockVocals.length)];
+        window.soundManager.playClip(chosenVocal);
+
+        if (chosenVocal === 'thenerean_niemert_verbi') {
+            this.showMemePopup("Niemert chunt an mir verbi! 🛡️");
+        } else if (chosenVocal === 'thenerean_chasch_mi_schlah') {
+            this.showMemePopup("Du hesch gmeint du chasch mi schlah?! 🛡️");
+        } else {
+            this.showMemePopup("Ich stah bis zum Schluss! 🛡️");
+        }
+
+        this.addFloatingText("SCHILD BLOCK! 🛡️", this.player.x + this.player.w * 0.5, this.player.y - 20, '#00d2d3', 22);
+
+        const cx = this.player.x + (this.player.facing > 0 ? this.player.w * 0.75 : this.player.w * 0.25);
+        const cy = this.player.y + this.player.h * 0.45;
+        this.shockwaves.push({ x: cx, y: cy, radius: 12, maxRadius: 140, color: '#00d2d3', alpha: 0.9 });
+
+        // Shield spark particles
+        for (let i = 0; i < 22; i++) {
+            const angle = (Math.PI * 2 * i) / 22;
+            const spd = 4 + Math.random() * 4;
+            this.particles.push({
+                x: cx,
+                y: cy,
+                vx: Math.cos(angle) * spd,
+                vy: Math.sin(angle) * spd,
+                life: 18,
+                maxLife: 18,
+                color: i % 2 === 0 ? '#00d2d3' : '#ffd32a',
+                size: 4 + Math.random() * 4
+            });
+        }
+    }
+
+    onBlockSuccess(hitX, hitY) {
+        window.soundManager.playBlockSfx();
+        this.screenShake = 7;
+        const bx = hitX || (this.player.x + (this.player.facing > 0 ? this.player.w * 0.8 : this.player.w * 0.2));
+        const by = hitY || (this.player.y + this.player.h * 0.48);
+
+        this.spawnBurst(bx, by, 18, '#00d2d3', 6, 22);
+        this.spawnBurst(bx, by, 12, '#ffd32a', 4, 16);
+        this.shockwaves.push({ x: bx, y: by, radius: 10, maxRadius: 95, color: '#00d2d3', alpha: 0.85 });
+        this.addFloatingText("GEBLOCKT! 🛡️ 0 DMG", this.player.x + this.player.w * 0.5, this.player.y - 12, '#00d2d3', 24);
+
+        if (Math.random() > 0.45) {
+            const blockCounters = ['thenerean_chasch_mi_schlah', 'thenerean_niemert_verbi'];
+            const clip = blockCounters[Math.floor(Math.random() * blockCounters.length)];
+            window.soundManager.playClip(clip);
+        }
+    }
+
     playerJump() {
         if (this.player.isGrounded) {
             this.player.vy = this.player.jumpPower;
@@ -1357,6 +1532,15 @@ class Game {
         if (this.player.frisbeeCooldown > 0) {
             this.player.frisbeeCooldown--;
         }
+        if (this.player.blockTimer > 0) {
+            this.player.blockTimer--;
+            if (this.player.blockTimer <= 0) {
+                this.player.isBlocking = false;
+            }
+        }
+        if (this.player.blockCooldown > 0) {
+            this.player.blockCooldown--;
+        }
         this.updateBars();
 
         if (this.state === GAME_STATE.RUNNING) {
@@ -1413,6 +1597,10 @@ class Game {
             this.player.vx = 0;
         }
 
+        if (this.player.isDucking && this.player.isGrounded) {
+            this.player.vx *= 0.52;
+        }
+
         this.player.x += this.player.vx;
         if (this.player.x < 30) this.player.x = 30;
 
@@ -1449,8 +1637,14 @@ class Game {
         for (const obs of this.obstacles) {
             const screenX = obs.x - this.worldDistance;
             if (screenX > -120 && screenX < canvas.width + 120) {
-                if (this.checkCollision(this.player.x + 12, this.player.y + 12, this.player.w - 24, this.player.h - 14, screenX + 4, obs.y + 4, obs.w - 8, obs.h - 8)) {
-                    this.onPlayerHit(14, obs.type);
+                const pHitY = (this.player.isDucking && this.player.isGrounded) ? this.player.y + this.player.h * 0.44 : this.player.y + 12;
+                const pHitH = (this.player.isDucking && this.player.isGrounded) ? this.player.h * 0.54 : this.player.h - 14;
+                if (this.checkCollision(this.player.x + 12, pHitY, this.player.w - 24, pHitH, screenX + 4, obs.y + 4, obs.w - 8, obs.h - 8)) {
+                    if (this.player.isBlocking) {
+                        this.onBlockSuccess(screenX, obs.y);
+                    } else {
+                        this.onPlayerHit(14, obs.type);
+                    }
                 }
                 if (!obs.cleared && screenX + obs.w < this.player.x) {
                     obs.cleared = true;
@@ -1531,6 +1725,10 @@ class Game {
             this.player.facing = -1;
         } else {
             this.player.vx = 0;
+        }
+
+        if (this.player.isDucking && this.player.isGrounded) {
+            this.player.vx *= 0.52;
         }
 
         this.player.x += this.player.vx;
@@ -1734,7 +1932,27 @@ class Game {
 
             // Boss projectile hits player
             if (!p.isPlayer) {
-                if (this.checkCollision(p.x, p.y, p.w, p.h, this.player.x + 10, this.player.y + 10, this.player.w - 20, this.player.h - 14)) {
+                const isDucking = this.player.isDucking && this.player.isGrounded;
+                const pHitY = isDucking ? this.player.y + this.player.h * 0.44 : this.player.y + 10;
+                const pHitH = isDucking ? this.player.h * 0.54 : this.player.h - 14;
+
+                // Check if normal standing hitbox would have hit, but crouch dodged under it
+                if (isDucking && !p.duckDodged) {
+                    const standingHit = this.checkCollision(p.x, p.y, p.w, p.h, this.player.x + 10, this.player.y + 10, this.player.w - 20, this.player.h - 14);
+                    const crouchHit = this.checkCollision(p.x, p.y, p.w, p.h, this.player.x + 10, pHitY, this.player.w - 20, pHitH);
+                    if (standingHit && !crouchHit) {
+                        p.duckDodged = true;
+                        this.addFloatingText("GEDUCKT! 💨", this.player.x + this.player.w * 0.5, this.player.y + this.player.h * 0.25, '#2ed573', 20);
+                        if (Math.random() > 0.5) window.soundManager.playClip('thenerean_stah');
+                    }
+                }
+
+                if (this.checkCollision(p.x, p.y, p.w, p.h, this.player.x + 10, pHitY, this.player.w - 20, pHitH)) {
+                    if (this.player.isBlocking) {
+                        this.onBlockSuccess(p.x, p.y);
+                        this.projectiles.splice(i, 1);
+                        continue;
+                    }
                     this.onPlayerHit(p.damage, p.type);
                     this.projectiles.splice(i, 1);
                     continue;
@@ -1804,6 +2022,18 @@ class Game {
             const fReady = this.player.frisbeeCooldown <= 0 || this.state === GAME_STATE.DEMO;
             this.ui.slotFrisbee.classList.toggle('ready', fReady);
             this.ui.slotFrisbee.classList.toggle('cooldown', !fReady);
+        }
+
+        const shieldReady = this.player.blockCooldown <= 0
+            ? 100
+            : Math.max(0, 100 - (this.player.blockCooldown / this.player.maxBlockCooldown) * 100);
+        if (this.ui.hudShieldFill) {
+            this.ui.hudShieldFill.style.width = `${shieldReady}%`;
+        }
+        if (this.ui.slotShield) {
+            const sReady = this.player.blockCooldown <= 0 || this.state === GAME_STATE.DEMO;
+            this.ui.slotShield.classList.toggle('ready', sReady);
+            this.ui.slotShield.classList.toggle('cooldown', !sReady);
         }
     }
 
@@ -2138,7 +2368,16 @@ class Game {
         let poseKey = 'thenerean_idle';
         let sx = 1.0, sy = 1.0, tilt = 0;
 
-        if (p.attackAnimTimer > 0) {
+        if (p.isBlocking) {
+            poseKey = 'thenerean_block';
+            sx = 1.05;
+            sy = 0.98;
+            tilt = 0.03 * p.facing;
+        } else if (p.isDucking && p.isGrounded) {
+            poseKey = 'thenerean_duck';
+            sx = 1.05;
+            sy = 0.95;
+        } else if (p.attackAnimTimer > 0) {
             poseKey = 'thenerean_attack';
             sx = 1.04;
             sy = 0.98;
@@ -2163,8 +2402,55 @@ class Game {
         const sprite = images[poseKey] || images.thenerean_idle || images.thenerean_hero;
         this.drawCharacterSprite(sprite, footX, footY, p.h, p.facing, 0, sx, sy, tilt);
 
+        if (p.isBlocking) {
+            this.drawShieldAura(footX, footY, p.h, p.facing);
+        }
+
         // Name Plate pill above head
-        this.drawNamePill("Thenerean", footX, p.y - 14, '#ffd32a');
+        const nameLabel = p.isBlocking ? "Thenerean [BLOCK]" : (p.isDucking ? "Thenerean [DUCK]" : "Thenerean");
+        const nameY = (p.isDucking && p.isGrounded) ? (p.y + p.h * 0.38) : (p.y - 14);
+        this.drawNamePill(nameLabel, footX, nameY, '#ffd32a');
+    }
+
+    drawShieldAura(footX, footY, h, facing) {
+        ctx.save();
+        const shieldX = footX + facing * (h * 0.28);
+        const shieldY = footY - h * 0.5;
+        const radius = h * 0.54;
+
+        const pulse = 1.0 + Math.sin(this.animClock * 28) * 0.06;
+
+        // Outer glow
+        const grad = ctx.createRadialGradient(shieldX, shieldY, radius * 0.2, shieldX, shieldY, radius * 1.3);
+        grad.addColorStop(0, 'rgba(0, 210, 211, 0.45)');
+        grad.addColorStop(0.65, 'rgba(0, 210, 211, 0.18)');
+        grad.addColorStop(1, 'rgba(255, 211, 42, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(shieldX, shieldY, radius * 1.25 * pulse, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Energy Barrier Arc
+        ctx.strokeStyle = '#00d2d3';
+        ctx.lineWidth = 4.5;
+        ctx.shadowColor = '#00d2d3';
+        ctx.shadowBlur = 18;
+        ctx.beginPath();
+        const startAngle = facing > 0 ? -Math.PI * 0.38 : Math.PI * 0.62;
+        const endAngle = facing > 0 ? Math.PI * 0.38 : Math.PI * 1.38;
+        ctx.arc(shieldX, shieldY, radius * 0.9 * pulse, startAngle, endAngle);
+        ctx.stroke();
+
+        // Inner golden reinforcement line
+        ctx.strokeStyle = '#ffd32a';
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = '#ffd32a';
+        ctx.shadowBlur = 9;
+        ctx.beginPath();
+        ctx.arc(shieldX, shieldY, radius * 0.76 * pulse, startAngle + 0.14, endAngle - 0.14);
+        ctx.stroke();
+
+        ctx.restore();
     }
 
     drawBoss(bossEntity) {

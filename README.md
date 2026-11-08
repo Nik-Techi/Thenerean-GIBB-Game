@@ -14,11 +14,18 @@ Ein humorvolles 2D-Action-Game über Thenerean Selvabankumar, der an der Berufss
   - *"Da git es nüt z dischputiere! Gang auf die Platz!"*
   - *"Da hast du 20 Frisbees!"*
 - **Kampfsystem & Demo-Modus:**
-  - `E`: Gesetzestext geradeaus schleudern.
-  - `Q` / `Shift`: **„ICH STAH DOCH DA!“** Mega-Schockwelle abfeuern.
+  - `E`: Gesetzestext geradeaus schleudern (28 DMG).
+  - `Q` / `Shift`: **„ICH STAH DOCH DA!“** Mega-Schockwelle abfeuern (70 DMG).
   - `F`: **„DA HAST DU 20 FRISBEES!“** 20-Frisbee-Salve mit Original-Sound abfeuern.
-  - **Trainingsraum (Demo-Modus):** Direkt vom Hauptmenü aus alle Attacken testen.
-- **Standalone `.exe` & Browser-Vollbild:** Läuft wahlweise über `Thenerean_Selvabankumar.exe` (USB-Stick tauglich) oder im Browser (`100vw / 100vh`) mit automatischer Anpassung an jeden Bildschirm.
+  - `R`: **Schild-Block:** Thenerean aktiviert ein taktisches Schild mit Energie-Aura (*„Niemert chunt an mir verbi!“* / *„Ich stah bis zum Schluss!“*) und wehrt Angriffe komplett ab (0 Schaden).
+  - `CTRL`: **Ducken:** Thenerean duckt sich geschmeidig unter Projektilen und Hindernissen durch.
+  - **Trainingsraum (Demo-Modus):** Direkt vom Hauptmenü aus alle Fähigkeiten und Abwehrmechaniken ausprobieren.
+- **Dedizierte Sound- & Musiksteuerung:**
+  - Musik kann separat ein- oder ausgeschaltet werden.
+  - Lautstärkeregler (0% bis 100%) für Hintergrundmusik, damit Stimmen und Soundeffekte auch ganz ohne Musik gespielt werden können.
+- **Standalone `.exe` & App-Icon:** 
+  - Einzelne Portable EXE mit Thenereans Helden-Icon (`app_icon.ico`) – ideal für USB-Sticks.
+  - Vollbild-Optimierung (100vw / 100vh) ohne Ränder für jeden Monitor.
 
 ---
 
@@ -27,7 +34,7 @@ Ein humorvolles 2D-Action-Game über Thenerean Selvabankumar, der an der Berufss
 ### Einzelne Portable EXE (Windows / USB-Stick):
 Einfach **`Thenerean_Selvabankumar.exe`** doppelklicken (keine Installation nötig).
 
-### Schnellstart (Browser):
+### Schnellstart:
 Einfach die Datei **`START_SPIEL.bat`** doppelklicken.
 
 ### Alternativ per Terminal:
@@ -43,7 +50,9 @@ Das Spiel öffnet sich automatisch im Browser unter `http://localhost:8080`.
 | --- | --- |
 | `A` / `D` oder `←` / `→` | Laufen (kein Zwangs-Lauf) |
 | `LEERTASTE` | Springen / Dialog weiter |
-| `E` / Linksklick | Gesetzestext werfen |
-| `Q` / `Shift` / Rechtsklick | „ICH STAH DOCH DA!“ Mega-Schockwelle |
-| `F` / Mittelklick | „Da hast du 20 Frisbees!“ (20x Salve) |
+| `CTRL` | Ducken (weicht hohen Angriffen aus) |
+| `R` | Schild-Block (*„Niemert chunt an mir verbi!“*) |
+| `E` / Linksklick | Gesetzestext werfen (28 DMG) |
+| `Q` / `Shift` | „ICH STAH DOCH DA!“ Mega-Schockwelle (70 DMG) |
+| `F` | „Da hast du 20 Frisbees!“ (20x Salve) |
 | `F11` oder ⛶ Button | Vollbild ein/aus |
