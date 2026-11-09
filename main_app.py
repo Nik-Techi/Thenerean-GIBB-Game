@@ -41,7 +41,7 @@ def main():
     server_thread.start()
 
     # Launch native desktop window with modern WebView2 engine
-    url = f"http://127.0.0.1:{port}/index.html"
+    url = f"http://127.0.0.1:{port}/index.html?platform=desktop"
     window = webview.create_window(
         title="Thenerean Selvabankumar - Das GIBB Abenteuer",
         url=url,

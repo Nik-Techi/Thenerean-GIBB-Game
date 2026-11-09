@@ -150,8 +150,12 @@ class Game {
         };
         this.hazards = [];
 
-        const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
-        this.touchControlsEnabled = isTouch;
+        const urlParams = new URLSearchParams(window.location.search);
+        const platformParam = urlParams.get('platform');
+        this.isExplicitDesktop = platformParam === 'desktop';
+        const isExplicitAndroid = platformParam === 'android';
+        const isMobileOS = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        this.touchControlsEnabled = !this.isExplicitDesktop && (isExplicitAndroid || isMobileOS);
 
         this.worldDistance = 0;
         this.menuPan = 0;
@@ -254,6 +258,9 @@ class Game {
             touchBtnAttack: document.getElementById('touch-btn-attack'),
             touchBtnMega: document.getElementById('touch-btn-mega'),
             touchBtnFrisbee: document.getElementById('touch-btn-frisbee'),
+            touchShieldFill: document.getElementById('touch-shield-fill'),
+            touchMegaFill: document.getElementById('touch-mega-fill'),
+            touchFrisbeeFill: document.getElementById('touch-frisbee-fill'),
 
             btnMusicToggle: document.getElementById('btn-music-toggle'),
             sliderMusicVol: document.getElementById('slider-music-vol'),
@@ -299,6 +306,15 @@ class Game {
             introTimerBar: document.getElementById('intro-timer-bar'),
             introDots: document.querySelectorAll('.chap-dot')
         };
+
+        if (this.isExplicitDesktop) {
+            if (this.ui.touchOverlay) this.ui.touchOverlay.remove();
+            if (this.ui.btnTouchToggle) this.ui.btnTouchToggle.remove();
+            this.ui.touchOverlay = null;
+            this.ui.btnTouchToggle = null;
+            this.touchControlsEnabled = false;
+            document.body.classList.remove('touch-active');
+        }
 
         this.keys = {};
         this.resizeCanvas();
@@ -672,8 +688,9 @@ class Game {
             null
         );
 
-        // Toggle Touch Controls Button
-        if (this.ui.btnTouchToggle) {
+        // Toggle Touch Controls Button (never active in Windows Desktop EXE)
+        if (this.ui.btnTouchToggle && !this.isExplicitDesktop) {
+            this.ui.btnTouchToggle.classList.toggle('touch-on', this.touchControlsEnabled);
             this.ui.btnTouchToggle.addEventListener('click', () => {
                 this.touchControlsEnabled = !this.touchControlsEnabled;
                 this.updateTouchControlsVisibility();
@@ -692,12 +709,14 @@ class Game {
     }
 
     updateTouchControlsVisibility() {
-        if (!this.ui.touchOverlay) return;
-        const inAction = this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO || this.state === GAME_STATE.PRE_BOSS_WALK || this.state === GAME_STATE.PRE_BOSS_DIALOGUE;
-        if (this.touchControlsEnabled && inAction) {
-            this.ui.touchOverlay.classList.remove('hidden');
-        } else {
-            this.ui.touchOverlay.classList.add('hidden');
+        const inAction = this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO || this.state === GAME_STATE.PRE_BOSS_WALK;
+        const showTouch = Boolean(!this.isExplicitDesktop && this.touchControlsEnabled && inAction && this.ui.touchOverlay);
+        if (this.ui.touchOverlay) {
+            this.ui.touchOverlay.classList.toggle('hidden', !showTouch);
+        }
+        document.body.classList.toggle('touch-active', showTouch);
+        if (this.ui.btnTouchToggle) {
+            this.ui.btnTouchToggle.classList.toggle('touch-on', !this.isExplicitDesktop && this.touchControlsEnabled);
         }
     }
 
@@ -722,6 +741,7 @@ class Game {
         this.ui.controlHintPill.classList.add('hidden');
         this.ui.dialogueBox.classList.add('hidden');
         if (this.ui.touchOverlay) this.ui.touchOverlay.classList.add('hidden');
+        document.body.classList.remove('touch-active');
         if (this.ui.btnDemoExit) this.ui.btnDemoExit.classList.add('hidden');
     }
 
@@ -1537,6 +1557,7 @@ class Game {
 
     startPreBossDialogue() {
         this.state = GAME_STATE.PRE_BOSS_DIALOGUE;
+        this.updateTouchControlsVisibility();
         this.ui.abilityDock.classList.add('hidden');
         this.ui.memePopup.classList.add('hidden');
         const encounter = this.level.preBossEncounter;
@@ -1576,6 +1597,7 @@ class Game {
             this.ui.abilityDock.classList.remove('hidden');
             if (this.boss) this.boss.banterAnimTimer = 0;
             this.state = GAME_STATE.BOSS_FIGHT;
+            this.updateTouchControlsVisibility();
             this.screenShake = 18;
             this.radialFlashTimer = 14;
             this.addFloatingText("KAMPF BEGINNT!", canvas.width / 2, canvas.height * 0.37, '#ff4757', 34);
@@ -2186,33 +2208,55 @@ class Game {
         this.ui.energyValText.textContent = `${Math.round(energyPct)}%`;
         this.ui.scoreVal.textContent = this.player.score.toFixed(1);
 
+        const megaReady = this.player.megaEnergy >= 40 || this.state === GAME_STATE.DEMO;
         if (this.ui.hudEnergyFill) {
             this.ui.hudEnergyFill.style.width = `${energyPct}%`;
         }
         if (this.ui.slotMega) {
-            const megaReady = this.player.megaEnergy >= 40 || this.state === GAME_STATE.DEMO;
             this.ui.slotMega.classList.toggle('ready', megaReady);
             this.ui.slotMega.classList.toggle('cooldown', !megaReady);
         }
+        if (this.ui.touchMegaFill) {
+            this.ui.touchMegaFill.style.width = `${this.state === GAME_STATE.DEMO ? 100 : energyPct}%`;
+        }
+        if (this.ui.touchBtnMega) {
+            this.ui.touchBtnMega.classList.toggle('ready', megaReady);
+            this.ui.touchBtnMega.classList.toggle('cooldown', !megaReady);
+        }
+
+        const fReady = this.player.frisbeeCooldown <= 0 || this.state === GAME_STATE.DEMO;
         if (this.ui.hudFrisbeeFill) {
             this.ui.hudFrisbeeFill.style.width = `${frisbeeReady}%`;
         }
         if (this.ui.slotFrisbee) {
-            const fReady = this.player.frisbeeCooldown <= 0 || this.state === GAME_STATE.DEMO;
             this.ui.slotFrisbee.classList.toggle('ready', fReady);
             this.ui.slotFrisbee.classList.toggle('cooldown', !fReady);
+        }
+        if (this.ui.touchFrisbeeFill) {
+            this.ui.touchFrisbeeFill.style.width = `${this.state === GAME_STATE.DEMO ? 100 : frisbeeReady}%`;
+        }
+        if (this.ui.touchBtnFrisbee) {
+            this.ui.touchBtnFrisbee.classList.toggle('ready', fReady);
+            this.ui.touchBtnFrisbee.classList.toggle('cooldown', !fReady);
         }
 
         const shieldReady = this.player.blockCooldown <= 0
             ? 100
             : Math.max(0, 100 - (this.player.blockCooldown / this.player.maxBlockCooldown) * 100);
+        const sReady = this.player.blockCooldown <= 0 || this.state === GAME_STATE.DEMO;
         if (this.ui.hudShieldFill) {
             this.ui.hudShieldFill.style.width = `${shieldReady}%`;
         }
         if (this.ui.slotShield) {
-            const sReady = this.player.blockCooldown <= 0 || this.state === GAME_STATE.DEMO;
             this.ui.slotShield.classList.toggle('ready', sReady);
             this.ui.slotShield.classList.toggle('cooldown', !sReady);
+        }
+        if (this.ui.touchShieldFill) {
+            this.ui.touchShieldFill.style.width = `${this.state === GAME_STATE.DEMO ? 100 : shieldReady}%`;
+        }
+        if (this.ui.touchBtnBlock) {
+            this.ui.touchBtnBlock.classList.toggle('ready', sReady);
+            this.ui.touchBtnBlock.classList.toggle('cooldown', !sReady);
         }
     }
 
@@ -2242,6 +2286,7 @@ class Game {
     triggerLevelWin() {
         this.clearFrisbeeTimers();
         this.state = GAME_STATE.LEVEL_WIN;
+        this.updateTouchControlsVisibility();
         this.ui.bossHudBanner.classList.add('hidden');
         this.ui.winGrade.textContent = this.player.score.toFixed(1);
         this.ui.winHp.textContent = `${Math.round(this.player.hp)}%`;
@@ -2253,6 +2298,7 @@ class Game {
     triggerGameOver() {
         this.clearFrisbeeTimers();
         this.state = GAME_STATE.GAME_OVER;
+        this.updateTouchControlsVisibility();
         this.ui.bossHudBanner.classList.add('hidden');
         this.ui.screenLose.classList.remove('hidden');
         window.soundManager.setMusicQuietMode(false);
