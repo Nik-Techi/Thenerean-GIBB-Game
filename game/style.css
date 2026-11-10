@@ -572,7 +572,7 @@ html, body {
 
 #control-hint-pill {
     position: absolute;
-    bottom: 22px;
+    bottom: 84px;
     right: 18px;
     background: rgba(12, 16, 28, 0.82);
     backdrop-filter: blur(8px);
@@ -1025,7 +1025,256 @@ html, body {
     font-weight: 700;
 }
 
-/* Main Menu */
+.comic-panel {
+    background: linear-gradient(160deg, rgba(16, 22, 38, 0.88) 0%, rgba(8, 11, 22, 0.94) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 3px solid #121728;
+    box-shadow:
+        0 10px 0 rgba(7, 10, 18, 0.92),
+        0 18px 46px rgba(0, 0, 0, 0.72),
+        inset 0 2px 0 rgba(255, 255, 255, 0.16);
+}
+
+/* Redesigned 2D Comic-Arcade Lobby */
+#screen-menu {
+    background: linear-gradient(
+        180deg,
+        rgba(6, 9, 18, 0.62) 0%,
+        rgba(6, 9, 18, 0.10) 36%,
+        rgba(6, 9, 18, 0.22) 68%,
+        rgba(5, 7, 14, 0.84) 100%
+    );
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    padding: 12px 24px 14px 24px;
+}
+
+.lobby-shell {
+    width: min(1180px, 98vw);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+}
+
+.lobby-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.comic-badge {
+    border: 2.5px solid #0b0e18;
+    box-shadow: 0 3px 0 #0b0e18;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.comic-title {
+    font-size: clamp(28px, 4.1vw, 46px);
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    line-height: 1;
+    margin-bottom: 8px;
+    transform: skewX(-4deg);
+    text-shadow:
+        -2px -2px 0 #0b0e18,
+         2px -2px 0 #0b0e18,
+        -2px  2px 0 #0b0e18,
+         2px  2px 0 #0b0e18,
+         0    6px 0 #0b0e18,
+         0   10px 24px rgba(0, 0, 0, 0.78);
+}
+
+.lobby-quote-bubble {
+    background: #fffbeb;
+    color: #111524;
+    border: 2.5px solid #0b0e18;
+    box-shadow: 0 4px 0 #0b0e18, 0 8px 20px rgba(0, 0, 0, 0.45);
+    border-radius: 16px;
+    padding: 6px 18px;
+    font-size: 13.5px;
+    font-weight: 900;
+    max-width: min(760px, 94vw);
+    text-align: center;
+    letter-spacing: 0.2px;
+}
+
+.lobby-quote-bubble.pop-flash {
+    animation: bubblePop 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes bubblePop {
+    0%   { transform: scale(0.92); background: #ffd32a; }
+    100% { transform: scale(1.00); background: #fffbeb; }
+}
+
+.lobby-stage {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: clamp(14px, 3vw, 44px);
+    padding-top: 10px;
+    padding-bottom: 4px;
+}
+
+.lobby-rivals {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: clamp(10px, 1.8vw, 24px);
+}
+
+.lobby-fighter {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.58));
+}
+
+.lobby-fighter img {
+    height: clamp(126px, 24.5vh, 200px);
+    width: auto;
+    object-fit: contain;
+    animation: fighterBreathe 3.2s ease-in-out infinite;
+}
+
+.lobby-rivals .lobby-fighter:nth-child(2) img { animation-delay: 0.4s; }
+.lobby-rivals .lobby-fighter:nth-child(3) img { animation-delay: 0.8s; }
+.lobby-rivals .lobby-fighter:nth-child(4) img { animation-delay: 1.2s; }
+
+.lobby-fighter.fighter-wide img {
+    height: clamp(112px, 21vh, 174px);
+}
+
+@keyframes fighterBreathe {
+    0%, 100% { transform: translateY(0) scaleY(1); }
+    50%      { transform: translateY(-4px) scaleY(1.015); }
+}
+
+.lobby-fighter:hover {
+    transform: translateY(-8px) scale(1.06);
+    z-index: 4;
+}
+
+.lobby-fighter.taunt-bounce {
+    animation: fighterTaunt 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes fighterTaunt {
+    0%   { transform: translateY(0) scale(1.0); }
+    45%  { transform: translateY(-16px) scale(1.1); }
+    100% { transform: translateY(0) scale(1.0); }
+}
+
+.fighter-tag {
+    margin-top: 2px;
+    padding: 3px 10px;
+    border-radius: 9px;
+    border: 2px solid #0b0e18;
+    box-shadow: 0 3px 0 #0b0e18;
+    font-size: 10.5px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.tag-hero { background: linear-gradient(135deg, #2ed573, #10ac84); color: #0b0e18; }
+.tag-mini { background: linear-gradient(135deg, #38bdf8, #0284c7); color: #ffffff; }
+.tag-boss { background: linear-gradient(135deg, #ff4757, #c0392b); color: #ffffff; }
+
+.fighter-new-pill {
+    position: absolute;
+    top: 4px;
+    right: -8px;
+    background: #ffd32a;
+    color: #0b0e18;
+    font-size: 9px;
+    font-weight: 900;
+    padding: 2px 7px;
+    border-radius: 8px;
+    border: 2px solid #0b0e18;
+    box-shadow: 0 2px 0 #0b0e18;
+    transform: rotate(8deg);
+    z-index: 5;
+}
+
+.lobby-vs-burst {
+    align-self: center;
+    background: linear-gradient(135deg, #ffd32a, #ff6b35);
+    color: #0b0e18;
+    font-size: clamp(22px, 3vw, 34px);
+    font-weight: 900;
+    padding: 8px 16px;
+    border-radius: 16px;
+    border: 3px solid #0b0e18;
+    box-shadow: 0 5px 0 #0b0e18, 0 0 24px rgba(255, 211, 42, 0.55);
+    transform: rotate(-7deg);
+    flex-shrink: 0;
+}
+
+.lobby-command-deck {
+    width: min(1050px, 98vw);
+    border-radius: 18px;
+    padding: 10px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    flex-shrink: 0;
+}
+
+.lobby-command-deck .controls-guide {
+    margin-bottom: 0;
+    padding: 7px 12px;
+    gap: 6px 14px;
+    font-size: 11.5px;
+}
+
+.lobby-command-deck .menu-audio-settings {
+    margin-bottom: 0;
+    max-width: none;
+    width: fit-content;
+    padding: 5px 14px;
+    gap: 16px;
+}
+
+.lobby-command-deck .menu-actions {
+    gap: 8px;
+}
+
+.lobby-command-deck .btn {
+    padding: 9px 14px;
+    font-size: 12.5px;
+}
+
+.lobby-command-deck .btn-lg {
+    padding: 10px 18px;
+    font-size: 13.5px;
+}
+
+.lobby-command-deck .btn {
+    border: 2px solid #0b0e18;
+    box-shadow: 0 4px 0 #0b0e18;
+}
+
+.lobby-command-deck .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 #0b0e18;
+}
+
+/* Main Menu & Modals */
 .menu-card {
     border-radius: 24px;
     padding: 28px 38px;
@@ -1329,6 +1578,18 @@ kbd {
     font-weight: 800;
     margin: 2px 0 4px 0;
     color: #fff;
+}
+
+.lvl-feature-tag {
+    display: inline-block;
+    background: rgba(56, 189, 248, 0.16);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 10.5px;
+    font-weight: 800;
+    margin: 2px 0 4px 0;
 }
 
 .level-btn-card p {
@@ -1701,6 +1962,26 @@ body.touch-active #control-hint-pill {
     .menu-actions { gap: 7px; }
     .btn-lg { padding: 7px 14px; font-size: 12px; border-radius: 9px; }
     .btn { padding: 7px 12px; font-size: 11.5px; border-radius: 9px; }
+    /* Compact Mobile Lobby (fits 920x440 cleanly without scroll or overlap) */
+    #screen-menu { padding: 6px 12px 8px 12px; }
+    .lobby-shell { gap: 3px; }
+    .comic-badge { font-size: 9px; padding: 2px 10px; margin-bottom: 2px; border-width: 2px; box-shadow: 0 2px 0 #0b0e18; }
+    .comic-title { font-size: clamp(20px, 3vw, 27px); margin-bottom: 3px; }
+    .lobby-quote-bubble { font-size: 11px; padding: 3px 12px; border-width: 2px; box-shadow: 0 2px 0 #0b0e18; }
+    .lobby-stage { gap: 12px; padding-bottom: 2px; }
+    .lobby-rivals { gap: 10px; }
+    .lobby-fighter img { height: clamp(82px, 23vh, 118px); }
+    .lobby-fighter.fighter-wide img { height: clamp(74px, 20vh, 104px); }
+    .fighter-tag { font-size: 8.5px; padding: 1px 6px; border-radius: 6px; border-width: 1.5px; box-shadow: 0 2px 0 #0b0e18; }
+    .fighter-new-pill { font-size: 7.5px; padding: 1px 5px; top: -5px; right: -4px; border-width: 1.5px; }
+    .lobby-vs-burst { font-size: 16px; padding: 4px 10px; border-width: 2px; box-shadow: 0 3px 0 #0b0e18; }
+    .lobby-command-deck { padding: 6px 12px; gap: 4px; border-radius: 14px; border-width: 2px; box-shadow: 0 4px 0 rgba(7, 10, 18, 0.92); }
+    .lobby-command-deck .controls-guide { padding: 3px 8px; gap: 3px 10px; font-size: 9.5px; }
+    .lobby-command-deck .menu-audio-settings { padding: 3px 10px; gap: 10px; }
+    .lobby-command-deck .menu-actions { gap: 5px; }
+    .lobby-command-deck .btn-lg { padding: 6px 12px; font-size: 11.5px; border-radius: 9px; }
+    .lobby-command-deck .btn { padding: 6px 10px; font-size: 11px; border-radius: 9px; box-shadow: 0 2px 0 #0b0e18; }
+
     .opening-card { padding: 14px 22px; }
     .opening-avatars-stage { min-height: 110px; gap: 22px; }
     .opening-avatar { width: 72px; height: 72px; }

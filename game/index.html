@@ -265,18 +265,18 @@
 
                 <div class="intro-footer">
                     <button id="btn-skip-intro" class="btn btn-secondary">Überspringen [ESC / LEERTASTE]</button>
-                    <span id="intro-time-hint" class="intro-time-hint">Cinematic Story • ~30s</span>
+                    <span id="intro-time-hint" class="intro-time-hint">Cinematic Story • 24s</span>
                 </div>
             </div>
         </div>
 
         <!-- ============================================== -->
-        <!-- 10-SEKUNDEN EPIC MEME OPENING INTRO            -->
+        <!-- 14-SEKUNDEN BALANCED MEME OPENING INTRO        -->
         <!-- ============================================== -->
         <div id="screen-opening" class="screen-overlay">
             <div class="opening-scanlines"></div>
-            <div class="opening-card glass-panel">
-                <div class="opening-badge">⚠️ GIBB MEME-OVERDRIVE • EDITION 2.0 ⚠️</div>
+            <div class="opening-card comic-panel">
+                <div class="opening-badge">⚠️ GIBB MEME-OVERDRIVE • EDITION 3.0 ⚠️</div>
                 <div class="opening-anim-box">
                     <div id="opening-flash-text" class="opening-glitch-text">BERUFSSCHULE GIBB BERN</div>
                     <div class="opening-avatars-stage">
@@ -302,71 +302,105 @@
 
                 <div class="opening-footer">
                     <button id="btn-skip-opening" class="btn btn-secondary">Überspringen [ESC / LEERTASTE]</button>
-                    <span id="opening-countdown-txt" class="opening-countdown">10s</span>
+                    <span id="opening-countdown-txt" class="opening-countdown">14s</span>
                 </div>
             </div>
         </div>
 
         <!-- ============================================== -->
-        <!-- MAIN MENU SCREEN                               -->
+        <!-- MAIN LOBBY SCREEN (2D COMIC-ARCADE EDITION)    -->
         <!-- ============================================== -->
         <div id="screen-menu" class="screen-overlay hidden">
-            <div class="menu-card glass-panel">
-                <div class="game-badge">🇨🇭 GIBB BERUFSSCHULE BERN • 4 JAHRE INFORMATIK</div>
-                <h1 class="game-title">THENEREAN<br><span class="highlight">SELVABANKUMAR</span></h1>
-                <p class="game-subtitle">Der epische 2D-Action-Kampf um das Informatik EFZ Diplom!</p>
-
-                <div class="hero-showcase">
-                    <div class="char-card char-hero">
-                        <img src="assets/sprites/thenerean_avatar.png" alt="Thenerean">
-                        <span>Thenerean</span>
-                    </div>
-                    <div class="vs-text">VS</div>
-                    <div class="char-card char-boss">
-                        <img src="assets/sprites/monika_avatar.png" alt="Monika Schneider">
-                        <span>Monika Schneider</span>
-                    </div>
-                    <div class="char-card char-boss">
-                        <img src="assets/sprites/adam_avatar.png" alt="Herr Adam">
-                        <span>Herr Adam</span>
-                    </div>
-                    <div class="char-card char-boss">
-                        <img src="assets/sprites/tuktuk_avatar.png" alt="TukTuk GPU">
-                        <span>TukTuk GPU</span>
+            <div class="lobby-shell">
+                <div class="lobby-header">
+                    <div class="game-badge comic-badge">🇨🇭 GIBB BERUFSSCHULE BERN • EDITION 3.0 • EFZ KAMPAGNE</div>
+                    <h1 class="game-title comic-title">THENEREAN <span class="highlight">SELVABANKUMAR</span></h1>
+                    <div id="lobby-quote-bubble" class="lobby-quote-bubble">
+                        💬 Klicke auf einen Charakter auf dem Pausenplatz — oder starte direkt deine Lehre!
                     </div>
                 </div>
 
-                <div class="controls-guide">
-                    <div class="key-item"><kbd>A</kbd><kbd>D</kbd> / <kbd>←</kbd><kbd>→</kbd> Laufen</div>
-                    <div class="key-item"><kbd>SPACE</kbd> Springen</div>
-                    <div class="key-item"><kbd>CTRL</kbd> Ducken</div>
-                    <div class="key-item"><kbd>R</kbd> Schild-Block (kurz vor Treffer = Perfekt-Block)</div>
-                    <div class="key-item"><kbd>E</kbd> Gesetzestext</div>
-                    <div class="key-item"><kbd>Q</kbd> / <kbd>SHIFT</kbd> Mega-Schock</div>
-                    <div class="key-item"><kbd>F</kbd> 20 Frisbees!</div>
-                </div>
+                <div class="lobby-stage">
+                    <div class="lobby-fighter lobby-hero"
+                         data-clip="thenerean_stah"
+                         data-quote="🔥 THENEREAN: 'HERR ADAM, ICH STAH DOCH DA! MIT NOTE 6.0 ZUM EFZ!'"
+                         title="Klicken für Original-Spruch">
+                        <img src="assets/sprites/characters/thenerean_idle.png" alt="Thenerean Selvabankumar">
+                        <div class="fighter-tag tag-hero">THENEREAN • EFZ</div>
+                    </div>
 
-                <div class="menu-audio-settings">
-                    <div class="audio-setting-item">
-                        <button id="btn-menu-music-toggle" class="btn btn-secondary btn-sm">🎵 MUSIK: AN</button>
-                        <div class="menu-slider-wrap">
-                            <span class="audio-set-label">LAUTSTÄRKE:</span>
-                            <input type="range" id="slider-menu-music-vol" min="0" max="100" value="50" step="5">
-                            <span id="label-menu-music-vol" class="vol-label">50%</span>
+                    <div class="lobby-vs-burst">VS</div>
+
+                    <div class="lobby-rivals">
+                        <div class="lobby-fighter lobby-rival fighter-new"
+                             data-clip=""
+                             data-quote="⚡ AVG. GIBB SCHÜLER (MINI-BOSS): 'Erst mal Energy exen! An mir chunnsch nöd verbi!'"
+                             title="Neu: Mini-Boss ab Level 3!">
+                            <span class="fighter-new-pill">NEU!</span>
+                            <img src="assets/sprites/characters/gibb_student_idle.png" alt="Average GIBB Schüler">
+                            <div class="fighter-tag tag-mini">AVG. SCHÜLER</div>
+                        </div>
+
+                        <div class="lobby-fighter lobby-rival"
+                             data-clip="monika_puenktlichkeit"
+                             data-quote="⏱️ MONIKA SCHNEIDER: 'Pünktlichkeit ist oberste Gebot! Gang uf die Platz!'"
+                             title="Klicken für Original-Spruch">
+                            <img src="assets/sprites/characters/monika_idle.png" alt="Monika Schneider">
+                            <div class="fighter-tag tag-boss">MONIKA</div>
+                        </div>
+
+                        <div class="lobby-fighter lobby-rival"
+                             data-clip="adam_silvankumar"
+                             data-quote="🥏 HERR ADAM: 'Silvankumar, ist der Thenerean da?! Da hast du 20 Frisbees!'"
+                             title="Klicken für Original-Spruch">
+                            <img src="assets/sprites/characters/adam_idle.png" alt="Herr Adam">
+                            <div class="fighter-tag tag-boss">HERR ADAM</div>
+                        </div>
+
+                        <div class="lobby-fighter lobby-rival fighter-wide"
+                             data-clip="thenerean_tuktuk"
+                             data-quote="🔥 TUKTUK GPU: 'Verdammti Maschine! GPU überhitzt — Jump &amp; Run Überleben!'"
+                             title="Klicken für Original-Spruch">
+                            <img src="assets/sprites/characters/tuktuk_idle.png" alt="TukTuk GPU">
+                            <div class="fighter-tag tag-boss">TUKTUK GPU</div>
                         </div>
                     </div>
-                    <div class="audio-setting-item">
-                        <button id="btn-menu-sound-toggle" class="btn btn-secondary btn-sm">🔊 SPRACHE & EFFEKTE: AN</button>
-                    </div>
                 </div>
 
-                <div class="menu-actions">
-                    <button id="btn-start" class="btn btn-primary btn-lg">🎮 LEHRE STARTEN (MIT INTRO)</button>
-                    <button id="btn-demo" class="btn btn-demo btn-lg">🎯 DEMO-MODUS (TRAINING)</button>
-                    <button id="btn-level-select" class="btn btn-secondary">📚 LEHRJAHR WÄHLEN</button>
-                    <button id="btn-story" class="btn btn-secondary">🎬 STORY & FOTOS</button>
-                    <button id="btn-replay-opening" class="btn btn-secondary">⚡ 10s INTRO</button>
-                    <button id="btn-fullscreen-menu" class="btn btn-secondary">⛶ VOLLBILD</button>
+                <div class="lobby-command-deck comic-panel">
+                    <div class="controls-guide">
+                        <div class="key-item"><kbd>A</kbd><kbd>D</kbd> Laufen</div>
+                        <div class="key-item"><kbd>SPACE</kbd> Springen</div>
+                        <div class="key-item"><kbd>CTRL</kbd> Ducken</div>
+                        <div class="key-item"><kbd>S</kbd>/<kbd>D×2</kbd> Sprint</div>
+                        <div class="key-item"><kbd>R</kbd> Block / Reflekt</div>
+                        <div class="key-item"><kbd>E</kbd> Gesetz</div>
+                        <div class="key-item"><kbd>Q</kbd> Mega</div>
+                        <div class="key-item"><kbd>F</kbd> 20 Frisbees</div>
+                    </div>
+
+                    <div class="menu-audio-settings">
+                        <div class="audio-setting-item">
+                            <button id="btn-menu-music-toggle" class="btn btn-secondary btn-sm">🎵 MUSIK: AN</button>
+                            <div class="menu-slider-wrap">
+                                <span class="audio-set-label">LAUTSTÄRKE:</span>
+                                <input type="range" id="slider-menu-music-vol" min="0" max="100" value="50" step="5">
+                                <span id="label-menu-music-vol" class="vol-label">50%</span>
+                            </div>
+                        </div>
+                        <div class="audio-setting-item">
+                            <button id="btn-menu-sound-toggle" class="btn btn-secondary btn-sm">🔊 SPRACHE & EFFEKTE: AN</button>
+                        </div>
+                    </div>
+
+                    <div class="menu-actions">
+                        <button id="btn-start" class="btn btn-primary btn-lg">🎮 LEHRE STARTEN</button>
+                        <button id="btn-demo" class="btn btn-demo btn-lg">🎯 DEMO-MODUS</button>
+                        <button id="btn-level-select" class="btn btn-secondary">📚 LEHRJAHRE (1–6)</button>
+                        <button id="btn-story" class="btn btn-secondary">🎬 STORY & FOTOS</button>
+                        <button id="btn-replay-opening" class="btn btn-secondary">⚡ 14s INTRO</button>
+                        <button id="btn-fullscreen-menu" class="btn btn-secondary">⛶ VOLLBILD</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -395,6 +429,7 @@
                     <ul>
                         <li><strong>Monika Schneider:</strong> Die Herrscherin über Pünktlichkeit. Selbst 2.54 Sekunden Verspätung werden nicht toleriert (<em>"Gang uf die Platz!"</em>).</li>
                         <li><strong>Herr Adam:</strong> Prüft die Absenzenliste mit fliegenden Sportgeräten: <em>"Silvankumar, ist der Thenerean da?!"</em> — worauf Thenerean heroisch kontert: <em>"HERR ADAM, ICH STAH DOCH DA!"</em></li>
+                        <li><strong>Average GIBB Schüler (Mini-Boss):</strong> Bewaffnet mit Energy-Drinks und Laptop stellt er sich ab Level 3 vor den finalen Dozenten in den Weg — mitten über heissen Lava- &amp; Parcours-Passagen!</li>
                     </ul>
                     <div class="story-gallery">
                         <img src="assets/sprites/photo_IMG_20260119_133741.jpg" alt="Thenerean Real 1">

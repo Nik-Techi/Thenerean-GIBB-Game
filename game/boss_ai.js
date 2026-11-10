@@ -39,7 +39,11 @@ const BOSS_ATTACKS = {
     whistle:    { telegraph: 38, warn: "PFIFF! ⬇ DUCKEN!", clip: 'adam_silvankumar' },
     cable:      { telegraph: 18 },
     charge:     { telegraph: 48, warn: "TUKTUK RAST AN! ⬆ SPRING!", clip: 'thenerean_tuktuk' },
-    fire:       { telegraph: 34, warn: "GPU ÜBERHITZT! 🔥 AUSWEICHEN!", clip: 'thenerean_gpu' }
+    fire:       { telegraph: 34, warn: "GPU ÜBERHITZT! 🔥 AUSWEICHEN!", clip: 'thenerean_gpu' },
+    energy_can: { telegraph: 16 },
+    laptop_arc: { telegraph: 28, warn: "LAPTOPS FLIEGEN! 💻" },
+    bag_high:   { telegraph: 34, warn: "ENERGY-SCHUSS OBEN! ⬇ DUCKEN!" },
+    desk_slide: { telegraph: 34, warn: "KABEL-WELLE! ⬆ SPRINGEN!" }
 };
 
 // Attack lists per boss type. Duplicates act as weights.
@@ -50,13 +54,15 @@ const BOSS_PATTERNS = {
     adam_miniboss:   { p1: ['frisbee', 'frisbee', 'lane'],   p2: ['frisbee', 'lane', 'basketball'],     cooldown: [66, 96] },
     adam:            { p1: ['frisbee', 'lane', 'lane'],      p2: ['lane', 'basketball', 'whistle', 'frisbee'], cooldown: [60, 90] },
     duo_partner:     { p1: ['frisbee', 'lane'],              p2: ['lane', 'basketball', 'whistle'],     cooldown: [85, 120] },
-    tuktuk_gpu:      { p1: ['cable', 'cable', 'charge'],     p2: ['cable', 'charge', 'fire'],           cooldown: [64, 94] }
+    tuktuk_gpu:      { p1: ['cable', 'cable', 'charge'],     p2: ['cable', 'charge', 'fire'],           cooldown: [64, 94] },
+    gibb_student:    { p1: ['energy_can', 'bag_high', 'laptop_arc'], p2: ['energy_can', 'bag_high', 'laptop_arc', 'desk_slide'], cooldown: [60, 86] }
 };
 
 const BOSS_PHASE2_LINES = {
     monika: { text: "Ganz ruhig bleiben?! JETZT NÖD MEH!", clip: 'monika_ganz_ruhig' },
     adam:   { text: "Hilf mir! ...NEI, JETZT GITS FRISBEES!", clip: 'adam_hilf_mir' },
-    tuktuk: { text: "Verdammti Maschine! GPU AM LIMIT!", clip: 'thenerean_verdammt_maschine' }
+    tuktuk:       { text: "Verdammti Maschine! GPU AM LIMIT!", clip: 'thenerean_verdammt_maschine' },
+    gibb_student: { text: "2. DOSE ENERGY! JETZT WIRD'S SCHNELL! ⚡", clip: null }
 };
 
 const BossAI = {
@@ -80,6 +86,7 @@ const BossAI = {
     },
 
     getBossFamily(b) {
+        if (b.type === 'gibb_student') return 'gibb_student';
         if (b.type === 'tuktuk_gpu') return 'tuktuk';
         if (b.type === 'adam' || b.type === 'adam_miniboss' || b.isDuoPartner) return 'adam';
         return 'monika';
@@ -193,7 +200,7 @@ const BossAI = {
         this.shockwaves.push({ x: cx, y: b.y + b.h * 0.5, radius: 18, maxRadius: 220, color: '#ff3838', alpha: 0.9 });
         this.addFloatingText(enraged ? "ALLEI NO WÜETENDER! 💢" : "PHASE 2: WÜTEND! 💢", cx, b.y - 60, '#ff3838', 28);
         this.addFloatingText(`"${line.text}"`, cx, b.y - 26, '#ffd32a', 17);
-        window.soundManager.playClip(line.clip);
+        if (line && line.clip) window.soundManager.playClip(line.clip);
     },
 
     checkDuoEnrage() {
@@ -402,6 +409,61 @@ const BossAI = {
                     this.hazards.push({ x: x, w: 92, armIn: 26, life: 210 });
                 }
                 this.screenShake = 8;
+                break;
+            }
+
+            case 'energy_can': {
+                this.projectiles.push({
+                    x: originX, y: b.y + b.h * 0.36,
+                    vx: 9.8 * dir, vy: (this.player.y - b.y) * 0.015,
+                    w: 38, h: 42,
+                    isPlayer: false, type: 'energy_can', damage: 15,
+                    rotation: 0, trailColor: '#38bdf8'
+                });
+                window.soundManager.playThrow();
+                break;
+            }
+
+            case 'laptop_arc': {
+                const targetX = this.player.x + this.player.w / 2;
+                const flight = 50;
+                const spreads = p2 ? [0.72, 0.95, 1.18] : [0.80, 1.12];
+                for (const s of spreads) {
+                    const vx = ((targetX - originX) / flight) * s;
+                    this.projectiles.push({
+                        x: originX, y: b.y + b.h * 0.22,
+                        vx: vx, vy: -10.8, g: 0.43,
+                        w: 46, h: 40,
+                        isPlayer: false, type: 'laptop', damage: 18,
+                        rotation: 0, trailColor: '#00d2d3'
+                    });
+                }
+                window.soundManager.playThrow();
+                break;
+            }
+
+            case 'bag_high': {
+                this.projectiles.push({
+                    x: originX, y: gy - ph * 0.96,
+                    vx: 9.6 * dir, vy: 0,
+                    w: 54, h: ph * 0.34,
+                    isPlayer: false, type: 'energy_can', damage: 16,
+                    rotation: 0, trailColor: '#38bdf8'
+                });
+                window.soundManager.playThrow();
+                break;
+            }
+
+            case 'desk_slide': {
+                this.projectiles.push({
+                    x: originX, y: gy - 44,
+                    vx: 8.8 * dir, vy: 0,
+                    w: 66, h: 44,
+                    isPlayer: false, type: 'broken_cable', damage: 17,
+                    rotation: 0, noSpin: true, trailColor: '#ff9f1a'
+                });
+                this.spawnBurst(originX, gy - 18, 8, '#38bdf8', 5, 14);
+                window.soundManager.playThrow();
                 break;
             }
         }
@@ -720,6 +782,8 @@ const BossAI = {
             case 'basketball': return images.basketball;
             case 'red_card': return images.red_card;
             case 'law_book': return images.item_gesetz;
+            case 'energy_can': return images.energy_can;
+            case 'laptop': return images.projectile_laptop;
             default: return proj.isPlayer ? images.item_gesetz : images.red_card;
         }
     },
@@ -770,7 +834,9 @@ const BossAI = {
             case 'wave':    zone = { y: gy - 46, h: 46, label: '⬆ SPRING' }; break;
             case 'shout':   zone = { y: gy - 175, h: 175, label: '🛡 BLOCK' }; break;
             case 'whistle': zone = { y: gy - ph * 0.98, h: ph * 0.36, label: '⬇ DUCK' }; break;
-            case 'charge':  zone = { y: gy - b.h * 0.45, h: b.h * 0.45, label: '⬆ SPRING' }; break;
+            case 'charge':     zone = { y: gy - b.h * 0.45, h: b.h * 0.45, label: '⬆ SPRING' }; break;
+            case 'bag_high':   zone = { y: gy - ph * 0.96, h: ph * 0.34, label: '⬇ DUCK' }; break;
+            case 'desk_slide': zone = { y: gy - 44, h: 44, label: '⬆ SPRING' }; break;
             case 'lane':
                 zone = tg.lane === 'high'
                     ? { y: gy - ph * 0.85, h: 28, label: '⬇ DUCK' }

@@ -66,14 +66,22 @@ const imageSources = {
     tuktuk_idle: 'assets/sprites/characters/tuktuk_idle.png',
     tuktuk_rage: 'assets/sprites/characters/tuktuk_rage.png',
 
-    // Authentic Real-Photo Portraits
+    gibb_student_idle: 'assets/sprites/characters/gibb_student_idle.png',
+    gibb_student_walk: 'assets/sprites/characters/gibb_student_walk.png',
+    gibb_student_windup: 'assets/sprites/characters/gibb_student_windup.png',
+    gibb_student_attack: 'assets/sprites/characters/gibb_student_attack.png',
+    gibb_student_sprite: 'assets/sprites/gibb_student_sprite.png',
+
+    // Authentic Real-Photo & Comic Portraits
     thenerean_avatar: 'assets/sprites/thenerean_avatar.png',
     thenerean_shout_avatar: 'assets/sprites/thenerean_shout_avatar.png',
     adam_avatar: 'assets/sprites/adam_avatar.png',
     monika_avatar: 'assets/sprites/monika_avatar.png',
     tuktuk_avatar: 'assets/sprites/tuktuk_avatar.png',
+    gibb_student_avatar: 'assets/sprites/gibb_student_avatar.png',
 
-    // Stage Backgrounds (All 6 Levels)
+    // Stage Backgrounds (Lobby + All 6 Levels)
+    bg_lobby: 'assets/backgrounds/bg_lobby.jpg',
     bg_gibb_entrance: 'assets/backgrounds/bg_gibb_entrance.jpg',
     bg_classroom: 'assets/backgrounds/bg_classroom.jpg',
     bg_gym_hallway: 'assets/backgrounds/bg_gym_hallway.jpg',
@@ -95,7 +103,9 @@ const imageSources = {
     broken_cable: 'assets/sprites/broken_cable.png',
     server_stack: 'assets/sprites/server_stack.png',
     item_clock: 'assets/sprites/item_clock.png',
-    item_shield: 'assets/sprites/item_shield.png'
+    item_shield: 'assets/sprites/item_shield.png',
+    projectile_laptop: 'assets/sprites/projectile_laptop.png',
+    energy_can: 'assets/sprites/energy_can.png'
 };
 
 for (const [key, src] of Object.entries(imageSources)) {
@@ -146,9 +156,17 @@ class Game {
             attackAnimTimer: 0,
             banterTimer: 240,
             stunTimer: 0,
-            pushVx: 0
+            pushVx: 0,
+            sprintTimer: 0,
+            lastRightTapTime: 0,
+            lastSafeWorldX: 0
         };
         this.hazards = [];
+        this.platforms = [];
+        this.lavaPits = [];
+        this.boostPads = [];
+        this.midBossTriggered = false;
+        this.midBossDefeated = false;
 
         const urlParams = new URLSearchParams(window.location.search);
         const platformParam = urlParams.get('platform');
@@ -174,33 +192,27 @@ class Game {
         this.demoTotalDamage = 0;
         this.resetCombatExtras();
 
-        // 10-Second Meme Spam Opening Intro
+        // 14s Balanced Meme Opening Intro (original clips with clean pacing)
         this.openingState = {
             active: true,
             elapsed: 0,
-            totalDuration: 10.0,
+            totalDuration: 14.2,
             currentStep: -1
         };
 
         this.openingSteps = [
-            { time: 0.0, duration: 0.9, title: "⚠️ GIBB ALARM: ABSENZENLISTE!", quote: "HERR ADAM: 'Silvankumar, ist der Thenerean da?!'", clip: 'adam_silvankumar', focus: 'left', shake: 10, color: '#ff4757' },
-            { time: 0.9, duration: 0.9, title: "🔥 DER LEGENDE-SCHREI!", quote: "THENEREAN: 'HERR ADAM, ICH STAH DOCH DA!'", clip: 'thenerean_stah', focus: 'center', shake: 22, color: '#ffd32a' },
-            { time: 1.8, duration: 0.9, title: "⏱️ MONIKA VERHÄNGT DISZIPLIN!", quote: "MONIKA: 'Pünktlichkeit ist oberste Gebot!'", clip: 'monika_puenktlichkeit', focus: 'right', shake: 12, color: '#a55eea' },
-            { time: 2.7, duration: 0.9, title: "🥏 FRISBEE-SALVE STARTET!", quote: "HERR ADAM: 'DA HAST DU 20 FRISBEES!'", clip: 'adam_20_frisbees', focus: 'left', shake: 24, color: '#ff4757' },
-            { time: 3.6, duration: 0.9, title: "🏃 DIE 4-MINUTEN AUSREDE!", quote: "THENEREAN: 'Entschuldigung, ich bi 4 Minuten später!'", clip: 'thenerean_entschuldigung', focus: 'center', shake: 12, color: '#45aaf2' },
-            { time: 4.5, duration: 0.9, title: "🚫 KEINE DISKUSSION AN DER GIBB!", quote: "MONIKA: 'Da git es nüt z dischputiere!'", clip: 'monika_zspaet', focus: 'right', shake: 16, color: '#ffa502' },
-            { time: 5.4, duration: 0.9, title: "💻 BLUESCREEN IM INFORMATIKRAUM!", quote: "THENEREAN: 'Meine GPU brennt! Fehler im System!'", clip: 'thenerean_gpu', focus: 'center', shake: 18, color: '#00d2d3' },
-            { time: 6.3, duration: 0.9, title: "📢 HINAUSWURF AUS DEM KLASSENZIMMER!", quote: "MONIKA: 'Gang uf die Platz! Sofort!'", clip: 'monika_gang_uf_platz', focus: 'right', shake: 16, color: '#ff6b81' },
-            { time: 7.2, duration: 0.9, title: "💥 HARDWARE-ESKALATION!", quote: "THENEREAN: 'Verdammte Maschine!'", clip: 'thenerean_verdammt_maschine', focus: 'center', shake: 20, color: '#ee5253' },
-            { time: 8.1, duration: 0.9, title: "🤬 DER NERVENZUSAMMENBRUCH!", quote: "THENEREAN: 'Ich raste gleich komplett aus!'", clip: 'thenerean_raste_aus', focus: 'center', shake: 24, color: '#ff9f43' },
-            { time: 9.0, duration: 1.0, title: "🏆 DAS FINALE EFZ-DIPLOM STEHT BEVOR!", quote: "ALLE: 'THENEREAN SELVABANKUMAR — BIST DU BEREIT?!'", clip: 'thenerean_ultra', focus: 'all', shake: 28, color: '#2ed573' }
+            { time: 0.0, duration: 3.1, title: "⚠️ GIBB ALARM: ABSENZENLISTE!", quote: "HERR ADAM: 'Silvankumar, ist der Thenerean da?!'", clip: 'adam_silvankumar', focus: 'left', shake: 12, color: '#ff4757' },
+            { time: 3.1, duration: 3.2, title: "🔥 DER LEGENDE-SCHREI!", quote: "THENEREAN: 'HERR ADAM, ICH STAH DOCH DA!'", clip: 'thenerean_stah', focus: 'center', shake: 22, color: '#ffd32a' },
+            { time: 6.3, duration: 2.6, title: "🥏 FRISBEE-SALVE STARTET!", quote: "HERR ADAM: 'DA HAST DU 20 FRISBEES!'", clip: 'adam_20_frisbees', focus: 'left', shake: 20, color: '#ff4757' },
+            { time: 8.9, duration: 2.9, title: "📢 KLASSENZIMMER DISZIPLIN!", quote: "MONIKA: 'Gang uf die Platz! Sofort!'", clip: 'monika_gang_platz', focus: 'right', shake: 16, color: '#a55eea' },
+            { time: 11.8, duration: 2.4, title: "🛡️ NIEMERT CHUNT AN MIR VERBI!", quote: "THENEREAN: 'BERUFSSCHULE GIBB — BIST DU BEREIT?!'", clip: 'thenerean_niemert_verbi', focus: 'all', shake: 24, color: '#2ed573' }
         ];
 
-        // 30s Cinematic Story Intro
+        // 24s Cinematic Story Intro (synced to actual clip lengths)
         this.introState = {
             active: false,
             elapsed: 0,
-            totalDuration: 30,
+            totalDuration: 24.0,
             currentStep: 0
         };
 
@@ -304,7 +316,9 @@ class Game {
             introSpeechText: document.getElementById('intro-speech-text'),
             introQuote: document.getElementById('intro-quote'),
             introTimerBar: document.getElementById('intro-timer-bar'),
-            introDots: document.querySelectorAll('.chap-dot')
+            introTimeHint: document.getElementById('intro-time-hint'),
+            introDots: document.querySelectorAll('.chap-dot'),
+            lobbyQuoteBubble: document.getElementById('lobby-quote-bubble')
         };
 
         if (this.isExplicitDesktop) {
@@ -332,12 +346,18 @@ class Game {
         canvas.height = window.innerHeight;
         const scale = Math.max(0.78, Math.min(1.38, canvas.height / 720));
         const newGroundY = canvas.height * 0.74;
+        const oldGroundY = this.player ? this.player.groundY : newGroundY;
         if (this.player) {
             this.player.groundY = newGroundY;
             this.player.h = Math.round(146 * scale);
             this.player.w = Math.round(78 * scale);
-            if (this.player.isGrounded) {
+            if (this.player.isGrounded && Math.abs((this.player.y + this.player.h) - oldGroundY) < 8) {
                 this.player.y = newGroundY - this.player.h;
+            }
+        }
+        if (this.platforms) {
+            for (const plat of this.platforms) {
+                if (plat.offsetY != null) plat.y = newGroundY - plat.offsetY;
             }
         }
         if (this.boss) {
@@ -414,6 +434,12 @@ class Game {
                 if (lower === 'q' || e.code === 'ShiftLeft') this.playerAttackMegaShout();
                 if (lower === 'f') this.playerAttackFrisbeeVolley();
                 if (lower === 'r') this.playerBlock();
+                if (lower === 's' || lower === 'x') this.triggerSprintBurst(75);
+                if (!e.repeat && (lower === 'd' || e.code === 'ArrowRight')) {
+                    const now = performance.now();
+                    if (now - this.player.lastRightTapTime < 280) this.triggerSprintBurst(75);
+                    this.player.lastRightTapTime = now;
+                }
             }
         });
 
@@ -631,7 +657,15 @@ class Game {
             () => { this.keys['arrowleft'] = false; this.keys['a'] = false; }
         );
         bindTouchBtn(this.ui.touchBtnRight,
-            () => { this.keys['arrowright'] = true; this.keys['d'] = true; },
+            () => {
+                this.keys['arrowright'] = true;
+                this.keys['d'] = true;
+                const now = performance.now();
+                if (now - this.player.lastRightTapTime > 35 && now - this.player.lastRightTapTime < 300) {
+                    if (this.state === GAME_STATE.RUNNING && !this.isPlayerStunned()) this.triggerSprintBurst(75);
+                }
+                this.player.lastRightTapTime = now;
+            },
             () => { this.keys['arrowright'] = false; this.keys['d'] = false; }
         );
 
@@ -706,6 +740,28 @@ class Game {
                 }
             });
         }
+
+        // Interactive Lobby Comic Character Showcase (click to taunt & animate!)
+        document.querySelectorAll('.lobby-fighter[data-clip]').forEach((el) => {
+            el.addEventListener('click', () => {
+                window.soundManager.initWebAudio();
+                const clip = el.getAttribute('data-clip');
+                const quote = el.getAttribute('data-quote');
+                if (clip) {
+                    window.soundManager.stopAllClips();
+                    window.soundManager.playClip(clip);
+                }
+                if (quote && this.ui.lobbyQuoteBubble) {
+                    this.ui.lobbyQuoteBubble.textContent = quote;
+                    this.ui.lobbyQuoteBubble.classList.remove('pop-flash');
+                    void this.ui.lobbyQuoteBubble.offsetWidth;
+                    this.ui.lobbyQuoteBubble.classList.add('pop-flash');
+                }
+                el.classList.remove('taunt-bounce');
+                void el.offsetWidth;
+                el.classList.add('taunt-bounce');
+            });
+        });
     }
 
     updateTouchControlsVisibility() {
@@ -756,7 +812,8 @@ class Game {
                 <div class="lvl-info">
                     <div class="lvl-num">${lvl.yearText}</div>
                     <div class="lvl-title">${lvl.name}</div>
-                    <p>Boss: <strong>${lvl.bossName}</strong> (HP: ${lvl.bossHP})</p>
+                    <div class="lvl-feature-tag">${lvl.featureTag || ''}</div>
+                    <p>${lvl.hasMiniBoss ? 'Mini-Boss + ' : ''}Boss: <strong>${lvl.bossName}</strong> (HP: ${lvl.bossHP})</p>
                 </div>
             `;
             div.addEventListener('click', () => {
@@ -800,13 +857,20 @@ class Game {
         this.player.invulnerableTime = 0;
         this.player.attackAnimTimer = 0;
 
+        this.player.sprintTimer = 0;
+        this.player.lastSafeWorldX = 140;
         this.worldDistance = 0;
         this.obstacles = [];
         this.collectibles = [];
+        this.platforms = [];
+        this.lavaPits = [];
+        this.boostPads = [];
         this.projectiles = [];
         this.particles = [];
         this.shockwaves = [];
         this.floatingTexts = [];
+        this.midBossTriggered = false;
+        this.midBossDefeated = false;
         this.demoComboHits = 0;
         this.demoTotalDamage = 0;
         this.resetCombatExtras();
@@ -1035,7 +1099,10 @@ class Game {
             this.ui.openingImgRight.classList.toggle('highlight-pulse', step.focus === 'right' || step.focus === 'all');
 
             this.screenShake = step.shake || 14;
-            if (step.clip) window.soundManager.playClip(step.clip);
+            if (step.clip) {
+                window.soundManager.stopAllClips();
+                window.soundManager.playClip(step.clip);
+            }
         }
 
         if (this.ui.openingCard && this.screenShake > 0) {
@@ -1079,8 +1146,8 @@ class Game {
 
         this.introChapters = [
             {
-                time: 0,
-                duration: 5.5,
+                time: 0.0,
+                duration: 6.0,
                 title: "KAPITEL 1: DER EINSTIEG AN DER GIBB (2022)",
                 text: "Thenerean Selvabankumar betritt voller Hoffnung die Berufsschule GIBB Bern. Doch bereits an Tag 1 wartet Monika Schneider...",
                 quote: "Pünktlichkeit ist oberste Gebot! Ohne Disziplin lernt man nicht!",
@@ -1088,8 +1155,8 @@ class Game {
                 clip: "monika_puenktlichkeit"
             },
             {
-                time: 5.5,
-                duration: 5.5,
+                time: 6.0,
+                duration: 4.4,
                 title: "KAPITEL 2: DIE 4-MINUTEN AUSREDE",
                 text: "Der Zug hatte Verspätung! Thenerean versucht verzweifelt die 4 Minuten Verspätung zu erklären...",
                 quote: "Entschuldigung Monika Schneider, ich bi 4 Minuten später!",
@@ -1097,17 +1164,17 @@ class Game {
                 clip: "thenerean_entschuldigung"
             },
             {
-                time: 11.0,
-                duration: 6.0,
+                time: 10.4,
+                duration: 3.8,
                 title: "KAPITEL 3: HERR ADAMS FRISBEE-HAGEL",
-                text: "Im 2. Lehrjahr wartet die Sporthalle. Herr Adam kontrolliert die Absenzenliste mit fliegenden Frisbees...",
+                text: "Im 2. Lehrjahr wartet die Sporthalle — mit fliegenden Frisbees, Parcours und GIBB-Rivalen...",
                 quote: "Da hast du 20 Frisbees! Silvankumar, ist der Thenerean da?!",
                 img: "assets/sprites/adam_full.png",
                 clip: "adam_silvankumar"
             },
             {
-                time: 17.0,
-                duration: 6.0,
+                time: 14.2,
+                duration: 4.0,
                 title: "KAPITEL 4: DER LEGENDE-SCHREI",
                 text: "Thenerean lässt sich nicht unterkriegen und brüllt seinen ikonischen Satz durch die gesamte GIBB Turnhalle!",
                 quote: "HERR ADAM, ICH STAH DOCH DA!",
@@ -1115,10 +1182,10 @@ class Game {
                 clip: "thenerean_stah"
             },
             {
-                time: 23.0,
-                duration: 7.0,
+                time: 18.2,
+                duration: 5.8,
                 title: "KAPITEL 5: DIE ABSCHLUSSPRÜFUNG BEGINNT!",
-                text: "Nach 4 harten Jahren, TukTuk-Fahrten in Sri Lanka und brennenden GPUs steht das finale EFZ-Diplom auf dem Spiel. KÄMPFE!",
+                text: "Über Lava-Gruben, TukTuk-Rennen und Mini-Bosse geht es direkt zum EFZ-Diplom. KÄMPFE!",
                 quote: "Da git es nüt z dischputiere! Gang uf die Platz!",
                 img: "assets/sprites/photo_IMG_20260623_113237.jpg",
                 clip: "monika_zspaet"
@@ -1138,6 +1205,10 @@ class Game {
 
         const progressPercent = Math.min(100, (this.introState.elapsed / this.introState.totalDuration) * 100);
         this.ui.introTimerBar.style.width = `${progressPercent}%`;
+        if (this.ui.introTimeHint) {
+            const rem = Math.max(0, Math.ceil(this.introState.totalDuration - this.introState.elapsed));
+            this.ui.introTimeHint.textContent = `Cinematic Story • ${rem}s`;
+        }
 
         const idx = this.introChapters.findIndex(
             (ch) => this.introState.elapsed >= ch.time && this.introState.elapsed < ch.time + ch.duration
@@ -1158,6 +1229,7 @@ class Game {
             }
 
             if (currentChap.clip) {
+                window.soundManager.stopAllClips();
                 window.soundManager.playClip(currentChap.clip);
             }
         }
@@ -1199,15 +1271,22 @@ class Game {
         this.player.attackAnimTimer = 0;
         this.player.banterTimer = 220;
 
+        this.player.sprintTimer = 0;
+        this.player.lastSafeWorldX = 110;
         this.worldDistance = 0;
         this.obstacles = [];
         this.collectibles = [];
+        this.platforms = [];
+        this.lavaPits = [];
+        this.boostPads = [];
         this.projectiles = [];
         this.particles = [];
         this.shockwaves = [];
         this.floatingTexts = [];
         this.boss = null;
         this.duoPartner = null;
+        this.midBossTriggered = false;
+        this.midBossDefeated = false;
         this.resetCombatExtras();
 
         this.ui.screenMenu.classList.add('hidden');
@@ -1239,40 +1318,143 @@ class Game {
         window.soundManager.playMusic(this.level.music);
 
         this.generateLevelObstacles();
+        if (this.level.featureTag) {
+            this.showMemePopup(this.level.featureTag);
+        }
         this.state = GAME_STATE.RUNNING;
         this.updateTouchControlsVisibility();
     }
 
+    triggerSprintBurst(frames = 90) {
+        this.player.sprintTimer = Math.max(this.player.sprintTimer || 0, frames);
+        this.spawnBurst(this.player.x + this.player.w * 0.3, this.player.groundY - 18, 10, '#00d2d3', 5, 16);
+        this.addFloatingText("⚡ SPRINT!", this.player.x + this.player.w * 0.5, this.player.y - 16, '#00d2d3', 18);
+    }
+
     generateLevelObstacles() {
         const totalDist = this.level.targetDistance;
-        let x = 760;
-        while (x < totalDist - 360) {
-            x += 250 + Math.random() * 250;
-            const type = this.level.obstacleTypes[Math.floor(Math.random() * this.level.obstacleTypes.length)];
-            const size = type === 'frisbee' ? 56 : 54;
-            this.obstacles.push({
-                x: x,
-                y: this.player.groundY - size,
-                w: size,
-                h: type === 'frisbee' ? 38 : size,
-                type: type,
-                cleared: false,
-                phase: Math.random() * Math.PI * 2
-            });
+        const gy = this.player.groundY;
+        const ph = this.player.h;
+        const mech = this.level.mechanics || {};
+        const pStyle = mech.platformStyle || 'concrete';
+        const pitTheme = mech.pitTheme || 'lava';
 
-            if (Math.random() > 0.34) {
-                const cType = this.level.collectibleTypes[Math.floor(Math.random() * this.level.collectibleTypes.length)];
-                this.collectibles.push({
-                    x: x + 95,
-                    y: this.player.groundY - 128 - Math.random() * 68,
-                    w: 44,
-                    h: 44,
-                    type: cType,
-                    collected: false,
-                    phase: Math.random() * Math.PI * 2
-                });
+        const mbDist = this.level.hasMiniBoss
+            ? Math.round(totalDist * (this.level.miniBossTriggerRatio || 0.50))
+            : -1;
+
+        const addCollectible = (wx, wy, forcedType) => {
+            const cType = forcedType || this.level.collectibleTypes[Math.floor(Math.random() * this.level.collectibleTypes.length)];
+            this.collectibles.push({
+                x: wx, y: wy, w: 42, h: 42, type: cType, collected: false, phase: Math.random() * Math.PI * 2
+            });
+        };
+
+        const addGroundObs = (wx, type) => {
+            const oType = type || this.level.obstacleTypes[Math.floor(Math.random() * this.level.obstacleTypes.length)];
+            const size = oType === 'frisbee' ? 56 : 52;
+            this.obstacles.push({
+                x: wx, y: gy - size, w: size, h: oType === 'frisbee' ? 38 : size,
+                type: oType, high: false, cleared: false, phase: Math.random() * Math.PI * 2
+            });
+        };
+
+        const addDuckObs = (wx, type) => {
+            const oType = type || (this.level.id >= 5 ? 'broken_cable' : (this.level.id >= 3 ? 'frisbee' : 'warning_letter'));
+            const barH = Math.round(ph * 0.30);
+            this.obstacles.push({
+                x: wx, y: gy - Math.round(ph * 0.96), w: 84, h: barH,
+                type: oType, high: true, cleared: false, phase: Math.random() * Math.PI * 2
+            });
+        };
+
+        // Build deterministic themed traversal sectors inside non-arena spans (clear runway before/after Mini-Boss!)
+        const spans = mbDist > 0
+            ? [[660, mbDist - 110], [mbDist + 560, totalDist - 110]]
+            : [[660, totalDist - 110]];
+
+        const addLavaBridge = (startX, rem) => {
+            if (mech.sprintPads) {
+                this.boostPads.push({ x: startX, w: 92, label: '⚡ SPRINT' });
             }
-        }
+            const pitX = startX + (mech.sprintPads ? 115 : 30);
+            const pitW = Math.min(370, Math.max(230, rem - 230));
+            this.lavaPits.push({ x: pitX, w: pitW, theme: pitTheme });
+
+            const plat1X = pitX + 34;
+            const plat1W = pitW > 310 ? 150 : Math.max(148, pitW - 68);
+            const off1 = 88;
+            const plat1Y = gy - off1;
+            this.platforms.push({ x: plat1X, y: plat1Y, offsetY: off1, w: plat1W, h: 22, style: pStyle });
+            addCollectible(plat1X + plat1W * 0.5 - 21, plat1Y - 58);
+
+            if (pitW > 310) {
+                const plat2X = plat1X + plat1W + 46;
+                const plat2W = 138;
+                const off2 = 136;
+                const plat2Y = gy - off2;
+                this.platforms.push({ x: plat2X, y: plat2Y, offsetY: off2, w: plat2W, h: 22, style: pStyle });
+                addCollectible(plat2X + plat2W * 0.5 - 21, plat2Y - 56, 'energy_drink');
+            }
+            return pitX + pitW + 135;
+        };
+
+        spans.forEach(([spanStart, spanEnd], spanIdx) => {
+            let cursor = spanStart;
+            let step = 0;
+            while (cursor < spanEnd - 170) {
+                const rem = spanEnd - cursor;
+                let mode = 'hurdle';
+                if (mech.lavaPits && mech.platforms && ((spanIdx === 0 && step === 0) || (spanIdx === 1 && step === 1)) && rem >= 460) {
+                    mode = 'lava';
+                } else if (mech.duckObstacles && ((step % 2 === 1) || (!mech.platforms && !mech.lavaPits)) && rem >= 175) {
+                    mode = 'duck';
+                } else if (mech.platforms && ((spanIdx === 0 && !mech.lavaPits && step === 0) || (spanIdx === 1 && step === 0)) && rem >= 310) {
+                    mode = 'highlow';
+                } else if (mech.lavaPits && mech.platforms && rem >= 460) {
+                    mode = 'lava';
+                }
+                step++;
+
+                if (mode === 'lava') {
+                    cursor = addLavaBridge(cursor, rem);
+                } else if (mode === 'highlow') {
+                    const pw = 190;
+                    const offP = 96;
+                    const py = gy - offP;
+                    this.platforms.push({ x: cursor, y: py, offsetY: offP, w: pw, h: 22, style: pStyle });
+                    addCollectible(cursor + 32, py - 56);
+                    addCollectible(cursor + 115, py - 56, 'coffee');
+                    addGroundObs(cursor + 74);
+                    if (mech.duckObstacles && rem >= 450) {
+                        addDuckObs(cursor + 275);
+                        cursor += 420;
+                    } else {
+                        cursor += 340;
+                    }
+                } else if (mode === 'duck') {
+                    addDuckObs(cursor);
+                    addCollectible(cursor + 20, gy - 68);
+                    if (rem >= 390) {
+                        addGroundObs(cursor + 225);
+                        cursor += 390;
+                    } else {
+                        cursor += 235;
+                    }
+                } else {
+                    if (mech.sprintPads && step % 2 === 1 && rem >= 360) {
+                        this.boostPads.push({ x: cursor, w: 96, label: '⚡ SPRINT' });
+                        addGroundObs(cursor + 225);
+                        addCollectible(cursor + 235, gy - 155);
+                        cursor += 375;
+                    } else {
+                        addGroundObs(cursor);
+                        addCollectible(cursor + 95, gy - 135 - Math.random() * 45);
+                        cursor += 280;
+                    }
+                }
+            }
+        });
     }
 
     // =====================================================================
@@ -1497,6 +1679,73 @@ class Game {
     // =====================================================================
     // BOSS ENCOUNTER & DIALOGUE
     // =====================================================================
+    triggerMiniBossEncounter() {
+        this.midBossTriggered = true;
+        this.state = GAME_STATE.PRE_BOSS_WALK;
+        this.ui.controlHintPill.classList.add('hidden');
+        window.soundManager.setMusicQuietMode(true);
+        this.projectiles = [];
+        this.hazards = [];
+
+        // Ensure player lands cleanly on solid arena floor
+        const groundPos = this.player.groundY;
+        if (this.player.y > groundPos - this.player.h) {
+            this.player.y = groundPos - this.player.h;
+            this.player.vy = 0;
+            this.player.isGrounded = true;
+        }
+
+        const scale = Math.max(0.78, Math.min(1.38, canvas.height / 720));
+        const bossH = Math.round(160 * scale);
+        const bossW = Math.round(92 * scale);
+        const hp = this.level.miniBossHP || 280;
+
+        this.boss = {
+            name: this.level.miniBossName || 'Average GIBB Schüler',
+            type: this.level.miniBossType || 'gibb_student',
+            isMiniBoss: true,
+            avatar: this.level.miniBossAvatar || 'assets/sprites/gibb_student_avatar.png',
+            x: canvas.width * 0.74,
+            y: groundPos - bossH,
+            w: bossW,
+            h: bossH,
+            hp: hp,
+            maxHp: hp,
+            facing: -1,
+            attackTimer: 55,
+            attackAnimTimer: 0,
+            banterAnimTimer: 0,
+            moveDir: -1,
+            hitFlash: 0,
+            banterTimer: 110
+        };
+        this.duoPartner = null;
+        this.updateBossHUD();
+        this.showMemePopup('⚡ MINI-BOSS TAUCHT AUF!');
+    }
+
+    onMiniBossDefeated() {
+        this.midBossDefeated = true;
+        this.boss = null;
+        this.duoPartner = null;
+        this.hazards = [];
+        this.projectiles = [];
+        this.ui.bossHudBanner.classList.add('hidden');
+        this.player.hp = Math.min(this.player.maxHp, this.player.hp + 30);
+        this.player.megaEnergy = Math.min(this.player.maxMegaEnergy, this.player.megaEnergy + 50);
+        this.player.score = Math.min(6.0, +(this.player.score + 0.1).toFixed(1));
+        this.updateBars();
+
+        this.state = GAME_STATE.RUNNING;
+        window.soundManager.setMusicQuietMode(false);
+        this.updateTouchControlsVisibility();
+        window.soundManager.playCollect();
+        window.soundManager.playClip('thenerean_stah');
+        this.screenShake = 14;
+        this.showMemePopup('MINI-BOSS BESIEGT! WEITER ZUM FINALEN BOSS! ▶');
+        this.addFloatingText('MINI-BOSS BESIEGT! +30 HP & +50% ENERGIE!', canvas.width * 0.5, canvas.height * 0.36, '#2ed573', 24);
+    }
+
     triggerPreBossEncounter() {
         this.state = GAME_STATE.PRE_BOSS_WALK;
         this.ui.controlHintPill.classList.add('hidden');
@@ -1560,7 +1809,9 @@ class Game {
         this.updateTouchControlsVisibility();
         this.ui.abilityDock.classList.add('hidden');
         this.ui.memePopup.classList.add('hidden');
-        const encounter = this.level.preBossEncounter;
+        const encounter = (this.boss && this.boss.isMiniBoss && this.level.preMiniBossEncounter)
+            ? this.level.preMiniBossEncounter
+            : this.level.preBossEncounter;
         if (this.boss) this.boss.banterAnimTimer = 999;
 
         this.dialogueQueue = [
@@ -1600,7 +1851,8 @@ class Game {
             this.updateTouchControlsVisibility();
             this.screenShake = 18;
             this.radialFlashTimer = 14;
-            this.addFloatingText("KAMPF BEGINNT!", canvas.width / 2, canvas.height * 0.37, '#ff4757', 34);
+            const fightY = Math.min(this.player.groundY - 96, Math.max(235, canvas.height * 0.50));
+            this.addFloatingText("KAMPF BEGINNT!", canvas.width / 2, fightY, '#ff4757', 32);
         }
     }
 
@@ -1765,12 +2017,35 @@ class Game {
         }
     }
 
+    onLavaFall(pit) {
+        const dmg = this.touchControlsEnabled ? 12 : 18;
+        this.screenShake = 16;
+        this.spawnBurst(this.player.x + this.player.w * 0.5, this.player.groundY + 10, 26, '#ff6348', 8, 24);
+        this.spawnBurst(this.player.x + this.player.w * 0.5, this.player.groundY + 6, 16, '#ffd32a', 6, 18);
+        this.onPlayerHit(dmg, 'lava');
+
+        // Recover cleanly onto solid ground immediately before the lava pit
+        if (this.state === GAME_STATE.RUNNING && pit) {
+            const safeWorldX = Math.max(80, pit.x - 140);
+            this.worldDistance = Math.max(0, safeWorldX - 130);
+            this.player.x = safeWorldX - this.worldDistance;
+            this.player.y = this.player.groundY - this.player.h - 8;
+            this.player.vy = -4.0;
+            this.player.isGrounded = false;
+            this.player.invulnerableTime = Math.max(this.player.invulnerableTime, 64);
+            this.addFloatingText("🔥 LAVA! RECHTSZEITIG SPRINGEN!", this.player.x + 140, this.player.groundY - 170, '#ffd32a', 20);
+        }
+    }
+
     updateRunning(dt) {
+        if (this.player.sprintTimer > 0) this.player.sprintTimer--;
+        const speedMult = this.player.sprintTimer > 0 ? 1.52 : 1.0;
+
         if (this.keys['arrowright'] || this.keys['d']) {
-            this.player.vx = this.player.speed;
+            this.player.vx = this.player.speed * speedMult;
             this.player.facing = 1;
         } else if (this.keys['arrowleft'] || this.keys['a']) {
-            this.player.vx = -this.player.speed * 0.78;
+            this.player.vx = -this.player.speed * 0.78 * speedMult;
             this.player.facing = -1;
         } else {
             this.player.vx = 0;
@@ -1780,6 +2055,7 @@ class Game {
             this.player.vx *= 0.52;
         }
 
+        const prevBottom = this.player.y + this.player.h;
         this.player.x += this.player.vx;
         if (this.player.x < 30) this.player.x = 30;
 
@@ -1790,20 +2066,77 @@ class Game {
             this.worldDistance += advance;
         }
 
+        // Sprint pads trigger automatic turbo burst
+        const footWorldX = this.worldDistance + this.player.x + this.player.w * 0.5;
+        for (const pad of this.boostPads) {
+            if (this.player.isGrounded && footWorldX >= pad.x && footWorldX <= pad.x + pad.w) {
+                if (!pad.triggered) {
+                    pad.triggered = true;
+                    this.triggerSprintBurst(135);
+                } else if (this.player.sprintTimer < 90) {
+                    this.player.sprintTimer = 110;
+                }
+            }
+        }
+
+        if (this.player.sprintTimer > 0 && Math.abs(this.player.vx) > 2 && Math.random() > 0.35) {
+            this.particles.push({
+                x: this.player.x + this.player.w * 0.3, y: this.player.y + this.player.h * 0.65,
+                vx: -3 - Math.random() * 2, vy: (Math.random() - 0.5) * 1.5,
+                life: 16, maxLife: 16, color: '#00d2d3', size: 6
+            });
+        }
         if (this.player.isGrounded && Math.abs(this.player.vx) > 2 && Math.random() > 0.65) {
-            this.spawnRunDust(this.player.x + this.player.w * 0.3, this.player.groundY);
+            this.spawnRunDust(this.player.x + this.player.w * 0.3, this.player.y + this.player.h);
         }
 
         this.player.y += this.player.vy;
         this.player.vy += 0.68;
-        if (this.player.y >= this.player.groundY - this.player.h) {
+        this.player.isGrounded = false;
+
+        // 1. Check elevated solid platforms (one-way top landing)
+        const footLeftScreen = this.player.x + 14;
+        const footRightScreen = this.player.x + this.player.w - 14;
+        for (const plat of this.platforms) {
+            const px0 = plat.x - this.worldDistance;
+            const px1 = px0 + plat.w;
+            if (footRightScreen > px0 && footLeftScreen < px1) {
+                if (this.player.vy >= 0 && prevBottom <= plat.y + 14 && (this.player.y + this.player.h) >= plat.y) {
+                    this.player.y = plat.y - this.player.h;
+                    this.player.vy = 0;
+                    this.player.isGrounded = true;
+                    if (this.player.jumpBuffered) {
+                        this.player.jumpBuffered = false;
+                        this.playerJump();
+                    }
+                    break;
+                }
+            }
+        }
+
+        // 2. Check Lava / Chasm Pits on ground plane
+        let overPit = null;
+        for (const pit of this.lavaPits) {
+            if (footWorldX > pit.x + 16 && footWorldX < pit.x + pit.w - 16) {
+                overPit = pit;
+                break;
+            }
+        }
+
+        if (!this.player.isGrounded && !overPit && this.player.y >= this.player.groundY - this.player.h) {
             this.player.y = this.player.groundY - this.player.h;
             this.player.vy = 0;
             this.player.isGrounded = true;
+            this.player.lastSafeWorldX = Math.max(80, this.worldDistance + this.player.x);
             if (this.player.jumpBuffered) {
                 this.player.jumpBuffered = false;
                 this.playerJump();
             }
+        }
+
+        if (overPit && (this.player.y + this.player.h) > this.player.groundY + 52) {
+            this.onLavaFall(overPit);
+            return;
         }
 
         this.tickPlayerBanter();
@@ -1811,6 +2144,13 @@ class Game {
         const prog = Math.min(100, (this.worldDistance / this.level.targetDistance) * 100);
         this.ui.progBar.style.width = `${prog}%`;
         this.ui.progValText.textContent = `${Math.round(prog)}%`;
+
+        // Mid-Level Mini-Boss Checkpoint (Average GIBB Schüler)
+        const mbDist = this.level.targetDistance * (this.level.miniBossTriggerRatio || 0.50);
+        if (this.level.hasMiniBoss && !this.midBossDefeated && !this.midBossTriggered && this.worldDistance >= mbDist) {
+            this.triggerMiniBossEncounter();
+            return;
+        }
 
         if (this.worldDistance >= this.level.targetDistance) {
             this.triggerPreBossEncounter();
@@ -1820,8 +2160,17 @@ class Game {
         for (const obs of this.obstacles) {
             const screenX = obs.x - this.worldDistance;
             if (screenX > -120 && screenX < canvas.width + 120) {
-                const pHitY = (this.player.isDucking && this.player.isGrounded) ? this.player.y + this.player.h * 0.44 : this.player.y + 12;
-                const pHitH = (this.player.isDucking && this.player.isGrounded) ? this.player.h * 0.54 : this.player.h - 14;
+                const isDuck = this.player.isDucking && this.player.isGrounded;
+                const pHitY = isDuck ? this.player.y + this.player.h * 0.48 : this.player.y + 12;
+                const pHitH = isDuck ? this.player.h * 0.50 : this.player.h - 14;
+                if (obs.high && isDuck && !obs.duckDodged) {
+                    const standHit = this.checkCollision(this.player.x + 12, this.player.y + 12, this.player.w - 24, this.player.h - 14, screenX + 4, obs.y + 4, obs.w - 8, obs.h - 8);
+                    const crouchHit = this.checkCollision(this.player.x + 12, pHitY, this.player.w - 24, pHitH, screenX + 4, obs.y + 4, obs.w - 8, obs.h - 8);
+                    if (standHit && !crouchHit) {
+                        obs.duckDodged = true;
+                        this.addFloatingText("💨 SAUBER GEDUCKT!", this.player.x + this.player.w * 0.5, this.player.y + 14, '#2ed573', 19);
+                    }
+                }
                 if (this.checkCollision(this.player.x + 12, pHitY, this.player.w - 24, pHitH, screenX + 4, obs.y + 4, obs.w - 8, obs.h - 8)) {
                     if (this.player.isBlocking) {
                         this.onBlockSuccess(screenX, obs.y);
@@ -1973,11 +2322,23 @@ class Game {
             this.boss.banterTimer--;
             if (this.boss.banterTimer <= 0) {
                 this.boss.banterTimer = 175 + Math.random() * 110;
-                const speakerEntity = (this.duoPartner && this.duoPartner.hp > 0 && Math.random() > 0.5) ? this.duoPartner : this.boss;
-                speakerEntity.banterAnimTimer = 35;
-                const line = this.level.bossLines[Math.floor(Math.random() * this.level.bossLines.length)];
-                window.soundManager.playClip(line.clip);
-                this.addFloatingText(`"${line.text}"`, speakerEntity.x + speakerEntity.w * 0.4, speakerEntity.y - 26, '#ffd32a', 17);
+                if (this.boss.isMiniBoss) {
+                    this.boss.banterAnimTimer = 35;
+                    const mbTaunts = [
+                        'Erst mal Energy exen! ⚡',
+                        'An mir chunnsch nöd verbi!',
+                        'Laptop-Wurf incoming! 💻',
+                        'Han d Modul-Prüefig scho gmacht!'
+                    ];
+                    const msg = mbTaunts[Math.floor(Math.random() * mbTaunts.length)];
+                    this.addFloatingText(`"${msg}"`, this.boss.x + this.boss.w * 0.4, this.boss.y - 26, '#38bdf8', 17);
+                } else {
+                    const speakerEntity = (this.duoPartner && this.duoPartner.hp > 0 && Math.random() > 0.5) ? this.duoPartner : this.boss;
+                    speakerEntity.banterAnimTimer = 35;
+                    const line = this.level.bossLines[Math.floor(Math.random() * this.level.bossLines.length)];
+                    window.soundManager.playClip(line.clip);
+                    this.addFloatingText(`"${line.text}"`, speakerEntity.x + speakerEntity.w * 0.4, speakerEntity.y - 26, '#ffd32a', 17);
+                }
             }
         }
 
@@ -2011,6 +2372,10 @@ class Game {
         this.updateBossHazards();
 
         if (this.boss && this.boss.hp <= 0 && (!this.duoPartner || this.duoPartner.hp <= 0)) {
+            if (this.boss.isMiniBoss) {
+                this.onMiniBossDefeated();
+                return;
+            }
             this.triggerLevelWin();
         }
 
@@ -2267,7 +2632,7 @@ class Game {
         }
         this.ui.bossHudBanner.classList.remove('hidden');
         this.ui.bossHudAvatar.src = this.boss.avatar;
-        this.ui.bossHudName.textContent = this.boss.name.toUpperCase();
+        this.ui.bossHudName.textContent = (this.boss.isMiniBoss ? '⚡ MINI-BOSS: ' : '') + this.boss.name.toUpperCase();
         this.ui.bossHudHpText.textContent = `${Math.max(0, Math.round(this.boss.hp))} / ${this.boss.maxHp} HP`;
         this.ui.bossHudFill.style.width = `${Math.max(0, (this.boss.hp / this.boss.maxHp) * 100)}%`;
 
@@ -2341,8 +2706,13 @@ class Game {
             return;
         }
 
-        // Layer 3: Foreground Ground Accent & Scrolling Markers
+        // Layer 3: Foreground Ground Accent, Lava Pits, Boost Pads & Elevated Platforms
         this.drawGroundOverlay();
+        if (this.state === GAME_STATE.RUNNING) {
+            this.drawLavaPits();
+            this.drawBoostPads();
+            this.drawPlatforms();
+        }
         this.drawHazards();
 
         // Collectibles & Obstacles
@@ -2388,7 +2758,10 @@ class Game {
     }
 
     getStageImageKey() {
-        if (this.state === GAME_STATE.MENU || this.state === GAME_STATE.OPENING) {
+        if (this.state === GAME_STATE.MENU) {
+            return 'bg_lobby';
+        }
+        if (this.state === GAME_STATE.OPENING) {
             return 'bg_gibb_entrance';
         }
         const bg = this.level.bgType;
@@ -2405,7 +2778,15 @@ class Game {
         const bgImg = images[bgKey];
         const groundY = this.player.groundY;
 
-        if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
+        if (bgImg && bgImg.complete && bgImg.naturalWidth > 0 && this.state === GAME_STATE.MENU) {
+            const scale = Math.max((canvas.width * 1.06) / bgImg.naturalWidth, (canvas.height * 1.06) / bgImg.naturalHeight);
+            const drawW = bgImg.naturalWidth * scale;
+            const drawH = bgImg.naturalHeight * scale;
+            const maxSway = Math.max(0, (drawW - canvas.width) * 0.45);
+            const drawX = -(drawW - canvas.width) * 0.5 + Math.sin(this.animClock * 0.35) * maxSway;
+            const drawY = Math.min(0, Math.max(canvas.height - drawH, groundY - drawH * 0.74));
+            ctx.drawImage(bgImg, drawX, drawY, drawW, drawH);
+        } else if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
             // Scale illustration so full image height matches viewport height (aligning floor at 0.74!)
             const scale = Math.max(canvas.height / bgImg.naturalHeight, canvas.width / (bgImg.naturalWidth * 1.15));
             const tileW = bgImg.naturalWidth * scale;
@@ -2413,7 +2794,7 @@ class Game {
             // Align horizon line (~74% of source art) cleanly with player.groundY
             const drawY = groundY - tileH * 0.74;
 
-            const scrollDist = (this.state === GAME_STATE.MENU || this.state === GAME_STATE.OPENING)
+            const scrollDist = (this.state === GAME_STATE.OPENING)
                 ? this.menuPan
                 : this.worldDistance * 0.35;
 
@@ -2634,7 +3015,21 @@ class Game {
         }
 
         // Name Plate pill above head
-        const nameLabel = p.isBlocking ? "Thenerean [BLOCK]" : (p.isDucking ? "Thenerean [DUCK]" : "Thenerean");
+        if (p.sprintTimer > 0) {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(0, 210, 211, 0.75)';
+            ctx.lineWidth = 3;
+            for (let s = 0; s < 3; s++) {
+                const sy = p.y + p.h * (0.28 + s * 0.24);
+                ctx.beginPath();
+                ctx.moveTo(p.x - 10 - s * 12, sy);
+                ctx.lineTo(p.x + 12, sy);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        const nameLabel = p.isBlocking ? "Thenerean [BLOCK]" : (p.isDucking ? "Thenerean [DUCK]" : (p.sprintTimer > 0 ? "Thenerean ⚡ SPRINT" : "Thenerean"));
         const nameY = (p.isDucking && p.isGrounded) ? (p.y + p.h * 0.38) : (p.y - 14);
         this.drawNamePill(nameLabel, footX, nameY, '#ffd32a');
     }
@@ -2681,7 +3076,8 @@ class Game {
     }
 
     drawBoss(bossEntity) {
-        const isAdam = bossEntity.name.includes("Adam") || bossEntity.type === 'adam' || bossEntity.type === 'adam_miniboss' || bossEntity.isDummy;
+        const isStudent = bossEntity.type === 'gibb_student';
+        const isAdam = !isStudent && (bossEntity.name.includes("Adam") || bossEntity.type === 'adam' || bossEntity.type === 'adam_miniboss' || bossEntity.isDummy);
         const isTukTuk = bossEntity.type === 'tuktuk_gpu';
         const ai = bossEntity.ai;
         const telegraphing = !!(ai && ai.telegraph);
@@ -2699,7 +3095,18 @@ class Game {
         let spriteKey;
         let sx = 1.0, sy = 1.0, tilt = 0;
 
-        if (isTukTuk) {
+        if (isStudent) {
+            if (bossEntity.attackAnimTimer > 0) {
+                spriteKey = 'gibb_student_attack';
+            } else if (telegraphing) {
+                spriteKey = 'gibb_student_windup';
+                sx = 1.03;
+            } else {
+                const step = Math.sin(this.animClock * 11);
+                spriteKey = step > -0.1 ? 'gibb_student_walk' : 'gibb_student_idle';
+                sy = 1.0 + 0.025 * Math.abs(step);
+            }
+        } else if (isTukTuk) {
             const isRage = bossEntity.attackAnimTimer > 0 || bossEntity.hp < bossEntity.maxHp * 0.5 || telegraphing || !!(ai && ai.charge);
             spriteKey = isRage ? 'tuktuk_rage' : 'tuktuk_idle';
             const rumble = Math.sin(this.animClock * (isRage ? 28 : 14));
@@ -2806,6 +3213,107 @@ class Game {
         }
     }
 
+    drawLavaPits() {
+        const gy = this.player.groundY;
+        const h = canvas.height - gy + 12;
+        for (const pit of this.lavaPits) {
+            const sx = pit.x - this.worldDistance;
+            if (sx > canvas.width + 60 || sx + pit.w < -60) continue;
+
+            ctx.save();
+            const isChasm = pit.theme === 'chasm';
+            const grad = ctx.createLinearGradient(0, gy - 6, 0, canvas.height);
+            if (isChasm) {
+                grad.addColorStop(0, '#120814');
+                grad.addColorStop(0.55, '#2b0b18');
+                grad.addColorStop(1, '#ff3838');
+            } else {
+                grad.addColorStop(0, '#ffd32a');
+                grad.addColorStop(0.28, '#ff6348');
+                grad.addColorStop(1, '#8c1010');
+            }
+            ctx.fillStyle = grad;
+            ctx.fillRect(sx, gy - 2, pit.w, h);
+
+            // Animated bubbling surface wave
+            ctx.fillStyle = isChasm ? 'rgba(255, 71, 87, 0.75)' : 'rgba(255, 224, 90, 0.92)';
+            ctx.beginPath();
+            ctx.moveTo(sx, gy + 18);
+            for (let dx = 0; dx <= pit.w; dx += 18) {
+                const wave = Math.sin(this.animClock * 7 + (pit.x + dx) * 0.08) * 5;
+                ctx.lineTo(sx + dx, gy + wave);
+            }
+            ctx.lineTo(sx + pit.w, gy + 18);
+            ctx.closePath();
+            ctx.fill();
+
+            // Inked hazard border lips
+            ctx.fillStyle = '#ffd32a';
+            ctx.strokeStyle = '#11141e';
+            ctx.lineWidth = 3;
+            ctx.fillRect(sx - 8, gy - 6, 12, 24);
+            ctx.strokeRect(sx - 8, gy - 6, 12, 24);
+            ctx.fillRect(sx + pit.w - 4, gy - 6, 12, 24);
+            ctx.strokeRect(sx + pit.w - 4, gy - 6, 12, 24);
+            ctx.restore();
+            this.drawNamePill(isChasm ? '⚠️ SPERRZONE!' : '🔥 LAVA! SPRINGEN!', sx + pit.w * 0.5, gy + 26, '#ffd32a');
+        }
+    }
+
+    drawBoostPads() {
+        const gy = this.player.groundY;
+        for (const pad of this.boostPads) {
+            const sx = pad.x - this.worldDistance;
+            if (sx > canvas.width + 80 || sx + pad.w < -80) continue;
+            ctx.save();
+            const pulse = 0.75 + 0.25 * Math.sin(this.animClock * 10);
+            ctx.fillStyle = `rgba(0, 210, 211, ${0.35 * pulse})`;
+            ctx.strokeStyle = '#00d2d3';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.roundRect(sx, gy - 10, pad.w, 12, 6);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#ffd32a';
+            ctx.font = '900 13px "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('⚡ SPRINT >>>', sx + pad.w * 0.5, gy - 16);
+            ctx.restore();
+        }
+    }
+
+    drawPlatforms() {
+        const colors = {
+            concrete:          { body: '#4b5563', top: '#9ca3af', edge: '#ffd32a' },
+            desk:              { body: '#8b5a2b', top: '#d49a58', edge: '#4b65ff' },
+            gym_box:           { body: '#b46528', top: '#f59e0b', edge: '#ffffff' },
+            server_rack:       { body: '#1e293b', top: '#0ea5e9', edge: '#00d2d3' },
+            auditorium_bridge: { body: '#27272a', top: '#eab308', edge: '#ff4757' }
+        };
+        for (const plat of this.platforms) {
+            const sx = plat.x - this.worldDistance;
+            if (sx > canvas.width + 80 || sx + plat.w < -80) continue;
+            const pal = colors[plat.style] || colors.concrete;
+            ctx.save();
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.36)';
+            ctx.beginPath();
+            ctx.roundRect(sx + 4, plat.y + 6, plat.w, plat.h, 8);
+            ctx.fill();
+            ctx.fillStyle = pal.body;
+            ctx.strokeStyle = '#11141e';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.roundRect(sx, plat.y, plat.w, plat.h, 8);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = pal.top;
+            ctx.fillRect(sx + 6, plat.y + 3, plat.w - 12, 6);
+            ctx.fillStyle = pal.edge;
+            ctx.fillRect(sx + 10, plat.y + plat.h - 6, plat.w - 20, 3);
+            ctx.restore();
+        }
+    }
+
     drawObstacles() {
         for (const obs of this.obstacles) {
             const screenX = obs.x - this.worldDistance;
@@ -2814,17 +3322,44 @@ class Game {
                 const img = images[key];
                 const bobY = obs.type === 'frisbee' ? Math.sin(this.animClock * 6 + obs.phase) * 5 : 0;
 
-                // Ground shadow
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
-                ctx.beginPath();
-                ctx.ellipse(screenX + obs.w / 2, this.player.groundY + 2, obs.w * 0.45, 7, 0, 0, Math.PI * 2);
-                ctx.fill();
-
-                if (img && img.complete && img.naturalWidth > 0) {
-                    ctx.drawImage(img, screenX, obs.y + bobY, obs.w, obs.h);
-                } else {
+                if (obs.high) {
+                    // Overhead Duck-Under Hazard Beam + Warning Tape & Icon!
+                    ctx.save();
+                    ctx.strokeStyle = '#ff4757';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(screenX + 12, 0);
+                    ctx.lineTo(screenX + 12, obs.y);
+                    ctx.moveTo(screenX + obs.w - 12, 0);
+                    ctx.lineTo(screenX + obs.w - 12, obs.y);
+                    ctx.stroke();
+                    ctx.fillStyle = '#141928';
+                    ctx.strokeStyle = '#ffd32a';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.roundRect(screenX, obs.y + bobY, obs.w, obs.h, 10);
+                    ctx.fill();
+                    ctx.stroke();
                     ctx.fillStyle = '#ff4757';
-                    ctx.fillRect(screenX, obs.y + bobY, obs.w, obs.h);
+                    ctx.fillRect(screenX + 8, obs.y + bobY + obs.h - 10, obs.w - 16, 6);
+                    if (img && img.complete && img.naturalWidth > 0) {
+                        ctx.drawImage(img, screenX + obs.w * 0.5 - 16, obs.y + bobY + 4, 32, 32);
+                    }
+                    ctx.restore();
+                    this.drawNamePill('⬇ DUCK [CTRL]', screenX + obs.w * 0.5, obs.y - 8, '#ffd32a');
+                } else {
+                    // Ground shadow
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+                    ctx.beginPath();
+                    ctx.ellipse(screenX + obs.w / 2, this.player.groundY + 2, obs.w * 0.45, 7, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    if (img && img.complete && img.naturalWidth > 0) {
+                        ctx.drawImage(img, screenX, obs.y + bobY, obs.w, obs.h);
+                    } else {
+                        ctx.fillStyle = '#ff4757';
+                        ctx.fillRect(screenX, obs.y + bobY, obs.w, obs.h);
+                    }
                 }
             }
         }

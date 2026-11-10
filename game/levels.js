@@ -1,7 +1,8 @@
 /**
  * Thenerean Selvabankumar - High-End Levels Configuration
  * 6 hand-crafted GIBB Bern & Sri Lanka stages with custom parallax backgrounds,
- * authentic voice banter across all 25 audio clips, and balanced Boss HP.
+ * authentic voice banter, unique per-level traversal mechanics (Duck Barriers, Sprint Pads,
+ * Jump-and-Run Platforms over Lava Pits), and Mid-Level Mini-Bosses ("Average GIBB Schüler").
  */
 
 const LEVELS_CONFIG = [
@@ -9,12 +10,21 @@ const LEVELS_CONFIG = [
         id: 1,
         yearText: "1. LEHRJAHR (TEIL 1)",
         name: "GIBB Vorplatz: Die 4-Minuten Panik",
+        featureTag: "⚡ SPRINT-BOOSTS & HINDERNISSE",
         bgType: "gibb_entrance",
         bgPath: "assets/backgrounds/bg_gibb_entrance.jpg",
         accentColor: "#ff4757",
         ambientStyle: "daylight",
-        targetDistance: 1900,
+        targetDistance: 2100,
         music: "assets/music/That_s_The_One.mp3",
+        hasMiniBoss: false,
+        mechanics: {
+            platforms: false,
+            duckObstacles: false,
+            lavaPits: false,
+            sprintPads: true,
+            platformStyle: "concrete"
+        },
         preBossEncounter: {
             speaker: "Monika Schneider",
             avatar: "assets/sprites/monika_avatar.png",
@@ -45,12 +55,21 @@ const LEVELS_CONFIG = [
         id: 2,
         yearText: "1. LEHRJAHR (TEIL 2)",
         name: "Klassenzimmer 302: Modul-Test & Disziplin",
+        featureTag: "💨 DUCKEN (CTRL) & SCHULBANK-SPRÜNGE",
         bgType: "classroom",
         bgPath: "assets/backgrounds/bg_classroom.jpg",
         accentColor: "#3742fa",
         ambientStyle: "classroom",
-        targetDistance: 2200,
+        targetDistance: 2500,
         music: "assets/music/Sirünän_Silicancumar.mp3",
+        hasMiniBoss: false,
+        mechanics: {
+            platforms: true,
+            duckObstacles: true,
+            lavaPits: false,
+            sprintPads: true,
+            platformStyle: "desk"
+        },
         preBossEncounter: {
             speaker: "Monika Schneider",
             avatar: "assets/sprites/monika_avatar.png",
@@ -81,13 +100,36 @@ const LEVELS_CONFIG = [
     {
         id: 3,
         yearText: "2. LEHRJAHR (TEIL 1)",
-        name: "Sporthalle Korridor: Aufwärmen für den Turnunterricht",
+        name: "Sporthalle Korridor: Hürden & GIBB-Rivale",
+        featureTag: "🎒 MINI-BOSS • 💨 HÜRDEN • 🕳️ BODENGRUBEN",
         bgType: "gym_hallway",
         bgPath: "assets/backgrounds/bg_gym_hallway.jpg",
         accentColor: "#ffa502",
         ambientStyle: "corridor",
-        targetDistance: 2100,
+        targetDistance: 3100,
         music: "assets/music/Sivassklicumar_Morning.mp3",
+        hasMiniBoss: true,
+        miniBossTriggerRatio: 0.50,
+        miniBossType: "gibb_student",
+        miniBossName: "Average GIBB Schüler (Korridor-Rivale)",
+        miniBossAvatar: "assets/sprites/gibb_student_avatar.png",
+        miniBossHP: 260,
+        preMiniBossEncounter: {
+            speaker: "Average GIBB Schüler",
+            avatar: "assets/sprites/gibb_student_avatar.png",
+            text: "Ey Thenerean! Bevor du zu Herr Adam gaahsch, muesch zerst an mir verbi — han grad en frische Energy!",
+            clip: null,
+            playerResponse: "Du hesch gmeint du chasch mi schlah?! Mach Platz!",
+            playerClip: "thenerean_chasch_mi_schlah"
+        },
+        mechanics: {
+            platforms: true,
+            duckObstacles: true,
+            lavaPits: true,
+            pitTheme: "chasm",
+            sprintPads: true,
+            platformStyle: "gym_box"
+        },
         preBossEncounter: {
             speaker: "Herr Adam",
             avatar: "assets/sprites/adam_avatar.png",
@@ -117,13 +159,36 @@ const LEVELS_CONFIG = [
     {
         id: 4,
         yearText: "2. LEHRJAHR (TEIL 2)",
-        name: "Die GIBB Sporthalle: Der 20-Frisbee Hagel",
+        name: "Die GIBB Sporthalle: Lava-Parcours & Frisbees",
+        featureTag: "🌋 BODEN IST LAVA • 🎒 MINI-BOSS • 🥏 20 FRISBEES",
         bgType: "gym_turnhalle",
         bgPath: "assets/backgrounds/bg_gym_turnhalle.jpg",
         accentColor: "#ff6348",
         ambientStyle: "gym",
-        targetDistance: 2600,
+        targetDistance: 3300,
         music: "assets/music/Thanuran_Takeover.mp3",
+        hasMiniBoss: true,
+        miniBossTriggerRatio: 0.50,
+        miniBossType: "gibb_student",
+        miniBossName: "Average GIBB Schüler (Turn-Rivale)",
+        miniBossAvatar: "assets/sprites/gibb_student_avatar.png",
+        miniBossHP: 310,
+        preMiniBossEncounter: {
+            speaker: "Average GIBB Schüler",
+            avatar: "assets/sprites/gibb_student_avatar.png",
+            text: "De Bode isch Lava, Kolleg! Und die Turnhall gehört hüt mir!",
+            clip: null,
+            playerResponse: "Niemert chunt an mir verbi — ich gang dur d'Mitti!",
+            playerClip: "thenerean_niemert_verbi"
+        },
+        mechanics: {
+            platforms: true,
+            duckObstacles: true,
+            lavaPits: true,
+            pitTheme: "lava",
+            sprintPads: true,
+            platformStyle: "gym_box"
+        },
         preBossEncounter: {
             speaker: "Herr Adam",
             avatar: "assets/sprites/adam_avatar.png",
@@ -154,13 +219,36 @@ const LEVELS_CONFIG = [
     {
         id: 5,
         yearText: "3. LEHRJAHR",
-        name: "Serverraum & Sri Lanka: Der GPU-Crash",
+        name: "Serverraum & Sri Lanka: Magma & GPU-Crash",
+        featureTag: "🔥 GPU-MAGMA JUMP & RUN • 💻 MINI-BOSS • ⚡ SPRINT",
         bgType: "server_room",
         bgPath: "assets/backgrounds/bg_server_srilanka.jpg",
         accentColor: "#00d2d3",
         ambientStyle: "server",
-        targetDistance: 2700,
+        targetDistance: 3500,
         music: "assets/music/Chasin_Dreams_Tharunan_s_Theme_.mp3",
+        hasMiniBoss: true,
+        miniBossTriggerRatio: 0.50,
+        miniBossType: "gibb_student",
+        miniBossName: "Average GIBB Schüler (Server-Nerd)",
+        miniBossAvatar: "assets/sprites/gibb_student_avatar.png",
+        miniBossHP: 350,
+        preMiniBossEncounter: {
+            speaker: "Average GIBB Schüler",
+            avatar: "assets/sprites/gibb_student_avatar.png",
+            text: "Bro, mini Grafikkarte überhitzt de ganze Serverbode — fang mis Laptop ab!",
+            clip: null,
+            playerResponse: "Verdammte Maschine! Ich will doch nur Gesetzestext!",
+            playerClip: "thenerean_verdammt_maschine"
+        },
+        mechanics: {
+            platforms: true,
+            duckObstacles: true,
+            lavaPits: true,
+            pitTheme: "lava",
+            sprintPads: true,
+            platformStyle: "server_rack"
+        },
         preBossEncounter: {
             speaker: "TukTuk & Overheating GPU",
             avatar: "assets/sprites/tuktuk_avatar.png",
@@ -191,13 +279,36 @@ const LEVELS_CONFIG = [
     {
         id: 6,
         yearText: "4. LEHRJAHR (GROSSES FINALE)",
-        name: "Das EFZ Prüfungs-Auditorium: Schneider & Adam",
+        name: "Das EFZ Prüfungs-Auditorium: Parcours & Duo",
+        featureTag: "👑 LAVA-PARCOURS • 🎒 MINI-BOSS • 🏆 DUO-FINALE",
         bgType: "exam_auditorium",
         bgPath: "assets/backgrounds/bg_exam_auditorium.jpg",
         accentColor: "#ffd32a",
         ambientStyle: "finale",
-        targetDistance: 3200,
+        targetDistance: 3800,
         music: "assets/music/Sirünän_Reign.mp3",
+        hasMiniBoss: true,
+        miniBossTriggerRatio: 0.50,
+        miniBossType: "gibb_student",
+        miniBossName: "Average GIBB Schüler (Klassenbester)",
+        miniBossAvatar: "assets/sprites/gibb_student_avatar.png",
+        miniBossHP: 390,
+        preMiniBossEncounter: {
+            speaker: "Average GIBB Schüler",
+            avatar: "assets/sprites/gibb_student_avatar.png",
+            text: "Nur wer mich schlaht dörf zur EFZ-Abschlussprüefig vor d'Schneider & Herr Adam!",
+            clip: null,
+            playerResponse: "Ich stah bis zum Schluss — gib mer das Diplom!",
+            playerClip: "thenerean_stah_bis_schluss"
+        },
+        mechanics: {
+            platforms: true,
+            duckObstacles: true,
+            lavaPits: true,
+            pitTheme: "lava",
+            sprintPads: true,
+            platformStyle: "auditorium_bridge"
+        },
         preBossEncounter: {
             speaker: "Monika Schneider & Herr Adam",
             avatar: "assets/sprites/adam_avatar.png",
