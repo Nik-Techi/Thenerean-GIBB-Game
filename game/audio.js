@@ -227,6 +227,80 @@ class SoundManager {
         } catch (e) {}
     }
 
+    playSprint() {
+        if (!this.enabled || !this.ctx) return;
+        try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.type = 'triangle';
+            const now = this.ctx.currentTime;
+            osc.frequency.setValueAtTime(260, now);
+            osc.frequency.exponentialRampToValueAtTime(820, now + 0.16);
+            gain.gain.setValueAtTime(0.18, now);
+            gain.gain.linearRampToValueAtTime(0.005, now + 0.18);
+            osc.start(now);
+            osc.stop(now + 0.18);
+        } catch (e) {}
+    }
+
+    playLavaSplash() {
+        if (!this.enabled || !this.ctx) return;
+        try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.type = 'sawtooth';
+            const now = this.ctx.currentTime;
+            osc.frequency.setValueAtTime(210, now);
+            osc.frequency.exponentialRampToValueAtTime(55, now + 0.28);
+            gain.gain.setValueAtTime(0.24, now);
+            gain.gain.linearRampToValueAtTime(0.005, now + 0.30);
+            osc.start(now);
+            osc.stop(now + 0.30);
+        } catch (e) {}
+    }
+
+    playPowerUp() {
+        if (!this.enabled || !this.ctx) return;
+        try {
+            const now = this.ctx.currentTime;
+            const notes = [523.25, 659.25, 783.99, 1046.5];
+            notes.forEach((freq, i) => {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, now + i * 0.045);
+                gain.gain.setValueAtTime(0.16, now + i * 0.045);
+                gain.gain.exponentialRampToValueAtTime(0.005, now + i * 0.045 + 0.14);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now + i * 0.045);
+                osc.stop(now + i * 0.045 + 0.15);
+            });
+        } catch (e) {}
+    }
+
+    playPause() {
+        if (!this.enabled || !this.ctx) return;
+        try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.type = 'sine';
+            const now = this.ctx.currentTime;
+            osc.frequency.setValueAtTime(480, now);
+            osc.frequency.setValueAtTime(640, now + 0.05);
+            gain.gain.setValueAtTime(0.14, now);
+            gain.gain.linearRampToValueAtTime(0.005, now + 0.11);
+            osc.start(now);
+            osc.stop(now + 0.11);
+        } catch (e) {}
+    }
+
     /**
      * Play a voice clip. Supports overlapping simultaneous clips cleanly
      * so rapid meme-spam & fast boss combat banter never cut each other off!

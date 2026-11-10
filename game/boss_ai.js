@@ -669,6 +669,7 @@ const BossAI = {
         p.blockCooldown = 0;
         p.megaEnergy = Math.min(p.maxMegaEnergy, p.megaEnergy + BOSS_TUNING.perfectBlockEnergy);
         this.updateBars();
+        if (this.registerCombo) this.registerCombo(2);
 
         window.soundManager.playBlockSfx();
         window.soundManager.playClip('thenerean_niemert_verbi');

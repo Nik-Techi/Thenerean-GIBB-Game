@@ -5,7 +5,9 @@ Ein humorvolles 2D-Action-Game über Thenerean Selvabankumar, der an der Berufss
 ---
 
 ## 🕹️ Features
-- **4 Lehrjahre & 6 Level:** Vom GIBB-Vorplatz über Klassenzimmer 302, Sporthalle und Serverraum bis zum grossen EFZ-Abschluss-Auditorium.
+- **4 Lehrjahre & 6 Level mit Spezial-Mechaniken & Mini-Boss („Average GIBB Schüler“):** Vom GIBB-Vorplatz über Klassenzimmer 302, Sporthalle und Serverraum bis zum grossen EFZ-Abschluss-Auditorium — mit Sprint-Pads (`S` / `D×2`), Duck-Hindernissen (`CTRL`), Jump-and-Run-Plattformen (inkl. beweglicher Plattformen ab Level 5) über Lava-Gruben ab Level 3–6, strategischen Boss-Arena-Plattformen, einem Mini-Boss („Average GIBB Schüler“) vor dem Endboss sowie einer überarbeiteten 2D Comic-Arcade Lobby.
+- **Pause-Menü, Save-System & Highscores (`localStorage`):** Mit `ESC`, `P` oder dem `⏸`-Button jederzeit pausieren, neu starten oder ins Hauptmenü zurückkehren. Abgeschlossene Lehrjahre speichern automatisch Bestnote, Bestzeit und höchste Kombo.
+- **Kombo-System & Energy-Rush Power-Up:** Sauberes Ausweichen, Ducken, Hindernis-Clear und Perfekt-Blocks erhöhen den Kombo-Zähler (Bonuspunkte auf Note & Mega-Energie). Eingesammelte Energy-Drinks aktivieren den **⚡ Energy-Rush** (6 Sekunden lang **1.5× Angriffsschaden** + doppelt so schnelle Cooldown-/Energie-Regeneration).
 - **30-Sekunden Cinematic Intro:** Humorvoller Rückblick auf Thenereans 4 Lehrjahre mit originalen Video- und Tonaufnahmen.
 - **Echte Audio-Zitate & Memes:** 
   - *"Silvankumar, ist der Thenerean da?!"*
@@ -14,7 +16,7 @@ Ein humorvolles 2D-Action-Game über Thenerean Selvabankumar, der an der Berufss
   - *"Da git es nüt z dischputiere! Gang auf die Platz!"*
   - *"Da hast du 20 Frisbees!"*
 - **Kampfsystem & Demo-Modus:**
-  - `E`: Gesetzestext geradeaus schleudern (28 DMG).
+  - `E`: Gesetzestext geradeaus schleudern (28 DMG, fairer Cooldown von 0.4s gegen unendliches Spammen).
   - `Q` / `Shift`: **„ICH STAH DOCH DA!“** Mega-Schockwelle abfeuern (70 DMG).
   - `F`: **„DA HAST DU 20 FRISBEES!“** 20-Frisbee-Salve mit Original-Sound abfeuern.
   - `R`: **Schild-Block:** Thenerean aktiviert ein taktisches Schild mit Energie-Aura (*„Niemert chunt an mir verbi!“* / *„Ich stah bis zum Schluss!“*) und wehrt Angriffe komplett ab (0 Schaden).
@@ -34,7 +36,7 @@ Ein humorvolles 2D-Action-Game über Thenerean Selvabankumar, der an der Berufss
 - **Mobile Touch-Steuerung & Android APK:**
   - Vollwertige **`Thenerean_Selvabankumar.apk`** für Android-Smartphones (vollständig offline, keine Berechtigungen, natives Vollbild).
   - Ergonomische On-Screen Touch-Buttons:
-    - **Linker Daumen:** `◀ LINKS` und `RECHTS ▶` für flüssige Bewegung.
+    - **Linker Daumen:** `◀ LINKS`, `RECHTS ▶` und `⚡ SPRINT` für flüssige Bewegung & Turbo-Boost.
     - **Rechter Daumen:** Großer grüner `▲ SPRUNG`-Button, `💨 DUCK` (Ducken), `🛡️ BLOCK` (Schild), `📜 GESETZ`, `⚡ MEGA` und `🎯 20 FRISB`.
   - **Mobile-Friendly & bisschen einfacher:**
     - Intelligentes **Jump-Buffering**: Tippen kurz vor dem Boden springt nahtlos beim Aufkommen ab.
@@ -69,9 +71,11 @@ Das Spiel öffnet sich automatisch im Browser unter `http://localhost:8080`.
 | --- | --- |
 | `A` / `D` oder `←` / `→` | Laufen (kein Zwangs-Lauf) |
 | `LEERTASTE` | Springen / Dialog weiter |
-| `CTRL` | Ducken (weicht hohen Angriffen aus) |
+| `CTRL` | Ducken (weicht hohen Angriffen & Schranken aus) |
+| `S` oder `D×2` | Sprint-Boost aktivieren |
 | `R` | Schild-Block (*„Niemert chunt an mir verbi!“*). Kurz vor dem Treffer gedrückt = **Perfekt-Block** |
 | `E` / Linksklick | Gesetzestext werfen (28 DMG) |
 | `Q` / `Shift` | „ICH STAH DOCH DA!“ Mega-Schockwelle (70 DMG) |
 | `F` | „Da hast du 20 Frisbees!“ (20x Salve) |
+| `ESC` / `P` | Spiel pausieren / fortsetzen |
 | `F11` oder ⛶ Button | Vollbild ein/aus |

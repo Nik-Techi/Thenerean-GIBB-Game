@@ -125,6 +125,13 @@ class Game {
         this.radialFlashTimer = 0;
         this.shoutAvatarTimer = 0;
         this.frisbeeTimers = [];
+        this.fixedAccumulator = 0;
+        this.isPaused = false;
+        this.comboCount = 0;
+        this.maxCombo = 0;
+        this.damageVignetteTimer = 0;
+        this.lastDamageReason = null;
+        this.saveData = this.loadSaveData();
 
         // Player Physics & Combat Stats
         this.player = {
@@ -140,6 +147,7 @@ class Game {
             jumpBuffered: false,
             groundY: 530,
             isGrounded: true,
+            standingPlatform: null,
             hp: 100,
             maxHp: 100,
             score: 5.5,
@@ -147,12 +155,16 @@ class Game {
             maxMegaEnergy: 100,
             frisbeeCooldown: 0,
             maxFrisbeeCooldown: 140,
+            lawBookCooldown: 0,
+            maxLawBookCooldown: 24,
             isBlocking: false,
             blockTimer: 0,
             blockCooldown: 0,
             maxBlockCooldown: 48,
             isDucking: false,
             invulnerableTime: 0,
+            hitFlash: 0,
+            powerTimer: 0,
             attackAnimTimer: 0,
             banterTimer: 240,
             stunTimer: 0,
@@ -235,6 +247,12 @@ class Game {
             scoreVal: document.getElementById('score-val'),
             timeVal: document.getElementById('time-val'),
             btnDemoExit: document.getElementById('btn-demo-exit'),
+            btnPauseToggle: document.getElementById('btn-pause-toggle'),
+            hudStatusPills: document.getElementById('hud-status-pills'),
+            hudComboPill: document.getElementById('hud-combo-pill'),
+            hudComboVal: document.getElementById('hud-combo-val'),
+            hudPowerPill: document.getElementById('hud-power-pill'),
+            hudPowerSec: document.getElementById('hud-power-sec'),
 
             bossHudBanner: document.getElementById('boss-hud-banner'),
             bossHudAvatar: document.getElementById('boss-hud-avatar'),
@@ -252,10 +270,10 @@ class Game {
             demoDmgVal: document.getElementById('demo-dmg-val'),
 
             abilityDock: document.getElementById('ability-dock'),
-            slotMega: document.getElementById('slot-mega'),
+            slotGesetz: document.getElementById('slot-gesetz'), slotMega: document.getElementById('slot-mega'),
             slotFrisbee: document.getElementById('slot-frisbee'),
             slotShield: document.getElementById('slot-shield'),
-            hudEnergyFill: document.getElementById('hud-energy-fill'),
+            hudGesetzFill: document.getElementById('hud-gesetz-fill'), hudEnergyFill: document.getElementById('hud-energy-fill'),
             hudFrisbeeFill: document.getElementById('hud-frisbee-fill'),
             hudShieldFill: document.getElementById('hud-shield-fill'),
             controlHintPill: document.getElementById('control-hint-pill'),
@@ -270,6 +288,8 @@ class Game {
             touchBtnAttack: document.getElementById('touch-btn-attack'),
             touchBtnMega: document.getElementById('touch-btn-mega'),
             touchBtnFrisbee: document.getElementById('touch-btn-frisbee'),
+            touchBtnSprint: document.getElementById('touch-btn-sprint'),
+            touchGesetzFill: document.getElementById('touch-gesetz-fill'),
             touchShieldFill: document.getElementById('touch-shield-fill'),
             touchMegaFill: document.getElementById('touch-mega-fill'),
             touchFrisbeeFill: document.getElementById('touch-frisbee-fill'),
@@ -306,10 +326,21 @@ class Game {
             screenLvlSelect: document.getElementById('screen-level-select'),
             screenStory: document.getElementById('screen-story'),
             screenWin: document.getElementById('screen-win'),
+            screenPause: document.getElementById('screen-pause'),
             screenLose: document.getElementById('screen-lose'),
             screenVictory: document.getElementById('screen-victory'),
+            winDesc: document.getElementById('win-desc'),
             winGrade: document.getElementById('win-grade'),
             winHp: document.getElementById('win-hp'),
+            winTime: document.getElementById('win-time'),
+            winCombo: document.getElementById('win-combo'),
+            btnNextLvl: document.getElementById('btn-next-lvl'),
+            pauseLevelInfo: document.getElementById('pause-level-info'),
+            loseBadge: document.getElementById('lose-badge'),
+            loseTitle: document.getElementById('lose-title'),
+            loseReason: document.getElementById('lose-reason'),
+            loseQuote: document.getElementById('lose-quote'),
+            campaignSummary: document.getElementById('campaign-summary'),
 
             introImg: document.getElementById('intro-img'),
             introStepTitle: document.getElementById('intro-step-title'),
@@ -357,7 +388,11 @@ class Game {
         }
         if (this.platforms) {
             for (const plat of this.platforms) {
-                if (plat.offsetY != null) plat.y = newGroundY - plat.offsetY;
+                if (plat.moveAxis === 'y' && plat.baseOffsetY != null) {
+                    plat.y = (newGroundY - plat.baseOffsetY) + Math.sin(this.animClock * (plat.moveSpeed || 2) + (plat.phase || 0)) * (plat.moveAmp || 0);
+                } else if (plat.offsetY != null) {
+                    plat.y = newGroundY - plat.offsetY;
+                }
             }
         }
         if (this.boss) {
@@ -417,20 +452,35 @@ class Game {
                 if (e.code === 'Space' || e.key === 'Escape' || e.key === 'Enter') {
                     this.skipIntro();
                 }
+            } else if (this.state === GAME_STATE.MENU) {
+                if (e.key === 'Escape') {
+                    if (this.ui.screenLvlSelect && !this.ui.screenLvlSelect.classList.contains('hidden')) {
+                        this.ui.screenLvlSelect.classList.add('hidden');
+                        this.ui.screenMenu.classList.remove('hidden');
+                    } else if (this.ui.screenStory && !this.ui.screenStory.classList.contains('hidden')) {
+                        this.ui.screenStory.classList.add('hidden');
+                        this.ui.screenMenu.classList.remove('hidden');
+                    }
+                }
+            } else if (!e.repeat && (e.key === 'Escape' || lower === 'p') && this.canPause()) {
+                e.preventDefault();
+                this.togglePause();
+            } else if (this.isPaused) {
+                return;
             } else if (this.state === GAME_STATE.PRE_BOSS_DIALOGUE) {
                 if (e.code === 'Space' || e.key === 'Enter') {
                     this.advancePreBossDialogue();
                 }
             } else if (this.state === GAME_STATE.DEMO) {
-                if (e.key === 'Escape') this.exitDemoMode();
                 if (e.code === 'Space') this.playerJump();
-                if (lower === 'e') this.playerAttackLawBook();
+                if (!e.repeat && lower === 'e') this.playerAttackLawBook();
                 if (lower === 'q' || e.code === 'ShiftLeft') this.playerAttackMegaShout();
                 if (lower === 'f') this.playerAttackFrisbeeVolley();
                 if (lower === 'r') this.playerBlock();
+                if (lower === 's' || lower === 'x') this.triggerSprintBurst(75);
             } else if ((this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT) && !this.isPlayerStunned()) {
                 if (e.code === 'Space') this.playerJump();
-                if (lower === 'e') this.playerAttackLawBook();
+                if (!e.repeat && lower === 'e') this.playerAttackLawBook();
                 if (lower === 'q' || e.code === 'ShiftLeft') this.playerAttackMegaShout();
                 if (lower === 'f') this.playerAttackFrisbeeVolley();
                 if (lower === 'r') this.playerBlock();
@@ -452,6 +502,7 @@ class Game {
         });
 
         canvas.addEventListener('mousedown', (e) => {
+            if (this.isPaused) return;
             if (this.state === GAME_STATE.OPENING) {
                 window.soundManager.initWebAudio();
                 this.finishOpening();
@@ -519,6 +570,16 @@ class Game {
             this.ui.btnDemoExit.addEventListener('click', () => this.exitDemoMode());
         }
 
+        if (this.ui.btnPauseToggle) {
+            this.ui.btnPauseToggle.addEventListener('click', () => this.togglePause());
+        }
+        const btnPauseResume = document.getElementById('btn-pause-resume');
+        const btnPauseRestart = document.getElementById('btn-pause-restart');
+        const btnPauseMenu = document.getElementById('btn-pause-menu');
+        if (btnPauseResume) btnPauseResume.addEventListener('click', () => this.togglePause(false));
+        if (btnPauseRestart) btnPauseRestart.addEventListener('click', () => this.restartCurrentLevel());
+        if (btnPauseMenu) btnPauseMenu.addEventListener('click', () => this.returnToMenu());
+
         document.getElementById('btn-skip-intro').addEventListener('click', () => this.skipIntro());
 
         document.getElementById('btn-level-select').addEventListener('click', () => {
@@ -533,13 +594,23 @@ class Game {
         });
 
         document.getElementById('btn-story').addEventListener('click', () => {
+            window.soundManager.initWebAudio();
             this.ui.screenMenu.classList.add('hidden');
             this.ui.screenStory.classList.remove('hidden');
+            this.showCharacter(this.activeCharacter || 'thenerean');
         });
 
         document.getElementById('btn-close-story').addEventListener('click', () => {
+            window.soundManager.stopAllClips();
             this.ui.screenStory.classList.add('hidden');
             this.ui.screenMenu.classList.remove('hidden');
+        });
+
+        document.querySelectorAll('.chars-tab[data-char]').forEach((tab) => {
+            tab.addEventListener('click', () => {
+                window.soundManager.initWebAudio();
+                this.showCharacter(tab.getAttribute('data-char'), true);
+            });
         });
 
         document.getElementById('btn-next-lvl').addEventListener('click', () => {
@@ -622,7 +693,7 @@ class Game {
 
         if (this.ui.slotShield) {
             this.ui.slotShield.addEventListener('click', () => {
-                if (this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) {
+                if (!this.isPaused && (this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) && !this.isPlayerStunned()) {
                     this.playerBlock();
                 }
             });
@@ -715,8 +786,17 @@ class Game {
 
         bindTouchBtn(this.ui.touchBtnFrisbee,
             () => {
-                if ((this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) && !this.isPlayerStunned()) {
+                if (!this.isPaused && (this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) && !this.isPlayerStunned()) {
                     this.playerAttackFrisbeeVolley();
+                }
+            },
+            null
+        );
+
+        bindTouchBtn(this.ui.touchBtnSprint,
+            () => {
+                if (!this.isPaused && (this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) && !this.isPlayerStunned()) {
+                    this.triggerSprintBurst(90);
                 }
             },
             null
@@ -764,9 +844,306 @@ class Game {
         });
     }
 
+    // =====================================================================
+    // CHARAKTER-GALERIE (Lobby): Thenerean, Monika Schneider, Herr Adam
+    // =====================================================================
+    getCharacterData() {
+        return {
+            thenerean: {
+                accent: '#2ed573',
+                role: 'HELD • INFORMATIK-LERNENDER EFZ',
+                name: 'Thenerean Selvabankumar',
+                sprite: 'assets/sprites/characters/thenerean_idle.png',
+                bio: 'Will seine 4-jährige Informatik-Lehre an der GIBB Bern mit Bestnote 6.0 abschliessen. Kämpft mit Gesetzestexten, dem legendären "ICH STAH DOCH DA!"-Schrei und 20 Frisbees gegen Verspätungs-Verwarnungen, Mini-Bosse und ein überhitztes TukTuk.',
+                stats: [['WAFFE', '📜 Gesetz'], ['SPEZIAL', '⚡ Mega-Schrei'], ['ZIEL', '🏆 EFZ 6.0']],
+                sounds: [
+                    { clip: 'thenerean_stah', text: '"Herr Adam, ich stah doch da!"' },
+                    { clip: 'thenerean_niemert_verbi', text: '"Niemert chunt an mir verbi!"' },
+                    { clip: 'thenerean_chasch_mi_schlah', text: '"Du hesch gmeint du chasch mi schlah?!"' },
+                    { clip: 'thenerean_entschuldigung', text: '"Entschuldigung, ich bi 4 Minuten später!"' },
+                    { clip: 'thenerean_tuktuk', text: '🛺 TukTuk-Fahrt in Sri Lanka' }
+                ]
+            },
+            monika: {
+                accent: '#a55eea',
+                role: 'BOSS • HERRSCHERIN DER PÜNKTLICHKEIT',
+                name: 'Monika Schneider',
+                sprite: 'assets/sprites/characters/monika_idle.png',
+                bio: 'Selbst 2.54 Sekunden Verspätung werden nicht toleriert. Wirft rote Karten im Bogen, schickt Absenzen-Wellen über den Boden und schreit in Phase 2 "Gang uf d\'Platz!" — nur ein Schild-Block hilft.',
+                stats: [['ANGRIFF', '🟥 Rote Karten'], ['PHASE 2', '📢 Schrei'], ['SCHWÄCHE', '🛡 Perfekt-Block']],
+                sounds: [
+                    { clip: 'monika_puenktlichkeit', text: '"Pünktlichkeit ist oberste Gebot!"' },
+                    { clip: 'monika_gang_uf_platz', text: '"Gang uf die Platz!"' },
+                    { clip: 'monika_zspaet', text: '"Z\'spät — da git es nüt z\'dischputiere!"' },
+                    { clip: 'monika_ganz_ruhig', text: '"Ganz ruhig bleiben!"' },
+                    { clip: 'monika_schuld', text: '🎙️ Original-Spruch: "Schuld"' }
+                ]
+            },
+            adam: {
+                accent: '#00d2d3',
+                role: 'BOSS • SPORTLEHRER & ABSENZEN-PRÜFER',
+                name: 'Herr Adam',
+                sprite: 'assets/sprites/characters/adam_idle.png',
+                bio: 'Prüft die Absenzenliste mit fliegenden Sportgeräten. Frisbee-Salven oben (ducken) oder unten (springen), springende Basketbälle und in Phase 2 ein Pfiff, der dich betäubt.',
+                stats: [['ANGRIFF', '🥏 Frisbees'], ['PHASE 2', '📯 Pfiff'], ['SCHWÄCHE', '⬇ Ducken']],
+                sounds: [
+                    { clip: 'adam_silvankumar', text: '"Silvankumar, ist der Thenerean da?!"' },
+                    { clip: 'adam_20_frisbees', text: '"Da hast du 20 Frisbees!"' },
+                    { clip: 'adam_frisbee', text: '🥏 Frisbee-Wurf' },
+                    { clip: 'adam_hilf_mir', text: '"Hilf mir!"' }
+                ]
+            }
+        };
+    }
+
+    showCharacter(key, playIntro = false) {
+        const data = this.getCharacterData()[key];
+        if (!data) return;
+        this.activeCharacter = key;
+
+        const card = document.querySelector('.chars-card');
+        if (card) card.style.setProperty('--char-accent', data.accent);
+
+        document.querySelectorAll('.chars-tab[data-char]').forEach((t) => {
+            t.classList.toggle('active', t.getAttribute('data-char') === key);
+        });
+
+        const sprite = document.getElementById('char-sprite');
+        if (sprite) {
+            sprite.src = data.sprite;
+            sprite.alt = data.name;
+            sprite.classList.remove('char-pop');
+            void sprite.offsetWidth;
+            sprite.classList.add('char-pop');
+        }
+        const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+        setText('char-role', data.role);
+        setText('char-name', data.name);
+        setText('char-bio', data.bio);
+
+        const stats = document.getElementById('char-stats');
+        if (stats) {
+            stats.innerHTML = '';
+            data.stats.forEach(([label, val]) => {
+                const box = document.createElement('div');
+                box.className = 'chars-stat';
+                const l = document.createElement('span');
+                l.textContent = label;
+                const v = document.createElement('strong');
+                v.textContent = val;
+                box.append(l, v);
+                stats.appendChild(box);
+            });
+        }
+
+        const list = document.getElementById('char-sounds');
+        if (list) {
+            list.innerHTML = '';
+            data.sounds.forEach((snd) => {
+                const btn = document.createElement('button');
+                btn.className = 'char-sound-btn';
+                const ico = document.createElement('span');
+                ico.className = 'play-ico';
+                ico.textContent = '▶';
+                const label = document.createElement('span');
+                label.textContent = snd.text;
+                btn.append(ico, label);
+                btn.addEventListener('click', () => this.playCharacterSound(btn, snd.clip));
+                list.appendChild(btn);
+            });
+        }
+
+        if (playIntro && data.sounds.length > 0 && list && list.firstChild) {
+            this.playCharacterSound(list.firstChild, data.sounds[0].clip);
+        }
+    }
+
+    playCharacterSound(btn, clip) {
+        window.soundManager.initWebAudio();
+        window.soundManager.stopAllClips();
+        document.querySelectorAll('.char-sound-btn.playing').forEach((b) => {
+            b.classList.remove('playing');
+            const ico = b.querySelector('.play-ico');
+            if (ico) ico.textContent = '▶';
+        });
+        btn.classList.add('playing');
+        const ico = btn.querySelector('.play-ico');
+        if (ico) ico.textContent = '🔊';
+        const reset = () => {
+            btn.classList.remove('playing');
+            if (ico) ico.textContent = '▶';
+        };
+        window.soundManager.playClip(clip, reset);
+        clearTimeout(this.charSoundTimeout);
+        this.charSoundTimeout = setTimeout(reset, 6000);
+    }
+
+    loadSaveData() {
+        try {
+            const raw = localStorage.getItem('thenerean_gibb_save_v1');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed && typeof parsed === 'object' && parsed.levels) {
+                    return parsed;
+                }
+            }
+        } catch (e) {}
+        return { levels: {} };
+    }
+
+    saveLevelProgress(levelId, grade, timeSec, maxCombo) {
+        if (!levelId || levelId <= 0) return;
+        if (!this.saveData || !this.saveData.levels) this.saveData = { levels: {} };
+        const key = String(levelId);
+        const prev = this.saveData.levels[key];
+        const bestGrade = prev ? Math.max(prev.bestGrade || 0, grade) : grade;
+        const clampedTime = Math.max(1, Math.round(timeSec || 0));
+        const bestTime = prev && prev.bestTime > 0 ? Math.min(prev.bestTime, clampedTime) : clampedTime;
+        const bestCombo = prev ? Math.max(prev.bestCombo || 0, maxCombo || 0) : (maxCombo || 0);
+        this.saveData.levels[key] = {
+            cleared: true,
+            bestGrade: +bestGrade.toFixed(1),
+            bestTime: bestTime,
+            bestCombo: bestCombo
+        };
+        try {
+            localStorage.setItem('thenerean_gibb_save_v1', JSON.stringify(this.saveData));
+        } catch (e) {}
+    }
+
+    formatTime(sec) {
+        const s = Math.max(0, Math.round(sec || 0));
+        return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+    }
+
+    canPause() {
+        return this.state === GAME_STATE.RUNNING ||
+            this.state === GAME_STATE.PRE_BOSS_WALK ||
+            this.state === GAME_STATE.PRE_BOSS_DIALOGUE ||
+            this.state === GAME_STATE.BOSS_FIGHT ||
+            this.state === GAME_STATE.DEMO;
+    }
+
+    togglePause(forceState = null) {
+        if (!this.canPause()) return;
+        const next = forceState !== null ? Boolean(forceState) : !this.isPaused;
+        if (next === this.isPaused) return;
+        this.isPaused = next;
+
+        if (this.ui.screenPause) {
+            this.ui.screenPause.classList.toggle('hidden', !this.isPaused);
+        }
+        if (this.ui.pauseLevelInfo && this.level) {
+            const modeTag = this.state === GAME_STATE.DEMO
+                ? 'Trainingsraum'
+                : (this.boss && this.boss.isMiniBoss ? 'Mini-Boss' : (this.state === GAME_STATE.BOSS_FIGHT ? 'Bosskampf' : 'Parcours'));
+            this.ui.pauseLevelInfo.textContent = `${this.level.yearText} — ${this.level.name} (${modeTag})`;
+        }
+        if (this.ui.btnPauseToggle) {
+            this.ui.btnPauseToggle.textContent = this.isPaused ? '▶' : '⏸';
+        }
+        window.soundManager.playPause();
+        window.soundManager.setMusicQuietMode(
+            this.isPaused ||
+            this.state === GAME_STATE.BOSS_FIGHT ||
+            this.state === GAME_STATE.PRE_BOSS_WALK ||
+            this.state === GAME_STATE.PRE_BOSS_DIALOGUE
+        );
+        this.updateTouchControlsVisibility();
+    }
+
+    restartCurrentLevel() {
+        this.isPaused = false;
+        if (this.ui.screenPause) this.ui.screenPause.classList.add('hidden');
+        if (this.ui.btnPauseToggle) this.ui.btnPauseToggle.textContent = '⏸';
+        if (this.state === GAME_STATE.DEMO) {
+            this.startDemoMode();
+        } else {
+            this.startLevel(this.currentLevelIndex);
+        }
+    }
+
+    registerCombo(points = 1, customLabel = null) {
+        this.comboCount += points;
+        if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
+
+        if (this.comboCount >= 3 && (this.comboCount === 3 || this.comboCount % 5 === 0)) {
+            this.player.score = Math.min(6.0, +(this.player.score + 0.1).toFixed(1));
+            this.player.megaEnergy = Math.min(this.player.maxMegaEnergy, this.player.megaEnergy + 10);
+            this.updateBars();
+            this.addFloatingText(
+                customLabel || `🔥 ${this.comboCount}× KOMBO! +0.1 NOTE!`,
+                this.player.x + this.player.w * 0.5,
+                this.player.y - 46,
+                '#ffd32a',
+                21
+            );
+        } else if (customLabel) {
+            this.addFloatingText(customLabel, this.player.x + this.player.w * 0.5, this.player.y - 34, '#2ed573', 19);
+        }
+        this.updateComboAndPowerHUD();
+    }
+
+    updateComboAndPowerHUD() {
+        const showCombo = this.comboCount >= 2;
+        const showPower = this.player.powerTimer > 0;
+        const inPlay = this.state === GAME_STATE.RUNNING ||
+            this.state === GAME_STATE.PRE_BOSS_WALK ||
+            this.state === GAME_STATE.PRE_BOSS_DIALOGUE ||
+            this.state === GAME_STATE.BOSS_FIGHT ||
+            this.state === GAME_STATE.DEMO;
+
+        if (this.ui.hudComboPill && this.ui.hudComboVal) {
+            this.ui.hudComboPill.classList.toggle('hidden', !showCombo);
+            if (showCombo) this.ui.hudComboVal.textContent = String(this.comboCount);
+        }
+        if (this.ui.hudPowerPill && this.ui.hudPowerSec) {
+            this.ui.hudPowerPill.classList.toggle('hidden', !showPower);
+            if (showPower) {
+                const sec = Math.max(1, Math.ceil(this.player.powerTimer / 60));
+                this.ui.hudPowerSec.textContent = `${sec}s`;
+            }
+        }
+        if (this.ui.hudStatusPills) {
+            this.ui.hudStatusPills.classList.toggle('hidden', !inPlay || (!showCombo && !showPower));
+        }
+    }
+
+    resetRunStats() {
+        this.isPaused = false;
+        this.fixedAccumulator = 0;
+        this.elapsedSeconds = 0;
+        if (this.ui.timeVal) this.ui.timeVal.textContent = '00:00';
+        if (this.ui.screenPause) this.ui.screenPause.classList.add('hidden');
+        if (this.ui.btnPauseToggle) this.ui.btnPauseToggle.textContent = '⏸';
+
+        this.player.hp = 100;
+        this.player.maxHp = 100;
+        this.player.score = 5.5;
+        this.player.megaEnergy = 100;
+        this.player.frisbeeCooldown = 0;
+        this.player.lawBookCooldown = 0;
+        this.player.isBlocking = false;
+        this.player.blockTimer = 0;
+        this.player.blockCooldown = 0;
+        this.player.isDucking = false;
+        this.player.invulnerableTime = 0;
+        this.player.hitFlash = 0;
+        this.player.powerTimer = 0;
+        this.player.attackAnimTimer = 0;
+        this.player.sprintTimer = 0;
+        this.player.standingPlatform = null;
+
+        this.comboCount = 0;
+        this.maxCombo = 0;
+        this.damageVignetteTimer = 0;
+        this.lastDamageReason = null;
+        this.updateComboAndPowerHUD();
+    }
+
     updateTouchControlsVisibility() {
         const inAction = this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO || this.state === GAME_STATE.PRE_BOSS_WALK;
-        const showTouch = Boolean(!this.isExplicitDesktop && this.touchControlsEnabled && inAction && this.ui.touchOverlay);
+        const showTouch = Boolean(!this.isExplicitDesktop && this.touchControlsEnabled && inAction && !this.isPaused && this.ui.touchOverlay);
         if (this.ui.touchOverlay) {
             this.ui.touchOverlay.classList.toggle('hidden', !showTouch);
         }
@@ -778,11 +1155,14 @@ class Game {
 
     returnToMenu() {
         this.clearFrisbeeTimers();
+        this.isPaused = false;
         window.soundManager.stopAllClips();
         this.hideGameplayHUDs();
         this.ui.screenLose.classList.add('hidden');
         this.ui.screenVictory.classList.add('hidden');
         this.ui.screenWin.classList.add('hidden');
+        if (this.ui.screenPause) this.ui.screenPause.classList.add('hidden');
+        if (this.ui.btnPauseToggle) this.ui.btnPauseToggle.textContent = '⏸';
         this.ui.screenMenu.classList.remove('hidden');
         this.state = GAME_STATE.MENU;
         window.soundManager.setMusicQuietMode(false);
@@ -793,6 +1173,7 @@ class Game {
         this.ui.bar.classList.add('hidden');
         this.ui.bossHudBanner.classList.add('hidden');
         this.ui.demoComboHud.classList.add('hidden');
+        if (this.ui.hudStatusPills) this.ui.hudStatusPills.classList.add('hidden');
         this.ui.abilityDock.classList.add('hidden');
         this.ui.controlHintPill.classList.add('hidden');
         this.ui.dialogueBox.classList.add('hidden');
@@ -804,7 +1185,25 @@ class Game {
     populateLevelSelectGrid() {
         const grid = document.querySelector('.level-grid');
         grid.innerHTML = '';
+        const savedLevels = (this.saveData && this.saveData.levels) || {};
+        let clearedCount = 0;
+        let gradeSum = 0;
+
         LEVELS_CONFIG.forEach((lvl, idx) => {
+            const rec = savedLevels[String(lvl.id)];
+            if (rec && rec.cleared) {
+                clearedCount++;
+                gradeSum += rec.bestGrade || 5.5;
+            }
+            const statusHtml = (rec && rec.cleared)
+                ? `<div class="lvl-save-row">
+                        <span class="lvl-cleared-badge">✅ BESTANDEN</span>
+                        <span class="lvl-grade-pill">⭐ Note ${(rec.bestGrade || 5.5).toFixed(1)}</span>
+                        <span class="lvl-grade-pill">⏱️ ${this.formatTime(rec.bestTime || 0)}</span>
+                        ${rec.bestCombo > 0 ? `<span class="lvl-grade-pill">🔥 ${rec.bestCombo}×</span>` : ''}
+                   </div>`
+                : `<div class="lvl-save-row"><span class="lvl-open-badge">Noch nicht abgeschlossen</span></div>`;
+
             const div = document.createElement('div');
             div.className = 'level-btn-card';
             div.innerHTML = `
@@ -814,6 +1213,7 @@ class Game {
                     <div class="lvl-title">${lvl.name}</div>
                     <div class="lvl-feature-tag">${lvl.featureTag || ''}</div>
                     <p>${lvl.hasMiniBoss ? 'Mini-Boss + ' : ''}Boss: <strong>${lvl.bossName}</strong> (HP: ${lvl.bossHP})</p>
+                    ${statusHtml}
                 </div>
             `;
             div.addEventListener('click', () => {
@@ -823,6 +1223,15 @@ class Game {
             });
             grid.appendChild(div);
         });
+
+        if (this.ui.campaignSummary) {
+            if (clearedCount === 0) {
+                this.ui.campaignSummary.textContent = `Fortschritt: 0 / ${LEVELS_CONFIG.length} Lehrjahre abgeschlossen • Hole dir Note 6.0!`;
+            } else {
+                const avg = (gradeSum / clearedCount).toFixed(1);
+                this.ui.campaignSummary.textContent = `Fortschritt: ${clearedCount} / ${LEVELS_CONFIG.length} Lehrjahre abgeschlossen • Ø Bestnote: ${avg}`;
+            }
+        }
     }
 
     // =====================================================================
@@ -849,16 +1258,9 @@ class Game {
         this.player.vx = 0;
         this.player.vy = 0;
         this.player.facing = 1;
-        this.player.hp = 100;
-        this.player.maxHp = 100;
-        this.player.megaEnergy = 100;
-        this.player.frisbeeCooldown = 0;
         this.player.isGrounded = true;
-        this.player.invulnerableTime = 0;
-        this.player.attackAnimTimer = 0;
-
-        this.player.sprintTimer = 0;
         this.player.lastSafeWorldX = 140;
+        this.resetRunStats();
         this.worldDistance = 0;
         this.obstacles = [];
         this.collectibles = [];
@@ -926,7 +1328,7 @@ class Game {
 
         this.obstacles.push({ x: 430, y: groundPos - 54, w: 54, h: 54, type: 'warning_letter', cleared: false });
         this.obstacles.push({ x: 590, y: groundPos - 54, w: 54, h: 54, type: 'frisbee', cleared: false });
-        this.collectibles.push({ x: 510, y: groundPos - 140, w: 46, h: 46, type: 'coffee', collected: false });
+        this.collectibles.push({ x: 510, y: groundPos - 140, w: 46, h: 46, type: 'energy_drink', collected: false });
 
         this.showMemePopup("TRAININGSRAUM GESTARTET! TESTE [E], [Q] & [F]!");
     }
@@ -936,11 +1338,14 @@ class Game {
     }
 
     updateDemoMode(dt) {
+        if (this.player.sprintTimer > 0) this.player.sprintTimer--;
+        const speedMult = this.player.sprintTimer > 0 ? 1.52 : 1.0;
+
         if (this.keys['arrowright'] || this.keys['d']) {
-            this.player.vx = this.player.speed;
+            this.player.vx = this.player.speed * speedMult;
             this.player.facing = 1;
         } else if (this.keys['arrowleft'] || this.keys['a']) {
-            this.player.vx = -this.player.speed;
+            this.player.vx = -this.player.speed * speedMult;
             this.player.facing = -1;
         } else {
             this.player.vx = 0;
@@ -974,7 +1379,7 @@ class Game {
         this.player.hp = 100;
         this.player.megaEnergy = 100;
         if (this.player.frisbeeCooldown > 0) this.player.frisbeeCooldown = Math.max(0, this.player.frisbeeCooldown - 5);
-        if (this.player.blockCooldown > 0) this.player.blockCooldown = 0;
+        if (this.player.blockCooldown > 0) this.player.blockCooldown = 0; if (this.player.lawBookCooldown > 0) this.player.lawBookCooldown = Math.max(0, this.player.lawBookCooldown - 2);
         this.updateBars();
 
         if (this.boss) {
@@ -1263,16 +1668,10 @@ class Game {
         this.player.vx = 0;
         this.player.vy = 0;
         this.player.facing = 1;
-        this.player.hp = 100;
-        this.player.megaEnergy = 100;
-        this.player.frisbeeCooldown = 0;
         this.player.isGrounded = true;
-        this.player.invulnerableTime = 0;
-        this.player.attackAnimTimer = 0;
         this.player.banterTimer = 220;
-
-        this.player.sprintTimer = 0;
         this.player.lastSafeWorldX = 110;
+        this.resetRunStats();
         this.worldDistance = 0;
         this.obstacles = [];
         this.collectibles = [];
@@ -1327,8 +1726,50 @@ class Game {
 
     triggerSprintBurst(frames = 90) {
         this.player.sprintTimer = Math.max(this.player.sprintTimer || 0, frames);
+        window.soundManager.playSprint();
         this.spawnBurst(this.player.x + this.player.w * 0.3, this.player.groundY - 18, 10, '#00d2d3', 5, 16);
         this.addFloatingText("⚡ SPRINT!", this.player.x + this.player.w * 0.5, this.player.y - 16, '#00d2d3', 18);
+    }
+
+    updateMovingPlatforms() {
+        for (const plat of this.platforms) {
+            if (!plat.moveAxis) {
+                plat.dx = 0;
+                plat.dy = 0;
+                continue;
+            }
+            const oldX = plat.x;
+            const oldY = plat.y;
+            if (plat.moveAxis === 'x' && plat.baseX != null) {
+                plat.x = plat.baseX + Math.sin(this.animClock * (plat.moveSpeed || 2.0) + (plat.phase || 0)) * (plat.moveAmp || 28);
+            } else if (plat.moveAxis === 'y' && plat.baseOffsetY != null) {
+                plat.y = (this.player.groundY - plat.baseOffsetY) + Math.sin(this.animClock * (plat.moveSpeed || 2.0) + (plat.phase || 0)) * (plat.moveAmp || 22);
+            }
+            plat.dx = plat.x - oldX;
+            plat.dy = plat.y - oldY;
+        }
+    }
+
+    spawnArenaPlatforms() {
+        this.platforms = this.platforms.filter(p => !p.isArena);
+        if (!this.level || !this.level.mechanics || !this.level.mechanics.platforms) return;
+        const gy = this.player.groundY;
+        const pStyle = this.level.mechanics.platformStyle || 'concrete';
+        const baseWorld = this.worldDistance;
+
+        const p1X = baseWorld + Math.round(canvas.width * 0.12);
+        const off1 = 78;
+        this.platforms.push({
+            x: p1X, baseX: p1X, y: gy - off1, offsetY: off1, baseOffsetY: off1,
+            w: 136, h: 20, style: pStyle, isArena: true
+        });
+
+        const p2X = baseWorld + Math.round(canvas.width * 0.28);
+        const off2 = 128;
+        this.platforms.push({
+            x: p2X, baseX: p2X, y: gy - off2, offsetY: off2, baseOffsetY: off2,
+            w: 136, h: 20, style: pStyle, isArena: true
+        });
     }
 
     generateLevelObstacles() {
@@ -1393,7 +1834,15 @@ class Game {
                 const plat2W = 138;
                 const off2 = 136;
                 const plat2Y = gy - off2;
-                this.platforms.push({ x: plat2X, y: plat2Y, offsetY: off2, w: plat2W, h: 22, style: pStyle });
+                const movingX = this.level.id >= 5;
+                this.platforms.push({
+                    x: plat2X, baseX: plat2X, y: plat2Y, offsetY: off2, baseOffsetY: off2, w: plat2W, h: 22,
+                    style: pStyle,
+                    moveAxis: movingX ? 'x' : null,
+                    moveAmp: movingX ? 28 : 0,
+                    moveSpeed: movingX ? 2.1 : 0,
+                    phase: Math.random() * Math.PI * 2
+                });
                 addCollectible(plat2X + plat2W * 0.5 - 21, plat2Y - 56, 'energy_drink');
             }
             return pitX + pitW + 135;
@@ -1422,7 +1871,15 @@ class Game {
                     const pw = 190;
                     const offP = 96;
                     const py = gy - offP;
-                    this.platforms.push({ x: cursor, y: py, offsetY: offP, w: pw, h: 22, style: pStyle });
+                    const movingY = this.level.id >= 5;
+                    this.platforms.push({
+                        x: cursor, baseX: cursor, y: py, offsetY: offP, baseOffsetY: offP, w: pw, h: 22,
+                        style: pStyle,
+                        moveAxis: movingY ? 'y' : null,
+                        moveAmp: movingY ? 20 : 0,
+                        moveSpeed: movingY ? 2.0 : 0,
+                        phase: Math.random() * Math.PI * 2
+                    });
                     addCollectible(cursor + 32, py - 56);
                     addCollectible(cursor + 115, py - 56, 'coffee');
                     addGroundObs(cursor + 74);
@@ -1463,8 +1920,12 @@ class Game {
 
     // ATTACK 1 (E): Straight-ahead Gesetzestext (no upward arc!)
     playerAttackLawBook() {
+        if (this.player.lawBookCooldown > 0) return;
+        this.player.lawBookCooldown = this.state === GAME_STATE.DEMO ? 10 : this.player.maxLawBookCooldown;
+        this.updateBars();
         this.player.attackAnimTimer = 18;
         const dir = this.player.facing || 1;
+        const dmgMult = this.player.powerTimer > 0 ? 1.5 : 1.0;
         this.projectiles.push({
             x: dir > 0 ? this.player.x + this.player.w * 0.72 : this.player.x - 20,
             y: this.player.y + this.player.h * 0.38,
@@ -1474,9 +1935,9 @@ class Game {
             h: 44,
             type: 'law_book',
             isPlayer: true,
-            damage: 28,
+            damage: Math.round(28 * dmgMult),
             rotation: 0,
-            trailColor: '#45aaf2'
+            trailColor: this.player.powerTimer > 0 ? '#00d2d3' : '#45aaf2'
         });
 
         window.soundManager.playThrow();
@@ -1509,6 +1970,7 @@ class Game {
         this.showMemePopup("HERR ADAM, ICH STAH DOCH DA!");
 
         const dir = this.player.facing || 1;
+        const dmgMult = this.player.powerTimer > 0 ? 1.5 : 1.0;
         const cx = this.player.x + this.player.w * 0.55;
         const cy = this.player.y + this.player.h * 0.42;
         this.shockwaves.push({ x: cx, y: cy, radius: 16, maxRadius: 210, color: '#ffd32a', alpha: 0.9 });
@@ -1523,7 +1985,7 @@ class Game {
             h: 72,
             type: 'mega_beam',
             isPlayer: true,
-            damage: 70,
+            damage: Math.round(70 * dmgMult),
             rotation: 0,
             trailColor: '#ffd32a'
         });
@@ -1566,8 +2028,10 @@ class Game {
         this.shockwaves.push({ x: cx, y: cy, radius: 14, maxRadius: 130, color: '#ff4757', alpha: 0.8 });
 
         const dir = this.player.facing || 1;
+        const dmgMult = this.player.powerTimer > 0 ? 1.5 : 1.0;
         for (let i = 0; i < 20; i++) {
             const tid = setTimeout(() => {
+                if (this.isPaused) return;
                 if (this.state !== GAME_STATE.RUNNING && this.state !== GAME_STATE.BOSS_FIGHT && this.state !== GAME_STATE.DEMO) return;
                 this.player.attackAnimTimer = Math.max(this.player.attackAnimTimer, 10);
                 const spreadY = (Math.random() - 0.5) * 3.4;
@@ -1581,7 +2045,7 @@ class Game {
                     h: 28,
                     type: 'frisbee',
                     isPlayer: true,
-                    damage: 12,
+                    damage: Math.round(12 * dmgMult),
                     rotation: Math.random() * Math.PI * 2,
                     trailColor: '#ff4757'
                 });
@@ -1653,6 +2117,7 @@ class Game {
         this.spawnBurst(bx, by, 12, '#ffd32a', 4, 16);
         this.shockwaves.push({ x: bx, y: by, radius: 10, maxRadius: 95, color: '#00d2d3', alpha: 0.85 });
         this.addFloatingText("GEBLOCKT! 🛡️ 0 DMG", this.player.x + this.player.w * 0.5, this.player.y - 12, '#00d2d3', 24);
+        this.registerCombo(1);
 
         if (Math.random() > 0.45) {
             const blockCounters = ['thenerean_chasch_mi_schlah', 'thenerean_niemert_verbi'];
@@ -1720,6 +2185,7 @@ class Game {
             banterTimer: 110
         };
         this.duoPartner = null;
+        this.spawnArenaPlatforms();
         this.updateBossHUD();
         this.showMemePopup('⚡ MINI-BOSS TAUCHT AUF!');
     }
@@ -1730,6 +2196,7 @@ class Game {
         this.duoPartner = null;
         this.hazards = [];
         this.projectiles = [];
+        this.platforms = this.platforms.filter(p => !p.isArena);
         this.ui.bossHudBanner.classList.add('hidden');
         this.player.hp = Math.min(this.player.maxHp, this.player.hp + 30);
         this.player.megaEnergy = Math.min(this.player.maxMegaEnergy, this.player.megaEnergy + 50);
@@ -1756,6 +2223,7 @@ class Game {
         const isDuo = this.level.bossType === 'duo';
         const isTukTuk = this.level.bossType === 'tuktuk_gpu';
         this.resetCombatExtras();
+        this.spawnArenaPlatforms();
         const bossH = Math.round((isTukTuk ? 195 : 162) * scale);
         const bossW = Math.round((isTukTuk ? 175 : 94) * scale);
 
@@ -1852,7 +2320,10 @@ class Game {
             this.screenShake = 18;
             this.radialFlashTimer = 14;
             const fightY = Math.min(this.player.groundY - 96, Math.max(235, canvas.height * 0.50));
-            this.addFloatingText("KAMPF BEGINNT!", canvas.width / 2, fightY, '#ff4757', 32);
+            const bannerText = (this.boss && this.boss.isMiniBoss)
+                ? "⚡ MINI-BOSS: AN MIR CHUNNSCH NÖD VERBI!"
+                : `⚔️ ${this.boss ? this.boss.name.toUpperCase() : 'KAMPF BEGINNT!'}`;
+            this.addFloatingText(bannerText, canvas.width / 2, fightY, '#ff4757', 26);
         }
     }
 
@@ -1912,6 +2383,8 @@ class Game {
     // MAIN UPDATE LOOP
     // =====================================================================
     update(dt) {
+        if (this.isPaused) return;
+
         this.animClock += dt;
 
         // Clamp dt for tab-switch stability
@@ -1936,15 +2409,44 @@ class Game {
             return;
         }
 
-        this.elapsedSeconds += safeDt;
-        const minutes = Math.floor(this.elapsedSeconds / 60);
-        const seconds = Math.floor(this.elapsedSeconds % 60);
-        this.ui.timeVal.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        const isActiveStage = this.state === GAME_STATE.RUNNING ||
+            this.state === GAME_STATE.PRE_BOSS_WALK ||
+            this.state === GAME_STATE.PRE_BOSS_DIALOGUE ||
+            this.state === GAME_STATE.BOSS_FIGHT ||
+            this.state === GAME_STATE.DEMO;
+
+        if (isActiveStage) {
+            this.elapsedSeconds += safeDt;
+            const minutes = Math.floor(this.elapsedSeconds / 60);
+            const seconds = Math.floor(this.elapsedSeconds % 60);
+            this.ui.timeVal.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
 
         if (this.screenShake > 0) this.screenShake *= 0.88;
         if (this.screenShake < 0.2) this.screenShake = 0;
         if (this.radialFlashTimer > 0) this.radialFlashTimer--;
+        if (this.damageVignetteTimer > 0) this.damageVignetteTimer--;
         if (this.player.attackAnimTimer > 0) this.player.attackAnimTimer--;
+        if (this.player.hitFlash > 0) this.player.hitFlash--;
+
+        if (this.player.powerTimer > 0) {
+            this.player.powerTimer--;
+            if (this.player.powerTimer % 4 === 0) {
+                this.particles.push({
+                    x: this.player.x + Math.random() * this.player.w,
+                    y: this.player.y + Math.random() * this.player.h,
+                    vx: (Math.random() - 0.5) * 1.5,
+                    vy: -1.5 - Math.random() * 1.5,
+                    life: 16,
+                    maxLife: 16,
+                    color: Math.random() > 0.5 ? '#00d2d3' : '#ffd32a',
+                    size: 5
+                });
+            }
+            if (this.player.powerTimer === 0 || this.player.powerTimer % 30 === 0) {
+                this.updateComboAndPowerHUD();
+            }
+        }
 
         if (this.shoutAvatarTimer > 0) {
             this.shoutAvatarTimer--;
@@ -1957,22 +2459,30 @@ class Game {
             }
         }
 
-        if (this.player.megaEnergy < this.player.maxMegaEnergy) {
-            this.player.megaEnergy = Math.min(this.player.maxMegaEnergy, this.player.megaEnergy + 0.16);
-        }
-        if (this.player.frisbeeCooldown > 0) {
-            this.player.frisbeeCooldown--;
-        }
-        if (this.player.blockTimer > 0) {
-            this.player.blockTimer--;
-            if (this.player.blockTimer <= 0) {
-                this.player.isBlocking = false;
+        if (isActiveStage) {
+            const powered = this.player.powerTimer > 0;
+            const regenRate = powered ? 0.32 : 0.16;
+            if (this.player.megaEnergy < this.player.maxMegaEnergy) {
+                this.player.megaEnergy = Math.min(this.player.maxMegaEnergy, this.player.megaEnergy + regenRate);
             }
+            const extraTick = powered && (Math.floor(this.player.powerTimer) % 2 === 0) ? 1 : 0;
+            if (this.player.frisbeeCooldown > 0) {
+                this.player.frisbeeCooldown = Math.max(0, this.player.frisbeeCooldown - 1 - extraTick);
+            }
+            if (this.player.lawBookCooldown > 0) {
+                this.player.lawBookCooldown = Math.max(0, this.player.lawBookCooldown - 1 - extraTick);
+            }
+            if (this.player.blockTimer > 0) {
+                this.player.blockTimer--;
+                if (this.player.blockTimer <= 0) {
+                    this.player.isBlocking = false;
+                }
+            }
+            if (this.player.blockCooldown > 0) {
+                this.player.blockCooldown--;
+            }
+            this.updateBars();
         }
-        if (this.player.blockCooldown > 0) {
-            this.player.blockCooldown--;
-        }
-        this.updateBars();
 
         if (this.state === GAME_STATE.RUNNING) {
             this.updateRunning(safeDt);
@@ -2020,6 +2530,7 @@ class Game {
     onLavaFall(pit) {
         const dmg = this.touchControlsEnabled ? 12 : 18;
         this.screenShake = 16;
+        window.soundManager.playLavaSplash();
         this.spawnBurst(this.player.x + this.player.w * 0.5, this.player.groundY + 10, 26, '#ff6348', 8, 24);
         this.spawnBurst(this.player.x + this.player.w * 0.5, this.player.groundY + 6, 16, '#ffd32a', 6, 18);
         this.onPlayerHit(dmg, 'lava');
@@ -2038,6 +2549,14 @@ class Game {
     }
 
     updateRunning(dt) {
+        const prevStanding = this.player.standingPlatform;
+        this.player.standingPlatform = null;
+        this.updateMovingPlatforms();
+        if (prevStanding && this.player.vy >= 0) {
+            if (prevStanding.dx) this.player.x += prevStanding.dx;
+            if (prevStanding.dy) this.player.y += prevStanding.dy;
+        }
+
         if (this.player.sprintTimer > 0) this.player.sprintTimer--;
         const speedMult = this.player.sprintTimer > 0 ? 1.52 : 1.0;
 
@@ -2098,13 +2617,16 @@ class Game {
         const footLeftScreen = this.player.x + 14;
         const footRightScreen = this.player.x + this.player.w - 14;
         for (const plat of this.platforms) {
+            if (plat.isArena) continue;
             const px0 = plat.x - this.worldDistance;
             const px1 = px0 + plat.w;
             if (footRightScreen > px0 && footLeftScreen < px1) {
-                if (this.player.vy >= 0 && prevBottom <= plat.y + 14 && (this.player.y + this.player.h) >= plat.y) {
+                const snapSlack = prevStanding === plat ? 4 : 0;
+                if (this.player.vy >= 0 && prevBottom <= plat.y + 18 && (this.player.y + this.player.h) >= plat.y - snapSlack) {
                     this.player.y = plat.y - this.player.h;
                     this.player.vy = 0;
                     this.player.isGrounded = true;
+                    this.player.standingPlatform = plat;
                     if (this.player.jumpBuffered) {
                         this.player.jumpBuffered = false;
                         this.playerJump();
@@ -2169,6 +2691,7 @@ class Game {
                     if (standHit && !crouchHit) {
                         obs.duckDodged = true;
                         this.addFloatingText("💨 SAUBER GEDUCKT!", this.player.x + this.player.w * 0.5, this.player.y + 14, '#2ed573', 19);
+                        this.registerCombo(1);
                     }
                 }
                 if (this.checkCollision(this.player.x + 12, pHitY, this.player.w - 24, pHitH, screenX + 4, obs.y + 4, obs.w - 8, obs.h - 8)) {
@@ -2203,6 +2726,7 @@ class Game {
 
     onObstacleDodged() {
         this.addFloatingText("Ausgewichen!", this.player.x + 25, this.player.y - 22, '#2ed573', 18);
+        this.registerCombo(1);
         const dodgeClips = [
             'thenerean_stah',
             'thenerean_254',
@@ -2241,9 +2765,30 @@ class Game {
             this.startPreBossDialogue();
         }
 
+        const prevBottom = this.player.y + this.player.h;
         this.player.y += this.player.vy;
         this.player.vy += 0.68;
-        if (this.player.y >= this.player.groundY - this.player.h) {
+        this.player.isGrounded = false;
+        this.player.standingPlatform = null;
+
+        const footLeftScreen = this.player.x + 14;
+        const footRightScreen = this.player.x + this.player.w - 14;
+        for (const plat of this.platforms) {
+            if (!plat.isArena) continue;
+            const px0 = plat.x - this.worldDistance;
+            const px1 = px0 + plat.w;
+            if (footRightScreen > px0 && footLeftScreen < px1) {
+                if (this.player.vy >= 0 && prevBottom <= plat.y + 16 && (this.player.y + this.player.h) >= plat.y) {
+                    this.player.y = plat.y - this.player.h;
+                    this.player.vy = 0;
+                    this.player.isGrounded = true;
+                    this.player.standingPlatform = plat;
+                    break;
+                }
+            }
+        }
+
+        if (!this.player.isGrounded && this.player.y >= this.player.groundY - this.player.h) {
             this.player.y = this.player.groundY - this.player.h;
             this.player.vy = 0;
             this.player.isGrounded = true;
@@ -2255,11 +2800,14 @@ class Game {
     }
 
     updateBossFight(dt) {
+        if (this.player.sprintTimer > 0) this.player.sprintTimer--;
+        const speedMult = this.player.sprintTimer > 0 ? 1.42 : 1.0;
+
         if (this.keys['arrowright'] || this.keys['d']) {
-            this.player.vx = this.player.speed;
+            this.player.vx = this.player.speed * speedMult;
             this.player.facing = 1;
         } else if (this.keys['arrowleft'] || this.keys['a']) {
-            this.player.vx = -this.player.speed;
+            this.player.vx = -this.player.speed * speedMult;
             this.player.facing = -1;
         } else {
             this.player.vx = 0;
@@ -2270,17 +2818,42 @@ class Game {
         }
 
         this.applyPlayerStatus();
+        const prevBottom = this.player.y + this.player.h;
         this.player.x += this.player.vx;
         if (this.player.x < 28) this.player.x = 28;
         if (this.player.x > canvas.width - 110) this.player.x = canvas.width - 110;
 
         if (this.player.isGrounded && Math.abs(this.player.vx) > 2 && Math.random() > 0.65) {
-            this.spawnRunDust(this.player.x + this.player.w * 0.3, this.player.groundY);
+            this.spawnRunDust(this.player.x + this.player.w * 0.3, this.player.y + this.player.h);
         }
 
         this.player.y += this.player.vy;
         this.player.vy += 0.68;
-        if (this.player.y >= this.player.groundY - this.player.h) {
+        this.player.isGrounded = false;
+        this.player.standingPlatform = null;
+
+        const footLeftScreen = this.player.x + 14;
+        const footRightScreen = this.player.x + this.player.w - 14;
+        for (const plat of this.platforms) {
+            if (!plat.isArena) continue;
+            const px0 = plat.x - this.worldDistance;
+            const px1 = px0 + plat.w;
+            if (footRightScreen > px0 && footLeftScreen < px1) {
+                if (this.player.vy >= 0 && prevBottom <= plat.y + 16 && (this.player.y + this.player.h) >= plat.y) {
+                    this.player.y = plat.y - this.player.h;
+                    this.player.vy = 0;
+                    this.player.isGrounded = true;
+                    this.player.standingPlatform = plat;
+                    if (this.player.jumpBuffered) {
+                        this.player.jumpBuffered = false;
+                        this.playerJump();
+                    }
+                    break;
+                }
+            }
+        }
+
+        if (!this.player.isGrounded && this.player.y >= this.player.groundY - this.player.h) {
             this.player.y = this.player.groundY - this.player.h;
             this.player.vy = 0;
             this.player.isGrounded = true;
@@ -2503,6 +3076,7 @@ class Game {
                     if (standingHit && !crouchHit) {
                         p.duckDodged = true;
                         this.addFloatingText("GEDUCKT! 💨", this.player.x + this.player.w * 0.5, this.player.y + this.player.h * 0.25, '#2ed573', 20);
+                        this.registerCombo(1);
                         if (Math.random() > 0.5) window.soundManager.playClip('thenerean_stah');
                     }
                 }
@@ -2532,8 +3106,14 @@ class Game {
     // Returns true if the hit landed (false while invulnerable).
     onPlayerHit(damage, reason) {
         if (this.player.invulnerableTime > 0) return false;
+        this.lastDamageReason = reason || this.lastDamageReason;
+        this.comboCount = 0;
+        this.updateComboAndPowerHUD();
+
         this.player.hp = Math.max(0, this.player.hp - damage);
         this.player.invulnerableTime = 52;
+        this.player.hitFlash = 10;
+        this.damageVignetteTimer = 16;
         this.player.score = Math.max(1.0, +(this.player.score - 0.2).toFixed(1));
         this.screenShake = 13;
         this.updateBars();
@@ -2549,13 +3129,48 @@ class Game {
     }
 
     onCollectItem(type) {
+        if (type === 'energy_drink') {
+            window.soundManager.playPowerUp();
+            this.player.hp = Math.min(this.player.maxHp, this.player.hp + 15);
+            this.player.megaEnergy = Math.min(this.player.maxMegaEnergy, this.player.megaEnergy + 45);
+            this.player.powerTimer = 360; // 6s @ 60Hz: 1.5x Attack DMG + 2x Cooldown/Energy Recovery
+            this.player.score = Math.min(6.0, +(this.player.score + 0.1).toFixed(1));
+            this.updateBars();
+            this.updateComboAndPowerHUD();
+            this.addFloatingText("⚡ ENERGY-RUSH! 1.5× DMG (6s)", this.player.x + 25, this.player.y - 16, '#00d2d3', 20);
+            this.spawnBurst(this.player.x + this.player.w * 0.5, this.player.y + this.player.h * 0.35, 16, '#00d2d3', 6, 20);
+            this.spawnBurst(this.player.x + this.player.w * 0.5, this.player.y + this.player.h * 0.35, 10, '#ffd32a', 5, 18);
+            return;
+        }
+
         window.soundManager.playCollect();
+        if (type === 'law_book') {
+            this.player.hp = Math.min(this.player.maxHp, this.player.hp + 10);
+            this.player.megaEnergy = Math.min(this.player.maxMegaEnergy, this.player.megaEnergy + 25);
+            this.player.lawBookCooldown = 0;
+            this.player.score = Math.min(6.0, +(this.player.score + 0.1).toFixed(1));
+            this.updateBars();
+            this.addFloatingText("📘 +GESETZ & ENERGIE!", this.player.x + 25, this.player.y - 10, '#45aaf2', 19);
+            this.spawnBurst(this.player.x + this.player.w * 0.5, this.player.y + this.player.h * 0.35, 12, '#45aaf2', 5, 18);
+            return;
+        }
+
+        if (type === 'diploma_shard') {
+            this.player.hp = Math.min(this.player.maxHp, this.player.hp + 25);
+            this.player.megaEnergy = Math.min(this.player.maxMegaEnergy, this.player.megaEnergy + 45);
+            this.player.score = Math.min(6.0, +(this.player.score + 0.2).toFixed(1));
+            this.updateBars();
+            this.addFloatingText("🏆 +EFZ DIPLOM-BOOST!", this.player.x + 25, this.player.y - 10, '#ffd32a', 20);
+            this.spawnBurst(this.player.x + this.player.w * 0.5, this.player.y + this.player.h * 0.35, 14, '#ffd32a', 5.5, 20);
+            return;
+        }
+
         this.player.hp = Math.min(this.player.maxHp, this.player.hp + 20);
         this.player.megaEnergy = Math.min(this.player.maxMegaEnergy, this.player.megaEnergy + 35);
         this.player.score = Math.min(6.0, +(this.player.score + 0.1).toFixed(1));
         this.updateBars();
 
-        const label = type === 'diploma_shard' ? "+EFZ Boost!" : (type === 'coffee' ? "+Kaffee & Energie!" : "+EFZ Energie!");
+        const label = type === 'coffee' ? "+Kaffee & Energie!" : "+EFZ Energie!";
         this.addFloatingText(label, this.player.x + 25, this.player.y - 10, '#2ed573', 19);
         this.spawnBurst(this.player.x + this.player.w * 0.5, this.player.y + this.player.h * 0.35, 12, '#2ed573', 5, 18);
     }
@@ -2623,6 +3238,25 @@ class Game {
             this.ui.touchBtnBlock.classList.toggle('ready', sReady);
             this.ui.touchBtnBlock.classList.toggle('cooldown', !sReady);
         }
+
+        const gesetzReady = this.player.lawBookCooldown <= 0
+            ? 100
+            : Math.max(0, 100 - (this.player.lawBookCooldown / this.player.maxLawBookCooldown) * 100);
+        const gReady = this.player.lawBookCooldown <= 0;
+        if (this.ui.hudGesetzFill) {
+            this.ui.hudGesetzFill.style.width = `${gesetzReady}%`;
+        }
+        if (this.ui.slotGesetz) {
+            this.ui.slotGesetz.classList.toggle('ready', gReady);
+            this.ui.slotGesetz.classList.toggle('cooldown', !gReady);
+        }
+        if (this.ui.touchGesetzFill) {
+            this.ui.touchGesetzFill.style.width = `${gesetzReady}%`;
+        }
+        if (this.ui.touchBtnAttack) {
+            this.ui.touchBtnAttack.classList.toggle('ready', gReady);
+            this.ui.touchBtnAttack.classList.toggle('cooldown', !gReady);
+        }
     }
 
     updateBossHUD() {
@@ -2650,11 +3284,31 @@ class Game {
 
     triggerLevelWin() {
         this.clearFrisbeeTimers();
+        this.isPaused = false;
         this.state = GAME_STATE.LEVEL_WIN;
+        if (this.ui.screenPause) this.ui.screenPause.classList.add('hidden');
+        if (this.ui.btnPauseToggle) this.ui.btnPauseToggle.textContent = '⏸';
         this.updateTouchControlsVisibility();
+        this.updateComboAndPowerHUD();
         this.ui.bossHudBanner.classList.add('hidden');
+
+        this.saveLevelProgress(this.level.id, this.player.score, this.elapsedSeconds, this.maxCombo);
+
         this.ui.winGrade.textContent = this.player.score.toFixed(1);
         this.ui.winHp.textContent = `${Math.round(this.player.hp)}%`;
+        if (this.ui.winTime) this.ui.winTime.textContent = this.formatTime(this.elapsedSeconds);
+        if (this.ui.winCombo) this.ui.winCombo.textContent = `${this.maxCombo}×`;
+        if (this.ui.winDesc) {
+            this.ui.winDesc.textContent = this.player.score >= 5.8
+                ? `Bestnote im ${this.level.yearText}! ${this.level.bossName} hat keine Chance gegen Thenerean!`
+                : `Stark durchgekämpft gegen ${this.level.bossName}! Das GIBB-Lehrjahr ist bestanden!`;
+        }
+        if (this.ui.btnNextLvl) {
+            this.ui.btnNextLvl.textContent = (this.currentLevelIndex + 1 < LEVELS_CONFIG.length)
+                ? 'NÄCHSTES LEHRJAHR ANTRETEN ▶'
+                : '🏆 EFZ-DIPLOM ABHOLEN ▶';
+        }
+
         this.ui.screenWin.classList.remove('hidden');
         window.soundManager.setMusicQuietMode(false);
         window.soundManager.playClip('thenerean_stah');
@@ -2662,9 +3316,47 @@ class Game {
 
     triggerGameOver() {
         this.clearFrisbeeTimers();
+        this.isPaused = false;
         this.state = GAME_STATE.GAME_OVER;
+        if (this.ui.screenPause) this.ui.screenPause.classList.add('hidden');
+        if (this.ui.btnPauseToggle) this.ui.btnPauseToggle.textContent = '⏸';
         this.updateTouchControlsVisibility();
+        this.updateComboAndPowerHUD();
         this.ui.bossHudBanner.classList.add('hidden');
+
+        const reason = this.lastDamageReason;
+        let badge = 'DISZIPLINAR-STOPP';
+        let title = '💀 VERWARNUNG ERHALTEN!';
+        let desc = 'Monika Schneider hat dich wegen Verspätung nach Hause geschickt!';
+        let quote = '"Pünktlichkeit ist oberste Gebot! Ohne Disziplin lernt man nicht!"';
+
+        if (reason === 'lava') {
+            badge = 'PARCOURS-UNFALL';
+            title = '🔥 IN DIE LAVA GEFALLEN!';
+            desc = `Im ${this.level.yearText} war die Lücke zu heiss! Nutze Sprint (S) + Plattformen für sichere Sprünge.`;
+            quote = '"Wer beim GIBB-Parcours zögert, landet in der Gefahrenzone!"';
+        } else if (reason === 'energy_can' || reason === 'laptop') {
+            badge = 'RIVALEN-DUELL';
+            title = '⚡ VOM GIBB SCHÜLER GESTOPPT!';
+            desc = 'Der Average GIBB Schüler hat dich mit Energy-Dosen & Laptops eingedeckt! Blocke mit [R] oder spring auf Plattformen!';
+            quote = '"Erst mal Energy exen — an mir chunnsch nöd verbi!"';
+        } else if (reason === 'tuktuk_charge' || reason === 'fire' || reason === 'broken_cable') {
+            badge = 'HARDWARE-CRASH';
+            title = '🛺 VOM TUKTUK ÜBERFAHREN!';
+            desc = 'Die überhitzte RTX-GPU hat zu stark zugeschlagen! Springe über das TukTuk und meide die Flammen!';
+            quote = '"Verdammti Maschine! Mini Grafikkarte brennt scho wieder!"';
+        } else if (reason === 'frisbee' || reason === 'basketball' || reason === 'whistle' || reason === 'whistle_wave') {
+            badge = 'SPORTHALLEN-K.O.';
+            title = '🥏 VON HERR ADAM ABGEWORFEN!';
+            desc = 'Herr Adams Sportgeräte waren schneller! Ducke dich bei hohen Würfen [CTRL] und kontere mit Perfekt-Block [R]!';
+            quote = '"Silvankumar, ist der Thenerean da?! Da hast du 20 Frisbees!"';
+        }
+
+        if (this.ui.loseBadge) this.ui.loseBadge.textContent = badge;
+        if (this.ui.loseTitle) this.ui.loseTitle.textContent = title;
+        if (this.ui.loseReason) this.ui.loseReason.textContent = desc;
+        if (this.ui.loseQuote) this.ui.loseQuote.textContent = quote;
+
         this.ui.screenLose.classList.remove('hidden');
         window.soundManager.setMusicQuietMode(false);
         window.soundManager.playClip('monika_zspaet');
@@ -2672,7 +3364,10 @@ class Game {
 
     triggerVictory() {
         this.clearFrisbeeTimers();
+        this.isPaused = false;
         this.state = GAME_STATE.VICTORY;
+        if (this.ui.screenPause) this.ui.screenPause.classList.add('hidden');
+        if (this.ui.btnPauseToggle) this.ui.btnPauseToggle.textContent = '⏸';
         this.hideGameplayHUDs();
         this.ui.screenVictory.classList.remove('hidden');
         window.soundManager.setMusicQuietMode(false);
@@ -2708,9 +3403,14 @@ class Game {
 
         // Layer 3: Foreground Ground Accent, Lava Pits, Boost Pads & Elevated Platforms
         this.drawGroundOverlay();
+        const inBossPhase = this.state === GAME_STATE.PRE_BOSS_WALK ||
+            this.state === GAME_STATE.PRE_BOSS_DIALOGUE ||
+            this.state === GAME_STATE.BOSS_FIGHT;
         if (this.state === GAME_STATE.RUNNING) {
             this.drawLavaPits();
             this.drawBoostPads();
+            this.drawPlatforms();
+        } else if (inBossPhase) {
             this.drawPlatforms();
         }
         this.drawHazards();
@@ -2755,6 +3455,19 @@ class Game {
         }
 
         ctx.restore();
+
+        // Screen-Edge Red Damage Vignette on Player Hit
+        if (this.damageVignetteTimer > 0) {
+            const alpha = Math.min(0.45, (this.damageVignetteTimer / 16) * 0.42);
+            const vGrad = ctx.createRadialGradient(
+                canvas.width * 0.5, canvas.height * 0.5, Math.min(canvas.width, canvas.height) * 0.28,
+                canvas.width * 0.5, canvas.height * 0.5, Math.max(canvas.width, canvas.height) * 0.72
+            );
+            vGrad.addColorStop(0, 'rgba(255, 56, 56, 0)');
+            vGrad.addColorStop(1, `rgba(255, 45, 65, ${alpha})`);
+            ctx.fillStyle = vGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
     }
 
     getStageImageKey() {
@@ -3007,8 +3720,25 @@ class Game {
             sx = 1.0 - 0.014 * breathe;
         }
 
+        // Energy-Rush Halo behind Thenerean
+        if (p.powerTimer > 0) {
+            ctx.save();
+            const pulse = 1.0 + Math.sin(this.animClock * 14) * 0.08;
+            const cy = footY - p.h * 0.48;
+            const r = p.h * 0.72 * pulse;
+            const pGrad = ctx.createRadialGradient(footX, cy, r * 0.15, footX, cy, r);
+            pGrad.addColorStop(0, 'rgba(0, 210, 211, 0.42)');
+            pGrad.addColorStop(0.55, 'rgba(255, 211, 42, 0.24)');
+            pGrad.addColorStop(1, 'rgba(255, 211, 42, 0)');
+            ctx.fillStyle = pGrad;
+            ctx.beginPath();
+            ctx.arc(footX, cy, r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
         const sprite = images[poseKey] || images.thenerean_idle || images.thenerean_hero;
-        this.drawCharacterSprite(sprite, footX, footY, p.h, p.facing, 0, sx, sy, tilt);
+        this.drawCharacterSprite(sprite, footX, footY, p.h, p.facing, p.hitFlash, sx, sy, tilt);
 
         if (p.isBlocking) {
             this.drawShieldAura(footX, footY, p.h, p.facing);
@@ -3029,9 +3759,13 @@ class Game {
             ctx.restore();
         }
 
-        const nameLabel = p.isBlocking ? "Thenerean [BLOCK]" : (p.isDucking ? "Thenerean [DUCK]" : (p.sprintTimer > 0 ? "Thenerean ⚡ SPRINT" : "Thenerean"));
+        const powerTag = p.powerTimer > 0 ? ' [⚡1.5×]' : '';
+        const baseLabel = p.isBlocking
+            ? "Thenerean [BLOCK]"
+            : (p.isDucking ? "Thenerean [DUCK]" : (p.sprintTimer > 0 ? "Thenerean ⚡ SPRINT" : "Thenerean"));
+        const nameLabel = baseLabel + powerTag;
         const nameY = (p.isDucking && p.isGrounded) ? (p.y + p.h * 0.38) : (p.y - 14);
-        this.drawNamePill(nameLabel, footX, nameY, '#ffd32a');
+        this.drawNamePill(nameLabel, footX, nameY, p.powerTimer > 0 ? '#00d2d3' : '#ffd32a');
     }
 
     drawShieldAura(footX, footY, h, facing) {
@@ -3290,7 +4024,12 @@ class Game {
             server_rack:       { body: '#1e293b', top: '#0ea5e9', edge: '#00d2d3' },
             auditorium_bridge: { body: '#27272a', top: '#eab308', edge: '#ff4757' }
         };
+        const inBossPhase = this.state === GAME_STATE.PRE_BOSS_WALK ||
+            this.state === GAME_STATE.PRE_BOSS_DIALOGUE ||
+            this.state === GAME_STATE.BOSS_FIGHT;
+
         for (const plat of this.platforms) {
+            if (inBossPhase ? !plat.isArena : plat.isArena) continue;
             const sx = plat.x - this.worldDistance;
             if (sx > canvas.width + 80 || sx + plat.w < -80) continue;
             const pal = colors[plat.style] || colors.concrete;
@@ -3300,7 +4039,7 @@ class Game {
             ctx.roundRect(sx + 4, plat.y + 6, plat.w, plat.h, 8);
             ctx.fill();
             ctx.fillStyle = pal.body;
-            ctx.strokeStyle = '#11141e';
+            ctx.strokeStyle = plat.moveAxis ? '#00d2d3' : '#11141e';
             ctx.lineWidth = 3;
             ctx.beginPath();
             ctx.roundRect(sx, plat.y, plat.w, plat.h, 8);
@@ -3310,6 +4049,17 @@ class Game {
             ctx.fillRect(sx + 6, plat.y + 3, plat.w - 12, 6);
             ctx.fillStyle = pal.edge;
             ctx.fillRect(sx + 10, plat.y + plat.h - 6, plat.w - 20, 3);
+
+            // Visual indicator for moving platforms (x or y)
+            if (plat.moveAxis) {
+                ctx.fillStyle = '#00d2d3';
+                const pulse = 0.75 + 0.25 * Math.sin(this.animClock * 9 + (plat.phase || 0));
+                ctx.globalAlpha = pulse;
+                ctx.beginPath();
+                ctx.arc(sx + 14, plat.y + plat.h * 0.5, 4, 0, Math.PI * 2);
+                ctx.arc(sx + plat.w - 14, plat.y + plat.h * 0.5, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
             ctx.restore();
         }
     }
@@ -3377,8 +4127,14 @@ class Game {
                 // Soft glowing aura behind collectible
                 const pulse = 0.85 + 0.15 * Math.sin(this.animClock * 6);
                 ctx.save();
-                ctx.globalAlpha = 0.38;
-                ctx.fillStyle = col.type === 'coffee' ? '#ffa502' : (col.type === 'diploma_shard' ? '#ffd32a' : '#2ed573');
+                ctx.globalAlpha = col.type === 'energy_drink' ? 0.5 : 0.38;
+                ctx.fillStyle = col.type === 'coffee'
+                    ? '#ffa502'
+                    : (col.type === 'diploma_shard'
+                        ? '#ffd32a'
+                        : (col.type === 'energy_drink'
+                            ? '#00d2d3'
+                            : (col.type === 'law_book' ? '#45aaf2' : '#2ed573')));
                 ctx.beginPath();
                 ctx.arc(cx, cy, col.w * 0.65 * pulse, 0, Math.PI * 2);
                 ctx.fill();
@@ -3498,12 +4254,35 @@ class Game {
     }
 
     loop(timestamp) {
-        const dt = (timestamp - this.lastFrameTime) / 1000;
+        const rawDt = Math.max(0, (timestamp - this.lastFrameTime) / 1000);
         this.lastFrameTime = timestamp;
 
-        this.update(dt);
-        this.render();
+        const FIXED_STEP = 1 / 60;
+        const safeDt = Math.min(rawDt, 0.1);
+        const isActiveAction = !this.isPaused && (
+            this.state === GAME_STATE.RUNNING ||
+            this.state === GAME_STATE.PRE_BOSS_WALK ||
+            this.state === GAME_STATE.PRE_BOSS_DIALOGUE ||
+            this.state === GAME_STATE.BOSS_FIGHT ||
+            this.state === GAME_STATE.DEMO
+        );
 
+        if (isActiveAction) {
+            // Snap tiny 60Hz jitter cleanly to 1/60s while normalizing 120Hz/144Hz monitors to 60Hz physics
+            const normalizedDt = (safeDt > 0.0145 && safeDt < 0.0195) ? FIXED_STEP : safeDt;
+            this.fixedAccumulator = Math.min(this.fixedAccumulator + normalizedDt, FIXED_STEP * 5);
+            let substeps = 0;
+            while (this.fixedAccumulator >= FIXED_STEP && substeps < 5) {
+                this.update(FIXED_STEP);
+                this.fixedAccumulator -= FIXED_STEP;
+                substeps++;
+            }
+        } else {
+            this.fixedAccumulator = 0;
+            this.update(safeDt);
+        }
+
+        this.render();
         requestAnimationFrame((t) => this.loop(t));
     }
 }

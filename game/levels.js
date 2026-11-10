@@ -118,7 +118,7 @@ const LEVELS_CONFIG = [
             speaker: "Average GIBB Schüler",
             avatar: "assets/sprites/gibb_student_avatar.png",
             text: "Ey Thenerean! Bevor du zu Herr Adam gaahsch, muesch zerst an mir verbi — han grad en frische Energy!",
-            clip: null,
+            clip: "thenerean_sport_spaet",
             playerResponse: "Du hesch gmeint du chasch mi schlah?! Mach Platz!",
             playerClip: "thenerean_chasch_mi_schlah"
         },
@@ -177,7 +177,7 @@ const LEVELS_CONFIG = [
             speaker: "Average GIBB Schüler",
             avatar: "assets/sprites/gibb_student_avatar.png",
             text: "De Bode isch Lava, Kolleg! Und die Turnhall gehört hüt mir!",
-            clip: null,
+            clip: "thenerean_raste_aus",
             playerResponse: "Niemert chunt an mir verbi — ich gang dur d'Mitti!",
             playerClip: "thenerean_niemert_verbi"
         },
@@ -237,7 +237,7 @@ const LEVELS_CONFIG = [
             speaker: "Average GIBB Schüler",
             avatar: "assets/sprites/gibb_student_avatar.png",
             text: "Bro, mini Grafikkarte überhitzt de ganze Serverbode — fang mis Laptop ab!",
-            clip: null,
+            clip: "thenerean_gpu",
             playerResponse: "Verdammte Maschine! Ich will doch nur Gesetzestext!",
             playerClip: "thenerean_verdammt_maschine"
         },
@@ -297,7 +297,7 @@ const LEVELS_CONFIG = [
             speaker: "Average GIBB Schüler",
             avatar: "assets/sprites/gibb_student_avatar.png",
             text: "Nur wer mich schlaht dörf zur EFZ-Abschlussprüefig vor d'Schneider & Herr Adam!",
-            clip: null,
+            clip: "thenerean_chasch_mi_schlah",
             playerResponse: "Ich stah bis zum Schluss — gib mer das Diplom!",
             playerClip: "thenerean_stah_bis_schluss"
         },
