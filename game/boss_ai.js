@@ -24,45 +24,48 @@ const BOSS_TUNING = {
     comboDamageMult: 1.6,       // mega shout vs. stunned boss
     chargeStunFrames: 95,       // TukTuk overheats after a charge
     chargeBlockStunFrames: 120, // TukTuk stopped by a perfect block
-    playerStunFrames: 45        // whistle hit
+    playerStunFrames: 26        // whistle hit (short stun window)
 };
 
 // Telegraph length, warning text and voice line per attack
 const BOSS_ATTACKS = {
     card:       { telegraph: 18 },
     arc:        { telegraph: 30, warn: "ROTE KARTEN!" },
-    wave:       { telegraph: 36, warn: "ABSENZEN-WELLE! ⬆ SPRING!", clip: 'monika_puenktlichkeit' },
-    shout:      { telegraph: 40, warn: "\"GANG UF D'PLATZ!\" 🛡️ BLOCKEN!", clip: 'monika_gang_uf_platz' },
+    wave:       { telegraph: 36, warn: "ABSENZEN-WELLE! ⬆ SPRING!", clip: 'monika_puenktlichkeit', altClips: ['monika_zspaet', 'monika_passwort_buech'] },
+    shout:      { telegraph: 40, warn: "\"GANG UF D'PLATZ!\" 🛡️ BLOCKEN!", clip: 'monika_gang_uf_platz', altClips: ['monika_keine_kopfhoerer', 'monika_altstadt_lehre'] },
     frisbee:    { telegraph: 18 },
-    lane:       { telegraph: 34, clip: 'adam_20_frisbees' },
+    lane:       { telegraph: 34, clip: 'adam_20_frisbees', altClips: ['adam_setup_genehmigt'] },
     basketball: { telegraph: 30, warn: "BASKETBÄLLE! 🏀" },
-    whistle:    { telegraph: 38, warn: "PFIFF! ⬇ DUCKEN!", clip: 'adam_silvankumar' },
+    whistle:    { telegraph: 38, warn: "PFIFF! ⬇ DUCKEN!", clip: 'adam_strafe_verpasst', altClips: ['adam_silvankumar', 'adam_abwesend_sketch'] },
     cable:      { telegraph: 18 },
+    dual_cable: { telegraph: 24, warn: "DOPPEL-KABEL! ⚡", clip: 'tuktuk_taeschfresser_gpu', altClips: ['thenerean_grafikkarte'] },
     charge:     { telegraph: 48, warn: "TUKTUK RAST AN! ⬆ SPRING!", clip: 'thenerean_tuktuk' },
-    fire:       { telegraph: 34, warn: "GPU ÜBERHITZT! 🔥 AUSWEICHEN!", clip: 'thenerean_gpu' },
+    overclock_charge: { telegraph: 46, warn: "DOUBLE-TURBO! 2× SPRINGEN!", clip: 'tuktuk_gpu_melone', altClips: ['thenerean_verdammt_maschine'] },
+    fire:       { telegraph: 34, warn: "GPU ÜBERHITZT! 🔥 AUSWEICHEN!", clip: 'thenerean_gpu', altClips: ['tuktuk_taeschfresser_gpu'] },
     energy_can: { telegraph: 16 },
     laptop_arc: { telegraph: 28, warn: "LAPTOPS FLIEGEN! 💻" },
-    bag_high:   { telegraph: 34, warn: "ENERGY-SCHUSS OBEN! ⬇ DUCKEN!" },
-    desk_slide: { telegraph: 34, warn: "KABEL-WELLE! ⬆ SPRINGEN!" }
+    bag_high:   { telegraph: 34, warn: "FORTNITE ENERGY OBEN! ⬇ DUCKEN!", clip: 'student_tiktok_fortnite' },
+    desk_slide: { telegraph: 34, warn: "CRINGE-WELLE! ⬆ SPRINGEN!", clip: 'student_cringe_king' }
 };
 
 // Attack lists per boss type. Duplicates act as weights.
 const BOSS_PATTERNS = {
-    monika_miniboss: { p1: ['card', 'card', 'arc'],          p2: ['card', 'arc', 'wave'],               cooldown: [70, 100] },
-    monika:          { p1: ['card', 'arc', 'wave'],          p2: ['card', 'arc', 'wave', 'shout'],      cooldown: [62, 92] },
-    duo:             { p1: ['card', 'arc', 'wave'],          p2: ['arc', 'wave', 'shout'],              cooldown: [80, 115] },
-    adam_miniboss:   { p1: ['frisbee', 'frisbee', 'lane'],   p2: ['frisbee', 'lane', 'basketball'],     cooldown: [66, 96] },
-    adam:            { p1: ['frisbee', 'lane', 'lane'],      p2: ['lane', 'basketball', 'whistle', 'frisbee'], cooldown: [60, 90] },
-    duo_partner:     { p1: ['frisbee', 'lane'],              p2: ['lane', 'basketball', 'whistle'],     cooldown: [85, 120] },
-    tuktuk_gpu:      { p1: ['cable', 'cable', 'charge'],     p2: ['cable', 'charge', 'fire'],           cooldown: [64, 94] },
-    gibb_student:    { p1: ['energy_can', 'bag_high', 'laptop_arc'], p2: ['energy_can', 'bag_high', 'laptop_arc', 'desk_slide'], cooldown: [60, 86] }
+    monika_miniboss: { p1: ['card', 'card', 'arc'],          p2: ['card', 'arc', 'wave'],               cooldown: [82, 115] },
+    monika:          { p1: ['card', 'arc', 'wave'],          p2: ['card', 'arc', 'wave', 'shout'],      cooldown: [76, 110] },
+    duo:             { p1: ['card', 'arc', 'wave'],          p2: ['arc', 'wave', 'shout'],              cooldown: [98, 136] },
+    adam_miniboss:   { p1: ['frisbee', 'frisbee', 'lane'],   p2: ['frisbee', 'lane', 'basketball'],     cooldown: [82, 115] },
+    adam:            { p1: ['frisbee', 'lane', 'lane'],      p2: ['lane', 'basketball', 'whistle', 'frisbee'], cooldown: [84, 118] },
+    duo_partner:     { p1: ['frisbee', 'lane'],              p2: ['lane', 'basketball', 'whistle'],     cooldown: [105, 144] },
+    tuktuk_gpu:      { p1: ['cable', 'cable', 'charge'],     p2: ['cable', 'charge', 'fire'],           cooldown: [86, 120] },
+    tuktuk_dual_gpu: { p1: ['dual_cable', 'overclock_charge', 'fire'], p2: ['dual_cable', 'overclock_charge', 'fire', 'cable'], cooldown: [78, 110] },
+    gibb_student:    { p1: ['energy_can', 'bag_high', 'laptop_arc'], p2: ['energy_can', 'bag_high', 'laptop_arc', 'desk_slide'], cooldown: [78, 110] }
 };
 
 const BOSS_PHASE2_LINES = {
-    monika: { text: "Ganz ruhig bleiben?! JETZT NÖD MEH!", clip: 'monika_ganz_ruhig' },
-    adam:   { text: "Hilf mir! ...NEI, JETZT GITS FRISBEES!", clip: 'adam_hilf_mir' },
-    tuktuk:       { text: "Verdammti Maschine! GPU AM LIMIT!", clip: 'thenerean_verdammt_maschine' },
-    gibb_student: { text: "2. DOSE ENERGY! JETZT WIRD'S SCHNELL! ⚡", clip: null }
+    monika: { text: "Ganz ruhig bleiben?! JETZT NÖD MEH!", clip: 'monika_ganz_ruhig', enrageClip: 'boss_evil_laugh' },
+    adam:   { text: "Du hesch de Schuss verpasst — JETZT GITS E STRAFE!", clip: 'adam_strafe_verpasst', enrageClip: 'adam_hilf_mir' },
+    tuktuk: { text: "TÄSCHFRESSER! ZWEI GRAFIKKARTE AM LIMIT!", clip: 'tuktuk_taeschfresser_gpu', enrageClip: 'thenerean_verdammt_maschine' },
+    gibb_student: { text: "Ich bin der Cringe King von TikTok! ⚡", clip: 'student_cringe_king', enrageClip: 'student_tiktok_fortnite' }
 };
 
 const BossAI = {
@@ -71,15 +74,18 @@ const BossAI = {
     // ---------------------------------------------------------------------
     ensureBossAI(b) {
         if (!b.ai) {
+            const diff = this.getActiveDifficulty ? this.getActiveDifficulty() : { aggroMult: 1, shieldCdMult: 1 };
             b.ai = {
                 phase: 1,
-                cooldown: 55,
+                cooldown: Math.max(16, Math.round(55 / (diff.aggroMult || 1))),
                 telegraph: null,
                 pending: [],
                 stun: 0,
                 charge: null,
                 last: null,
-                enraged: false
+                enraged: false,
+                shieldTimer: 0,
+                shieldCooldown: Math.max(180, Math.round(460 * (diff.shieldCdMult || 1)))
             };
         }
         return b.ai;
@@ -87,13 +93,14 @@ const BossAI = {
 
     getBossFamily(b) {
         if (b.type === 'gibb_student') return 'gibb_student';
-        if (b.type === 'tuktuk_gpu') return 'tuktuk';
-        if (b.type === 'adam' || b.type === 'adam_miniboss' || b.isDuoPartner) return 'adam';
+        if (b.type === 'tuktuk_gpu' || b.type === 'tuktuk_dual_gpu') return 'tuktuk';
+        if (b.type === 'adam' || b.type === 'adam_miniboss') return 'adam';
+        if (b.isDuoPartner) return 'adam';
         return 'monika';
     },
 
     getBossPattern(b) {
-        if (b.isDuoPartner) return BOSS_PATTERNS.duo_partner;
+        if (b.isDuoPartner && b.type === 'adam') return BOSS_PATTERNS.duo_partner;
         return BOSS_PATTERNS[b.type] || BOSS_PATTERNS.monika;
     },
 
@@ -104,9 +111,9 @@ const BossAI = {
     },
 
     bossSpeedMult(b) {
-        if (!b.ai) return 1;
-        if (b.ai.enraged) return 1.55;
-        return b.ai.phase === 2 ? 1.3 : 1;
+        const diff = this.getActiveDifficulty ? this.getActiveDifficulty() : { speedMult: 1 };
+        const base = !b.ai ? 1 : (b.ai.enraged ? 1.55 : (b.ai.phase === 2 ? 1.3 : 1));
+        return base * (diff.speedMult || 1);
     },
 
     isBossStunned(b) {
@@ -128,9 +135,28 @@ const BossAI = {
     // ---------------------------------------------------------------------
     updateBossAI(b, other) {
         const ai = this.ensureBossAI(b);
+        const diff = this.getActiveDifficulty ? this.getActiveDifficulty() : { aggroMult: 1, shieldCdMult: 1 };
+        const p2Threshold = (this.level && this.level.phase2Threshold) || BOSS_TUNING.phase2Threshold;
 
-        if (ai.phase === 1 && b.hp <= b.maxHp * BOSS_TUNING.phase2Threshold) {
+        if (ai.phase === 1 && b.hp <= b.maxHp * p2Threshold) {
             this.enterBossPhase2(b, false);
+        }
+
+        const shieldAllowed = !b.isMiniBoss && !b.isStageVanguard && b.type !== 'gibb_student' && (!b.isDuoPartner || (this.level && this.level.duoShieldEnabled));
+        if (ai.shieldTimer > 0) {
+            ai.shieldTimer--;
+        } else if (
+            this.level && this.level.bossShieldEnabled &&
+            shieldAllowed &&
+            b.hp <= b.maxHp * 0.65 && ai.stun <= 0
+        ) {
+            ai.shieldCooldown--;
+            if (ai.shieldCooldown <= 0) {
+                ai.shieldTimer = 260;
+                ai.shieldCooldown = Math.max(420, Math.round(980 * (diff.shieldCdMult || 1)));
+                this.addFloatingText("🛡 PRÜFUNGS-SCHILD! [R] ODER SCHALTER!", b.x + b.w * 0.5, b.y - 44, '#00d2d3', 19);
+                this.shockwaves.push({ x: b.x + b.w * 0.5, y: b.y + b.h * 0.5, radius: 20, maxRadius: 150, color: '#00d2d3', alpha: 0.85 });
+            }
         }
 
         // Queued follow-up shots (volleys, double waves)
@@ -165,9 +191,13 @@ const BossAI = {
                 this.executeBossAttack(b, tg);
                 const [minCd, maxCd] = this.getBossPattern(b).cooldown;
                 let cd = minCd + Math.random() * (maxCd - minCd);
-                if (ai.phase === 2) cd *= 0.78;
-                if (ai.enraged) cd *= 0.7;
-                ai.cooldown = cd;
+                if (this.level && this.level.bossAggression) cd *= this.level.bossAggression;
+                if (ai.phase === 2) cd *= 0.85;
+                if (ai.enraged) cd *= 0.82;
+                const aggro = diff.aggroMult || 1;
+                cd /= aggro;
+                const minClamp = aggro >= 1.55 ? 18 : (aggro >= 1.25 ? 26 : (aggro < 1 ? 52 : 42));
+                ai.cooldown = Math.max(minClamp, Math.round(cd));
             }
             return;
         }
@@ -200,7 +230,8 @@ const BossAI = {
         this.shockwaves.push({ x: cx, y: b.y + b.h * 0.5, radius: 18, maxRadius: 220, color: '#ff3838', alpha: 0.9 });
         this.addFloatingText(enraged ? "ALLEI NO WÜETENDER! 💢" : "PHASE 2: WÜTEND! 💢", cx, b.y - 60, '#ff3838', 28);
         this.addFloatingText(`"${line.text}"`, cx, b.y - 26, '#ffd32a', 17);
-        if (line && line.clip) window.soundManager.playClip(line.clip);
+        const chosenClip = (enraged && line && line.enrageClip) ? line.enrageClip : (line && line.clip);
+        if (chosenClip) window.soundManager.playClip(chosenClip);
     },
 
     checkDuoEnrage() {
@@ -229,10 +260,12 @@ const BossAI = {
         ai.last = attack;
 
         const info = BOSS_ATTACKS[attack];
+        const diff = this.getActiveDifficulty ? this.getActiveDifficulty() : { telegraphBonus: 0 };
+        const tgFrames = Math.max(12, info.telegraph + (diff.telegraphBonus || 0));
         const tg = {
             attack: attack,
-            timer: info.telegraph,
-            max: info.telegraph,
+            timer: tgFrames,
+            max: tgFrames,
             dir: this.dirToPlayer(b),
             lane: null,
             spots: null
@@ -261,8 +294,22 @@ const BossAI = {
         if (warn) {
             this.addFloatingText(warn, b.x + b.w * 0.5, b.y - 58, '#ff6b81', 19);
         }
-        if (info.clip && Math.random() > 0.35) {
-            window.soundManager.playClip(info.clip);
+        const chaos = window.soundManager ? window.soundManager.getSoundChaosLevel() : 2;
+        const playChance = chaos >= 3 ? 1.0 : (chaos === 1 ? 0.45 : 0.65);
+        if ((info.clip || info.altClips) && Math.random() < playChance) {
+            const pool = [info.clip, ...(info.altClips || [])].filter(Boolean);
+            if (pool.length > 0) {
+                window.soundManager.playClip(
+                    pool[Math.floor(Math.random() * pool.length)],
+                    null,
+                    1.0,
+                    chaos === 1 ? { lowPriority: true } : {}
+                );
+                if (chaos >= 3 && Math.random() < 0.55 && pool.length > 1) {
+                    const second = pool[Math.floor(Math.random() * pool.length)];
+                    window.soundManager.playClip(second);
+                }
+            }
         }
     },
 
@@ -275,6 +322,9 @@ const BossAI = {
         const ph = this.player.h;
         const originX = dir < 0 ? b.x : b.x + b.w;
         const p2 = b.ai.phase === 2;
+        const diff = this.getActiveDifficulty ? this.getActiveDifficulty() : { projSpeedMult: 1, dmgMult: 1, speedMult: 1 };
+        const pSpd = diff.projSpeedMult || 1;
+        const sDmg = (base) => Math.max(3, Math.round(base * (diff.dmgMult || 1)));
         b.attackAnimTimer = 22;
 
         switch (tg.attack) {
@@ -288,6 +338,34 @@ const BossAI = {
                 this.bossFireAttack(b, 'broken_cable');
                 break;
 
+            case 'dual_cable': {
+                const spd = (p2 ? 11.2 : 10.0) * pSpd;
+                this.projectiles.push({
+                    x: originX, y: b.y + b.h * 0.34,
+                    vx: spd * dir, vy: (this.player.y - b.y) * 0.015,
+                    w: 44, h: 42,
+                    isPlayer: false, type: 'broken_cable', damage: sDmg(10),
+                    rotation: 0, trailColor: '#00d2d3'
+                });
+                window.soundManager.playThrow();
+                b.ai.pending.push({
+                    delay: 15,
+                    fire: () => {
+                        if (b.hp <= 0) return;
+                        b.attackAnimTimer = 14;
+                        this.projectiles.push({
+                            x: originX, y: b.y + b.h * 0.56,
+                            vx: (spd + 0.8 * pSpd) * dir, vy: 0,
+                            w: 44, h: 42,
+                            isPlayer: false, type: 'broken_cable', damage: sDmg(10),
+                            rotation: 0, trailColor: '#ff6348'
+                        });
+                        window.soundManager.playThrow();
+                    }
+                });
+                break;
+            }
+
             case 'arc': {
                 // 3 red cards lobbed in arcs around the player
                 const targetX = this.player.x + this.player.w / 2;
@@ -299,7 +377,7 @@ const BossAI = {
                         x: originX, y: b.y + b.h * 0.2,
                         vx: vx, vy: -10.5, g: 0.42,
                         w: 40, h: 40,
-                        isPlayer: false, type: 'red_card', damage: 16,
+                        isPlayer: false, type: 'red_card', damage: sDmg(10),
                         rotation: 0, trailColor: '#ff3838'
                     });
                 }
@@ -313,15 +391,15 @@ const BossAI = {
                     if (b.hp <= 0) return;
                     this.projectiles.push({
                         x: originX, y: gy - 46,
-                        vx: 8.4 * dir, vy: 0,
+                        vx: 8.0 * pSpd * dir, vy: 0,
                         w: 78, h: 46,
-                        isPlayer: false, type: 'absenz_wave', damage: 18,
+                        isPlayer: false, type: 'absenz_wave', damage: sDmg(11),
                         rotation: 0, noSpin: true, trailColor: '#ff4757'
                     });
                     this.spawnBurst(originX, gy - 20, 10, '#ff4757', 5, 16);
                 };
                 fireWave();
-                if (p2) b.ai.pending.push({ delay: 34, fire: fireWave });
+                if (p2) b.ai.pending.push({ delay: 36, fire: fireWave });
                 break;
             }
 
@@ -329,9 +407,9 @@ const BossAI = {
                 // Full-height blast that pushes the player back: block it
                 this.projectiles.push({
                     x: originX, y: gy - 175,
-                    vx: 10.5 * dir, vy: 0,
+                    vx: 10.0 * pSpd * dir, vy: 0,
                     w: 70, h: 175,
-                    isPlayer: false, type: 'shout_blast', damage: 12,
+                    isPlayer: false, type: 'shout_blast', damage: sDmg(7),
                     rotation: 0, noSpin: true, trailColor: '#ffd32a',
                     effect: 'push'
                 });
@@ -346,15 +424,15 @@ const BossAI = {
                 const count = p2 ? 5 : 4;
                 for (let i = 0; i < count; i++) {
                     b.ai.pending.push({
-                        delay: i * 9 + 1,
+                        delay: i * 10 + 1,
                         fire: () => {
                             if (b.hp <= 0) return;
                             b.attackAnimTimer = 12;
                             this.projectiles.push({
                                 x: originX, y: y,
-                                vx: 10.2 * dir, vy: 0,
+                                vx: 9.6 * pSpd * dir, vy: 0,
                                 w: 46, h: 28,
-                                isPlayer: false, type: 'frisbee', damage: 14,
+                                isPlayer: false, type: 'frisbee', damage: sDmg(8),
                                 rotation: 0, trailColor: '#ff4757'
                             });
                             window.soundManager.playThrow();
@@ -369,9 +447,9 @@ const BossAI = {
                 for (const s of speeds) {
                     this.projectiles.push({
                         x: originX, y: b.y + b.h * 0.3,
-                        vx: s * dir, vy: -7 - Math.random() * 3, g: 0.5, bounce: 0.8, bounces: 0,
+                        vx: s * pSpd * dir, vy: -7 - Math.random() * 3, g: 0.5, bounce: 0.8, bounces: 0,
                         w: 42, h: 42,
-                        isPlayer: false, type: 'basketball', damage: 16,
+                        isPlayer: false, type: 'basketball', damage: sDmg(10),
                         rotation: 0, trailColor: '#ffa502'
                     });
                 }
@@ -383,9 +461,9 @@ const BossAI = {
                 // Head-height sound wave: duck under it or get stunned
                 this.projectiles.push({
                     x: originX, y: gy - ph * 0.98,
-                    vx: 10.0 * dir, vy: 0,
+                    vx: 9.4 * pSpd * dir, vy: 0,
                     w: 60, h: ph * 0.36,
-                    isPlayer: false, type: 'whistle_wave', damage: 8,
+                    isPlayer: false, type: 'whistle_wave', damage: sDmg(5),
                     rotation: 0, noSpin: true, trailColor: '#00d2d3',
                     effect: 'stun'
                 });
@@ -396,17 +474,31 @@ const BossAI = {
             case 'charge': {
                 b.ai.charge = {
                     dir: dir,
-                    speed: p2 ? 16.5 : 13.5,
-                    hitDone: false
+                    speed: (p2 ? 15.4 : 12.8) * (diff.speedMult || 1),
+                    hitDone: false,
+                    reboundsLeft: 0
                 };
                 b.facing = dir;
                 this.screenShake = 10;
                 break;
             }
 
+            case 'overclock_charge': {
+                b.ai.charge = {
+                    dir: dir,
+                    speed: (p2 ? 17.5 : 15.2) * (diff.speedMult || 1),
+                    hitDone: false,
+                    reboundsLeft: p2 ? 1 : 0,
+                    isOverclock: true
+                };
+                b.facing = dir;
+                this.screenShake = 13;
+                break;
+            }
+
             case 'fire': {
                 for (const x of tg.spots || []) {
-                    this.hazards.push({ x: x, w: 92, armIn: 26, life: 210 });
+                    this.hazards.push({ x: x, w: 92, armIn: 32, life: 190 });
                 }
                 this.screenShake = 8;
                 break;
@@ -415,9 +507,9 @@ const BossAI = {
             case 'energy_can': {
                 this.projectiles.push({
                     x: originX, y: b.y + b.h * 0.36,
-                    vx: 9.8 * dir, vy: (this.player.y - b.y) * 0.015,
+                    vx: 9.2 * pSpd * dir, vy: (this.player.y - b.y) * 0.015,
                     w: 38, h: 42,
-                    isPlayer: false, type: 'energy_can', damage: 15,
+                    isPlayer: false, type: 'energy_can', damage: sDmg(9),
                     rotation: 0, trailColor: '#38bdf8'
                 });
                 window.soundManager.playThrow();
@@ -434,7 +526,7 @@ const BossAI = {
                         x: originX, y: b.y + b.h * 0.22,
                         vx: vx, vy: -10.8, g: 0.43,
                         w: 46, h: 40,
-                        isPlayer: false, type: 'laptop', damage: 18,
+                        isPlayer: false, type: 'laptop', damage: sDmg(10),
                         rotation: 0, trailColor: '#00d2d3'
                     });
                 }
@@ -445,9 +537,9 @@ const BossAI = {
             case 'bag_high': {
                 this.projectiles.push({
                     x: originX, y: gy - ph * 0.96,
-                    vx: 9.6 * dir, vy: 0,
+                    vx: 9.0 * pSpd * dir, vy: 0,
                     w: 54, h: ph * 0.34,
-                    isPlayer: false, type: 'energy_can', damage: 16,
+                    isPlayer: false, type: 'energy_can', damage: sDmg(9),
                     rotation: 0, trailColor: '#38bdf8'
                 });
                 window.soundManager.playThrow();
@@ -457,9 +549,9 @@ const BossAI = {
             case 'desk_slide': {
                 this.projectiles.push({
                     x: originX, y: gy - 44,
-                    vx: 8.8 * dir, vy: 0,
+                    vx: 8.4 * pSpd * dir, vy: 0,
                     w: 66, h: 44,
-                    isPlayer: false, type: 'broken_cable', damage: 17,
+                    isPlayer: false, type: 'broken_cable', damage: sDmg(10),
                     rotation: 0, noSpin: true, trailColor: '#ff9f1a'
                 });
                 this.spawnBurst(originX, gy - 18, 8, '#38bdf8', 5, 14);
@@ -499,8 +591,12 @@ const BossAI = {
             }
             if (p.isBlocking) {
                 this.onBlockSuccess(p.x + p.w * 0.5, p.y + p.h * 0.45);
-            } else if (this.onPlayerHit(28, 'tuktuk_charge')) {
-                p.pushVx = c.dir * 14;
+            } else {
+                const diffC = this.getActiveDifficulty ? this.getActiveDifficulty() : { dmgMult: 1 };
+                const chargeDmg = Math.max(8, Math.round((c.isOverclock ? 18 : 15) * (diffC.dmgMult || 1)));
+                if (this.onPlayerHit(chargeDmg, 'tuktuk_charge')) {
+                    p.pushVx = c.dir * 14;
+                }
             }
         }
 
@@ -508,6 +604,16 @@ const BossAI = {
         const maxX = canvas.width - b.w - 20;
         if (b.x <= minX || b.x >= maxX) {
             b.x = Math.max(minX, Math.min(maxX, b.x));
+            if (c.reboundsLeft > 0) {
+                c.reboundsLeft--;
+                c.dir = -c.dir;
+                c.hitDone = false;
+                b.facing = c.dir;
+                this.screenShake = 12;
+                this.spawnBurst(b.x + (c.dir > 0 ? 0 : b.w), b.y + b.h * 0.6, 16, '#00d2d3', 7, 18);
+                this.addFloatingText("⚡ REBOUND-TURBO! NOCHMAL SPRINGEN!", b.x + b.w * 0.5, b.y - 54, '#00d2d3', 20);
+                return;
+            }
             b.ai.charge = null;
             b.moveDir = -c.dir;
             this.screenShake = 14;
@@ -530,17 +636,22 @@ const BossAI = {
                 continue;
             }
             h.life--;
+            const isElectric = h.theme === 'electric';
             if (Math.random() > 0.5) {
                 this.particles.push({
                     x: h.x + Math.random() * h.w, y: p.groundY - 4,
-                    vx: (Math.random() - 0.5) * 1.2, vy: -2 - Math.random() * 2.5,
-                    life: 20, maxLife: 20,
-                    color: Math.random() > 0.5 ? '#ff6348' : '#ffa502',
+                    vx: (Math.random() - 0.5) * 1.4, vy: -2 - Math.random() * 2.5,
+                    life: 18, maxLife: 18,
+                    color: isElectric ? (Math.random() > 0.5 ? '#00d2d3' : '#ffd32a') : (Math.random() > 0.5 ? '#ff6348' : '#ffa502'),
                     size: 5 + Math.random() * 5
                 });
             }
-            const feetOnFire = p.isGrounded && p.x + p.w - 16 > h.x && p.x + 16 < h.x + h.w;
-            if (feetOnFire) this.onPlayerHit(10, 'fire');
+            const feetOnGround = p.isGrounded && !p.standingPlatform && (p.y + p.h) >= (p.groundY - 14);
+            const feetOnFire = feetOnGround && p.x + p.w - 16 > h.x && p.x + 16 < h.x + h.w;
+            if (feetOnFire) {
+                const diffH = this.getActiveDifficulty ? this.getActiveDifficulty() : { dmgMult: 1 };
+                this.onPlayerHit(Math.max(4, Math.round(6 * (diffH.dmgMult || 1))), isElectric ? 'floor_zone' : 'fire');
+            }
             if (h.life <= 0) this.hazards.splice(i, 1);
         }
     },
@@ -550,33 +661,45 @@ const BossAI = {
         const gy = this.player.groundY;
         ctx.save();
         for (const h of this.hazards) {
+            const isElectric = h.theme === 'electric';
             if (h.armIn > 0) {
-                // Flickering warning outline before the fire ignites
                 const blink = Math.floor(this.animClock * 14) % 2 === 0;
-                ctx.globalAlpha = blink ? 0.85 : 0.35;
-                ctx.strokeStyle = '#ff6348';
+                ctx.globalAlpha = blink ? 0.9 : 0.38;
+                ctx.strokeStyle = isElectric ? '#ffd32a' : '#ff6348';
                 ctx.lineWidth = 3;
                 ctx.setLineDash([8, 6]);
                 ctx.beginPath();
                 ctx.ellipse(h.x + h.w / 2, gy, h.w / 2, 12, 0, 0, Math.PI * 2);
                 ctx.stroke();
                 ctx.setLineDash([]);
+                if (isElectric) {
+                    ctx.font = '900 12px "Segoe UI", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = '#ffd32a';
+                    ctx.fillText('⬆ AUF PLATTFORM!', h.x + h.w * 0.5, gy - 18);
+                }
                 continue;
             }
             const fade = Math.min(1, h.life / 30);
             const flick = 0.85 + Math.sin(this.animClock * 22 + h.x) * 0.15;
             const grad = ctx.createLinearGradient(0, gy - 46, 0, gy + 6);
-            grad.addColorStop(0, 'rgba(255, 211, 42, 0)');
-            grad.addColorStop(0.45, 'rgba(255, 165, 2, 0.75)');
-            grad.addColorStop(1, 'rgba(255, 56, 56, 0.95)');
+            if (isElectric) {
+                grad.addColorStop(0, 'rgba(0, 210, 211, 0)');
+                grad.addColorStop(0.45, 'rgba(0, 210, 211, 0.78)');
+                grad.addColorStop(1, 'rgba(255, 211, 42, 0.92)');
+            } else {
+                grad.addColorStop(0, 'rgba(255, 211, 42, 0)');
+                grad.addColorStop(0.45, 'rgba(255, 165, 2, 0.75)');
+                grad.addColorStop(1, 'rgba(255, 56, 56, 0.95)');
+            }
             ctx.globalAlpha = fade;
             ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.moveTo(h.x, gy + 4);
-            const peaks = 5;
+            const peaks = isElectric ? 7 : 5;
             for (let k = 0; k <= peaks; k++) {
                 const px = h.x + (h.w / peaks) * k;
-                const tall = (k % 2 === 0 ? 44 : 28) * flick;
+                const tall = (k % 2 === 0 ? 40 : 24) * flick;
                 ctx.lineTo(px, gy - tall);
             }
             ctx.lineTo(h.x + h.w, gy + 4);
@@ -690,9 +813,22 @@ const BossAI = {
         ai.charge = null;
     },
 
-    // Damage of a player projectile against a boss, incl. reflect stun and shout combo.
+    // Damage of a player projectile against a boss, incl. shield mitigation, reflect stun and shout combo.
     resolvePlayerHit(target, proj) {
         let dmg = proj.damage;
+        if (target && target.ai && target.ai.shieldTimer > 0) {
+            if (proj.reflected) {
+                target.ai.shieldTimer = 0;
+                this.stunBoss(target, BOSS_TUNING.reflectStunFrames);
+                this.spawnBurst(target.x + target.w * 0.5, target.y + target.h * 0.5, 24, '#00d2d3', 8, 22);
+                this.addFloatingText("💥 SCHILD ZERSTÖRT! [Q] KOMBO!", target.x + target.w * 0.5, target.y - 58, '#00d2d3', 24);
+                return dmg;
+            }
+            if (proj.type === 'law_book') {
+                dmg = Math.max(6, Math.round(dmg * 0.35));
+                this.addFloatingText("🛡 SCHILD!", target.x + target.w * 0.5, target.y - 44, '#00d2d3', 16);
+            }
+        }
         if (proj.type === 'mega_beam' && this.isBossStunned(target)) {
             dmg = Math.round(dmg * BOSS_TUNING.comboDamageMult);
             this.addFloatingText("KOMBO! ×" + BOSS_TUNING.comboDamageMult, target.x + target.w * 0.5, target.y - 52, '#00d2d3', 30);
@@ -793,6 +929,24 @@ const BossAI = {
     // BOSS OVERLAYS: telegraph, danger zones, stun, rage aura
     // ---------------------------------------------------------------------
     drawBossRageAura(b, footX, footY) {
+        if (b.ai && b.ai.shieldTimer > 0) {
+            ctx.save();
+            const pulse = 1.0 + Math.sin(this.animClock * 12) * 0.04;
+            const cy = footY - b.h * 0.5;
+            const r = b.h * 0.62 * pulse;
+            const sGrad = ctx.createRadialGradient(footX, cy, r * 0.4, footX, cy, r);
+            sGrad.addColorStop(0, 'rgba(0, 210, 211, 0.08)');
+            sGrad.addColorStop(0.8, 'rgba(0, 210, 211, 0.35)');
+            sGrad.addColorStop(1, 'rgba(255, 211, 42, 0.55)');
+            ctx.fillStyle = sGrad;
+            ctx.beginPath();
+            ctx.arc(footX, cy, r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#00d2d3';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.restore();
+        }
         if (!b.ai || b.ai.phase !== 2) return;
         ctx.save();
         const pulse = 0.55 + Math.sin(this.animClock * 9) * 0.2;
@@ -811,6 +965,9 @@ const BossAI = {
         const ai = b.ai;
         if (!ai) return;
 
+        if (ai.shieldTimer > 0) {
+            this.drawNamePill("🛡 SCHILD: [R] ODER SCHALTER!", footX, barY - 46, '#00d2d3');
+        }
         if (ai.stun > 0) {
             this.drawStunStars(footX, barY - 34, 4, 30);
             this.drawNamePill("BENOMMEN — [Q] KOMBO!", footX, barY - 62, '#ffd32a');
@@ -835,7 +992,8 @@ const BossAI = {
             case 'wave':    zone = { y: gy - 46, h: 46, label: '⬆ SPRING' }; break;
             case 'shout':   zone = { y: gy - 175, h: 175, label: '🛡 BLOCK' }; break;
             case 'whistle': zone = { y: gy - ph * 0.98, h: ph * 0.36, label: '⬇ DUCK' }; break;
-            case 'charge':     zone = { y: gy - b.h * 0.45, h: b.h * 0.45, label: '⬆ SPRING' }; break;
+            case 'charge':           zone = { y: gy - b.h * 0.45, h: b.h * 0.45, label: '⬆ SPRING' }; break;
+            case 'overclock_charge': zone = { y: gy - b.h * 0.45, h: b.h * 0.45, label: '⚡ DOUBLE-SPRING!' }; break;
             case 'bag_high':   zone = { y: gy - ph * 0.96, h: ph * 0.34, label: '⬇ DUCK' }; break;
             case 'desk_slide': zone = { y: gy - 44, h: 44, label: '⬆ SPRING' }; break;
             case 'lane':

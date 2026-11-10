@@ -30,7 +30,7 @@
                         <div class="progress-bar-bg">
                             <div id="hp-bar" class="progress-bar-fill hp-fill"></div>
                         </div>
-                        <span id="hp-val-text" class="bar-val">100</span>
+                        <span id="hp-val-text" class="bar-val">150</span>
                     </div>
                     <div class="bar-container">
                         <span class="bar-label">MEGA-ENERGIE</span>
@@ -121,6 +121,12 @@
             <div id="hud-power-pill" class="hud-pill power-pill hidden">⚡ ENERGY-RUSH <span id="hud-power-sec">6s</span></div>
         </div>
 
+        <!-- Mode-Specific Dynamic Objective / Timer / Switch HUD Pill -->
+        <div id="mission-pill" class="mission-pill hidden">
+            <span id="mission-icon" class="mission-icon">⏱️</span>
+            <span id="mission-text" class="mission-text">ZEIT: 34.0s</span>
+        </div>
+
         <!-- Bottom-Left Comic Ability Dock -->
         <div id="ability-dock" class="hidden">
             <div class="ability-slot ready" id="slot-gesetz">
@@ -165,7 +171,7 @@
 
         <!-- Level Start Hint Toast -->
         <div id="control-hint-pill" class="hidden">
-            <span><kbd>A</kbd><kbd>D</kbd> Laufen &bull; <kbd>CTRL</kbd> Ducken &bull; <kbd>S</kbd> Sprint &bull; <kbd>R</kbd> Block &bull; <kbd>ESC</kbd> Pause</span>
+            <span><kbd>A</kbd><kbd>D</kbd> Laufen &bull; <kbd>CTRL</kbd>/<kbd>↓</kbd> Ducken &bull; <kbd>S</kbd> Sprint &bull; <kbd>R</kbd> Block &bull; <kbd>ESC</kbd> Pause</span>
         </div>
 
         <!-- Mobile Touch Controls Overlay (Touch-Geräte & Smartphone) -->
@@ -241,134 +247,242 @@
         </div>
 
         <!-- ============================================== -->
-        <!-- 30-SEKUNDEN EPIC CINEMATIC INTRO OVERLAY      -->
+        <!-- FULLSCREEN CRAZY RANDOM-CONVERSATION INTRO     -->
         <!-- ============================================== -->
-        <div id="screen-intro" class="screen-overlay hidden">
-            <div class="intro-container glass-panel">
-                <div class="intro-header">
-                    <span class="badge-gibb">GIBB BERN • 2022 – 2026</span>
-                    <h1 class="intro-title">THENEREAN SELVABANKUMAR</h1>
-                    <div class="intro-subtitle">DIE WAHRE GESCHICHTE DER 4-JÄHRIGEN INFORMATIK-LEHRE</div>
-                </div>
+        <div id="screen-intro" class="screen-overlay intro-fullscreen hidden">
+            <div class="intro-bg-stage">
+                <img id="intro-bg-img" class="intro-bg-img" src="assets/backgrounds/bg_story_intro_crazy.jpg" alt="" aria-hidden="true">
+                <div class="intro-stage-vignette"></div>
+                <div class="intro-spot intro-spot-left"></div>
+                <div class="intro-spot intro-spot-right"></div>
+                <div id="intro-fx-layer" class="intro-fx-layer" aria-hidden="true"></div>
+            </div>
 
-                <div class="intro-chapters-dots" id="intro-chapter-dots">
-                    <span class="chap-dot active">1</span>
-                    <span class="chap-dot">2</span>
-                    <span class="chap-dot">3</span>
-                    <span class="chap-dot">4</span>
-                    <span class="chap-dot">5</span>
-                </div>
-
-                <div class="intro-visual-stage">
-                    <div class="intro-character-spotlight" id="intro-spotlight">
-                        <img id="intro-img" src="assets/sprites/photo_IMG_20260119_133741.jpg" alt="Thenerean">
+            <div class="intro-shell">
+                <header class="intro-top-hud">
+                    <div class="intro-top-badges">
+                        <span id="intro-episode-badge" class="badge-gibb">🎲 RANDOM GIBB EPISODE</span>
+                        <span id="intro-settings-badge" class="intro-setting-pill">🔵 NORMAL • 🔉 STUFE 2</span>
+                        <div class="intro-chapters-dots" id="intro-chapter-dots">
+                            <span class="chap-dot active">1</span>
+                            <span class="chap-dot">2</span>
+                            <span class="chap-dot">3</span>
+                            <span class="chap-dot">4</span>
+                            <span class="chap-dot">5</span>
+                        </div>
                     </div>
-                    <div class="intro-text-box">
-                        <div id="intro-step-title" class="intro-step-title">KAPITEL 1: DER TRAUM VOM EFZ</div>
-                        <p id="intro-speech-text" class="intro-speech-text">Es begann alles an der Berufsschule GIBB Bern...</p>
-                        <div class="intro-quote-box" id="intro-quote">"Pünktlichkeit ist oberste Gebot!"</div>
+                    <h1 id="intro-step-title" class="intro-topic-title">ABSENZEN-TRIBUNAL AM MONTAGMORGEN</h1>
+                    <div id="intro-speech-text" class="intro-context-bar">
+                        Zufällige GIBB-Konversation vor dem Start deiner Lehre...
                     </div>
-                </div>
+                </header>
 
-                <div class="intro-progress-wrap">
-                    <div id="intro-timer-bar" class="intro-timer-fill"></div>
-                </div>
+                <main class="intro-conv-stage">
+                    <div id="intro-actor-left" class="intro-actor actor-left active-speaker">
+                        <div id="intro-bubble-left" class="intro-comic-bubble bubble-left">
+                            <span id="intro-speaker-left" class="bubble-speaker-tag">MONIKA SCHNEIDER</span>
+                            <p id="intro-line-left" class="bubble-line">"..."</p>
+                        </div>
+                        <div class="intro-sprite-pedestal">
+                            <img id="intro-sprite-left" class="intro-actor-sprite" src="assets/sprites/characters/monika_point.png" alt="Linker Sprecher">
+                            <span id="intro-tag-left" class="fighter-tag tag-boss">MONIKA</span>
+                        </div>
+                    </div>
 
-                <div class="intro-footer">
-                    <button id="btn-skip-intro" class="btn btn-secondary">Überspringen [ESC / LEERTASTE]</button>
-                    <span id="intro-time-hint" class="intro-time-hint">Cinematic Story • 24s</span>
-                </div>
+                    <div id="intro-center-stamp" class="intro-center-stamp">
+                        <div id="intro-stamp-emoji" class="stamp-emoji">💬</div>
+                        <div id="intro-quote" class="stamp-quote">"EINZEL-DIALOG • VOLLBILD"</div>
+                    </div>
+
+                    <div id="intro-actor-right" class="intro-actor actor-right">
+                        <div id="intro-bubble-right" class="intro-comic-bubble bubble-right">
+                            <span id="intro-speaker-right" class="bubble-speaker-tag">THENEREAN</span>
+                            <p id="intro-line-right" class="bubble-line">"..."</p>
+                        </div>
+                        <div class="intro-sprite-pedestal">
+                            <img id="intro-sprite-right" class="intro-actor-sprite" src="assets/sprites/characters/thenerean_idle.png" alt="Rechter Sprecher">
+                            <span id="intro-tag-right" class="fighter-tag tag-hero">THENEREAN</span>
+                        </div>
+                    </div>
+                </main>
+
+                <footer class="intro-bottom-dock">
+                    <div class="intro-progress-wrap">
+                        <div id="intro-timer-bar" class="intro-timer-fill"></div>
+                    </div>
+                    <div class="intro-footer-row">
+                        <span id="intro-time-hint" class="intro-time-hint">Szene 1 / 5 • 22s</span>
+                        <div class="intro-footer-actions">
+                            <button id="btn-reroll-intro" class="btn btn-secondary btn-sm" title="Neue verrückte Konversation würfeln">🎲 NEUE STORY</button>
+                            <button id="btn-next-intro" class="btn btn-demo btn-sm">WEITER [ENTER] ▶</button>
+                            <button id="btn-skip-intro" class="btn btn-primary btn-sm">ÜBERSPRINGEN &amp; SPIELEN [ESC / SPACE] ▶</button>
+                        </div>
+                    </div>
+                </footer>
             </div>
         </div>
 
         <!-- ============================================== -->
-        <!-- LAUNCH LOADING SCREEN (ORIGINAL MEME SOUNDS)   -->
+        <!-- FULLSCREEN ANIMATED LAUNCH INTRO               -->
         <!-- ============================================== -->
-        <div id="screen-opening" class="screen-overlay launch-screen">
-            <div class="launch-bg-grid"></div>
-            <div class="launch-glow glow-a"></div>
-            <div class="launch-glow glow-b"></div>
-            <div class="opening-scanlines"></div>
+        <div id="screen-opening" class="screen-overlay opening-fullscreen">
+            <div class="opening-bg-stage">
+                <img class="opening-stage-img" src="assets/backgrounds/bg_intro_stage.jpg" alt="" aria-hidden="true">
+                <div class="opening-stage-vignette"></div>
+                <div class="opening-spotlight spot-left"></div>
+                <div class="opening-spotlight spot-center"></div>
+                <div class="opening-spotlight spot-right"></div>
+                <div class="opening-scanlines"></div>
+            </div>
 
-            <div class="opening-card launch-card">
-                <div class="launch-topline">
-                    <span class="launch-chip">🇨🇭 GIBB BERN</span>
-                    <span class="launch-chip chip-gold">EFZ EDITION 3.0</span>
-                </div>
+            <!-- Phase 1: Made by Techi Splash (0.0s - 1.8s) -->
+            <div id="opening-techi-splash" class="opening-techi-splash">
+                <div class="techi-chip">🇨🇭 GIBB BERN • EFZ STUDIO</div>
+                <div class="techi-wordmark">MADE BY <span>TECHI</span></div>
+                <div class="techi-bar"></div>
+                <div class="techi-sub">PRESENTS: THENEREAN SELVABANKUMAR — DAS GIBB ABENTEUER</div>
+            </div>
 
-                <h1 class="launch-logo">THENEREAN<span>SELVABANKUMAR</span></h1>
-                <div class="launch-sub">DAS GIBB ABENTEUER</div>
-
-                <div class="opening-anim-box launch-stage">
-                    <div class="opening-avatars-stage launch-avatars">
-                        <div class="opening-avatar-slot">
-                            <img id="opening-img-left" class="opening-avatar left-avatar" src="assets/sprites/adam_avatar.png" alt="Herr Adam">
-                            <span class="opening-role">HERR ADAM</span>
-                        </div>
-                        <div class="opening-avatar-slot">
-                            <img id="opening-img-center" class="opening-avatar center-avatar" src="assets/sprites/thenerean_avatar.png" alt="Thenerean">
-                            <span class="opening-role role-gold">THENEREAN</span>
-                        </div>
-                        <div class="opening-avatar-slot">
-                            <img id="opening-img-right" class="opening-avatar right-avatar" src="assets/sprites/monika_avatar.png" alt="Monika Schneider">
-                            <span class="opening-role">MONIKA SCHNEIDER</span>
-                        </div>
+            <!-- Phase 2: 10s Fullscreen Cast Sound-Chaos Stage (1.8s - 11.8s) -->
+            <div id="opening-chaos-stage" class="opening-chaos-stage phase-hidden">
+                <div class="opening-top-header">
+                    <div class="launch-topline">
+                        <span class="launch-chip">🇨🇭 GIBB BERN</span>
+                        <span class="launch-chip chip-gold">EFZ EDITION 4.0</span>
+                        <span class="launch-chip">🔊 FULL SOUND CHAOS</span>
                     </div>
+                    <h1 class="launch-logo">THENEREAN<span>SELVABANKUMAR</span></h1>
                     <div id="opening-flash-text" class="opening-glitch-text">BERUFSSCHULE GIBB BERN</div>
-                    <div id="opening-shout-banner" class="opening-shout-banner">"SILVANKUMAR, IST DER THENEREAN DA?!"</div>
+                    <div id="opening-shout-banner" class="opening-shout-banner">"ALLE CHARAKTERE MACHEN STRESS!"</div>
                 </div>
 
-                <div class="launch-loader">
-                    <div class="launch-loader-label">
-                        <span>⚙️ LADE LEHRJAHRE, BOSSE &amp; FRISBEES…</span>
-                        <span id="opening-countdown-txt" class="opening-countdown">14s</span>
-                    </div>
-                    <div class="opening-timer-container">
-                        <div id="opening-progress" class="opening-progress-fill"></div>
+                <div class="opening-arena-mid">
+                    <div id="opening-fx-layer" class="opening-fx-layer" aria-hidden="true"></div>
+                    <div class="opening-cast-lineup">
+                        <div class="cast-slot" data-cast="student">
+                            <div class="cast-bubble"></div>
+                            <img class="cast-sprite" src="assets/sprites/characters/gibb_student_idle.png" alt="Average GIBB Schüler">
+                            <span class="cast-tag">GIBB SCHÜLER</span>
+                        </div>
+                        <div class="cast-slot" data-cast="monika">
+                            <div class="cast-bubble"></div>
+                            <img class="cast-sprite" src="assets/sprites/characters/monika_point.png" alt="Monika Schneider">
+                            <span class="cast-tag tag-purple">MONIKA</span>
+                        </div>
+                        <div class="cast-slot cast-hero" data-cast="thenerean">
+                            <div class="cast-bubble"></div>
+                            <img class="cast-sprite" src="assets/sprites/characters/thenerean_idle.png" alt="Thenerean Selvabankumar">
+                            <span class="cast-tag tag-gold">THENEREAN</span>
+                        </div>
+                        <div class="cast-slot" data-cast="adam">
+                            <div class="cast-bubble"></div>
+                            <img class="cast-sprite" src="assets/sprites/characters/adam_throw.png" alt="Herr Adam">
+                            <span class="cast-tag tag-cyan">HERR ADAM</span>
+                        </div>
+                        <div class="cast-slot cast-wide" data-cast="tuktuk">
+                            <div class="cast-bubble"></div>
+                            <img class="cast-sprite" src="assets/sprites/characters/tuktuk_idle.png" alt="TukTuk MK-I">
+                            <span class="cast-tag tag-orange">TUKTUK MK-I</span>
+                        </div>
+                        <div class="cast-slot cast-wide" data-cast="tuktuk_dual">
+                            <div class="cast-bubble"></div>
+                            <img class="cast-sprite" src="assets/sprites/characters/tuktuk_dual_rage.png" alt="Dual-GPU TukTuk MK-II">
+                            <span class="cast-tag tag-red">DUAL-GPU MK-II</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="opening-footer">
-                    <span class="launch-hint">🔊 Ton an für die legendären Original-Sprüche</span>
+                <div class="opening-bottom-bar">
+                    <div class="launch-loader opening-bar-loader">
+                        <div class="launch-loader-label">
+                            <span>⚙️ ALLE 6 CHARAKTERE FEUERN IHRE SPRÜCHE DURCHEINANDER…</span>
+                            <span id="opening-countdown-txt" class="opening-countdown">10s</span>
+                        </div>
+                        <div class="opening-timer-container">
+                            <div id="opening-progress" class="opening-progress-fill"></div>
+                        </div>
+                    </div>
                     <button id="btn-skip-opening" class="btn btn-secondary btn-sm">Überspringen [ESC / LEERTASTE]</button>
                 </div>
             </div>
         </div>
 
         <!-- ============================================== -->
-        <!-- MAIN LOBBY (CLEAN COMIC-ARCADE EDITION)        -->
+        <!-- MAIN LOBBY (FULL-WIDTH SHOWCASE EDITION)      -->
         <!-- ============================================== -->
         <div id="screen-menu" class="screen-overlay hidden">
-            <div class="lobby2">
-                <div class="lobby2-left comic-panel">
-                    <div class="game-badge comic-badge">🇨🇭 GIBB BERUFSSCHULE BERN • EFZ KAMPAGNE</div>
-                    <h1 class="lobby2-title">THENEREAN<span>SELVABANKUMAR</span></h1>
-                    <p class="lobby2-tagline">4 Lehrjahre. 6 Level. Mini-Bosse, Lava-Parcours &amp; ein Ziel: <strong>EFZ mit Note 6.0.</strong></p>
+            <div class="lobby-showcase">
+                <!-- TOP: Großer animierter Titel -->
+                <header class="lobby-hero-header">
+                    <div class="game-badge comic-badge">🇨🇭 GIBB BERUFSSCHULE BERN • EFZ KAMPAGNE • 10 LEHRJAHRE</div>
+                    <h1 class="lobby-big-title">THENEREAN <span>SELVABANKUMAR</span></h1>
+                    <p class="lobby-tagline">ABU-Witze, Mensa-Bankomat, Dual-GPU TukTuk &amp; das grosse <strong>EFZ-Finale 6.0!</strong></p>
+                </header>
 
-                    <div class="lobby2-actions">
-                        <button id="btn-start" class="btn btn-primary btn-lg lobby2-main">🎮 LEHRE STARTEN</button>
-                        <div class="lobby2-grid">
-                            <button id="btn-demo" class="btn btn-demo">🎯 TRAINING</button>
-                            <button id="btn-level-select" class="btn btn-secondary">📚 LEHRJAHRE</button>
-                            <button id="btn-story" class="btn btn-secondary btn-chars">👥 CHARAKTERE</button>
-                            <button id="btn-replay-opening" class="btn btn-secondary">⚡ INTRO</button>
+                <!-- CENTER: Alle 3 Charaktere gross & interaktiv in der Mitte -->
+                <main class="lobby-center-stage">
+                    <div id="lobby-quote-bubble" class="lobby-quote-bubble lobby-stage-bubble">
+                        💬 Klicke auf einen Charakter — oder starte direkt deine Lehre!
+                    </div>
+                    <div class="lobby-fighters-row">
+                        <div class="lobby-stage-spot"></div>
+                        <div class="lobby-fighter lobby-rival rival-left"
+                             data-clip="monika_puenktlichkeit"
+                             data-quote="⏱️ MONIKA SCHNEIDER: 'Pünktlichkeit ist oberste Gebot!'"
+                             title="Monika Schneider — anklicken für Spruch!">
+                            <img src="assets/sprites/characters/monika_idle.png" alt="Monika Schneider">
+                            <div class="fighter-tag tag-boss">MONIKA</div>
+                        </div>
+                        <div class="lobby-fighter lobby-hero-main"
+                             data-clip="thenerean_stah"
+                             data-quote="🔥 THENEREAN: 'HERR ADAM, ICH STAH DOCH DA!'"
+                             title="Thenerean Selvabankumar — anklicken für Spruch!">
+                            <img src="assets/sprites/characters/thenerean_idle.png" alt="Thenerean Selvabankumar">
+                            <div class="fighter-tag tag-hero">THENEREAN • EFZ</div>
+                        </div>
+                        <div class="lobby-fighter lobby-rival rival-right"
+                             data-clip="adam_silvankumar"
+                             data-quote="🥏 HERR ADAM: 'Silvankumar, ist der Thenerean da?!'"
+                             title="Herr Adam — anklicken für Spruch!">
+                            <img src="assets/sprites/characters/adam_idle.png" alt="Herr Adam">
+                            <div class="fighter-tag tag-boss">HERR ADAM</div>
+                        </div>
+                    </div>
+                </main>
+
+                <!-- BOTTOM: Breite Command-Leiste (alle Auswahlen auf einer Linie + Musik-Steuerung) -->
+                <footer class="lobby-bottom-bar comic-panel">
+                    <div class="lobby-actions-row">
+                        <button id="btn-start" class="btn btn-primary lobby-btn-play">🎮 LEHRE STARTEN</button>
+                        <button id="btn-demo" class="btn btn-demo">🎯 TRAINING</button>
+                        <button id="btn-level-select" class="btn btn-secondary">📚 LEHRJAHRE</button>
+                        <button id="btn-story" class="btn btn-secondary btn-chars">👥 CHARAKTERE</button>
+                        <button id="btn-replay-opening" class="btn btn-secondary">⚡ INTRO</button>
+                    </div>
+
+                    <div class="lobby-utility-row">
+                        <div class="lobby-music-group">
+                            <span class="music-picker-label">🎶 LOBBY-MUSIK</span>
+                            <button id="btn-music-prev" class="btn btn-secondary btn-music-step" title="Vorheriger Track">⏮</button>
+                            <select id="select-menu-music" class="music-select" aria-label="Lobby Musik auswählen"></select>
+                            <button id="btn-music-next" class="btn btn-secondary btn-music-step" title="Nächster Track">⏭</button>
+                        </div>
+
+                        <div class="lobby-audio-toggles">
+                            <button id="btn-menu-music-toggle" class="btn btn-secondary btn-sm">🎵 MUSIK: AN</button>
+                            <div class="menu-slider-wrap">
+                                <input type="range" id="slider-menu-music-vol" min="0" max="100" value="50" step="5">
+                                <span id="label-menu-music-vol" class="vol-label">50%</span>
+                            </div>
+                            <button id="btn-menu-sound-toggle" class="btn btn-secondary btn-sm">🔊 SPRACHE &amp; EFFEKTE: AN</button>
+                            <button id="btn-fullscreen-menu" class="btn btn-secondary btn-sm" title="Vollbild umschalten">⛶</button>
                         </div>
                     </div>
 
-                    <div class="menu-audio-settings lobby2-audio">
-                        <button id="btn-menu-music-toggle" class="btn btn-secondary btn-sm">🎵 MUSIK: AN</button>
-                        <div class="menu-slider-wrap">
-                            <input type="range" id="slider-menu-music-vol" min="0" max="100" value="50" step="5">
-                            <span id="label-menu-music-vol" class="vol-label">50%</span>
-                        </div>
-                        <button id="btn-menu-sound-toggle" class="btn btn-secondary btn-sm">🔊 SPRACHE &amp; EFFEKTE: AN</button>
-                        <button id="btn-fullscreen-menu" class="btn btn-secondary btn-sm">⛶</button>
-                    </div>
-
-                    <div class="controls-guide lobby2-keys">
+                    <div class="controls-guide lobby-keys-bar">
                         <div class="key-item"><kbd>A</kbd><kbd>D</kbd> Laufen</div>
                         <div class="key-item"><kbd>SPACE</kbd> Sprung</div>
-                        <div class="key-item"><kbd>CTRL</kbd> Ducken</div>
+                        <div class="key-item"><kbd>CTRL</kbd>/<kbd>↓</kbd> Ducken</div>
                         <div class="key-item"><kbd>S</kbd> Sprint</div>
                         <div class="key-item"><kbd>R</kbd> Block</div>
                         <div class="key-item"><kbd>E</kbd> Gesetz</div>
@@ -376,36 +490,93 @@
                         <div class="key-item"><kbd>F</kbd> Frisbees</div>
                         <div class="key-item"><kbd>ESC</kbd> Pause</div>
                     </div>
+                </footer>
+            </div>
+        </div>
+
+        <!-- Pre-Start Setup Modal (Schwierigkeit & 3-Stufen Sound-Chaos) -->
+        <div id="screen-prestart" class="screen-overlay hidden">
+            <div class="menu-card modal-card glass-panel prestart-card">
+                <div class="modal-header-bar">
+                    <div>
+                        <span class="game-badge comic-badge">⚙️ EINSATZ-VORBEREITUNG</span>
+                        <h2>LEHRE KONFIGURIEREN</h2>
+                        <p class="campaign-summary">Bestimme Boss-HP &amp; Aggressivität sowie die Anzahl gleichzeitiger Sounds im Spiel.</p>
+                    </div>
+                    <button id="btn-close-prestart" class="btn btn-secondary">ZURÜCK</button>
                 </div>
 
-                <div class="lobby2-right">
-                    <div id="lobby-quote-bubble" class="lobby-quote-bubble lobby2-bubble">
-                        💬 Klicke auf einen Charakter — oder starte direkt deine Lehre!
+                <div class="prestart-section">
+                    <div class="prestart-section-title">⚔️ SCHWIERIGKEIT (BOSS-LEBEN &amp; AGGRESSIVITÄT)</div>
+                    <div class="diff-grid" id="prestart-diff-grid">
+                        <button type="button" class="setup-opt-card diff-opt" data-diff="easy">
+                            <div class="opt-top">
+                                <span class="opt-ico">🟢</span>
+                                <strong class="opt-name">LEICHT</strong>
+                                <span class="opt-badge">-25% HP</span>
+                            </div>
+                            <p class="opt-desc">Weniger Boss-HP, langsamere Angriffe &amp; milderer Schaden.</p>
+                        </button>
+                        <button type="button" class="setup-opt-card diff-opt active" data-diff="normal">
+                            <div class="opt-top">
+                                <span class="opt-ico">🔵</span>
+                                <strong class="opt-name">NORMAL</strong>
+                                <span class="opt-badge badge-std">STANDARD</span>
+                            </div>
+                            <p class="opt-desc">Originale EFZ-Balance: 100% Boss-HP &amp; faire Cooldowns.</p>
+                        </button>
+                        <button type="button" class="setup-opt-card diff-opt" data-diff="hard">
+                            <div class="opt-top">
+                                <span class="opt-ico">🟠</span>
+                                <strong class="opt-name">SCHWER</strong>
+                                <span class="opt-badge">+30% HP</span>
+                            </div>
+                            <p class="opt-desc">Aggressivere Bosse, mehr Schaden &amp; schnellere Salven.</p>
+                        </button>
+                        <button type="button" class="setup-opt-card diff-opt" data-diff="nightmare">
+                            <div class="opt-top">
+                                <span class="opt-ico">🔴</span>
+                                <strong class="opt-name">EXTREM</strong>
+                                <span class="opt-badge">+65% HP</span>
+                            </div>
+                            <p class="opt-desc">Brutales GIBB-Chaos: hyper-schnelle &amp; zähe Boss-Combos!</p>
+                        </button>
                     </div>
-                    <div class="lobby2-stage">
-                        <div class="lobby2-spot"></div>
-                        <div class="lobby-fighter lobby2-rival rival-left"
-                             data-clip="monika_puenktlichkeit"
-                             data-quote="⏱️ MONIKA SCHNEIDER: 'Pünktlichkeit ist oberste Gebot!'"
-                             title="Monika Schneider">
-                            <img src="assets/sprites/characters/monika_idle.png" alt="Monika Schneider">
-                            <div class="fighter-tag tag-boss">MONIKA</div>
-                        </div>
-                        <div class="lobby-fighter lobby2-hero"
-                             data-clip="thenerean_stah"
-                             data-quote="🔥 THENEREAN: 'HERR ADAM, ICH STAH DOCH DA!'"
-                             title="Thenerean Selvabankumar">
-                            <img src="assets/sprites/characters/thenerean_idle.png" alt="Thenerean Selvabankumar">
-                            <div class="fighter-tag tag-hero">THENEREAN • EFZ</div>
-                        </div>
-                        <div class="lobby-fighter lobby2-rival rival-right"
-                             data-clip="adam_silvankumar"
-                             data-quote="🥏 HERR ADAM: 'Silvankumar, ist der Thenerean da?!'"
-                             title="Herr Adam">
-                            <img src="assets/sprites/characters/adam_idle.png" alt="Herr Adam">
-                            <div class="fighter-tag tag-boss">HERR ADAM</div>
-                        </div>
+                </div>
+
+                <div class="prestart-section">
+                    <div class="prestart-section-title">🔊 SOUND-MENGE IM SPIEL (3 STUFEN)</div>
+                    <div class="sound-tier-grid" id="prestart-sound-grid">
+                        <button type="button" class="setup-opt-card sound-opt" data-sound-tier="1">
+                            <div class="opt-top">
+                                <span class="opt-ico">🔈</span>
+                                <strong class="opt-name">STUFE 1 • RUHIG</strong>
+                                <span class="opt-badge">NUR 1 SOUND</span>
+                            </div>
+                            <p class="opt-desc">Immer streng nur 1 Sound gleichzeitig — sauber &amp; fokussiert.</p>
+                        </button>
+                        <button type="button" class="setup-opt-card sound-opt active" data-sound-tier="2">
+                            <div class="opt-top">
+                                <span class="opt-ico">🔉</span>
+                                <strong class="opt-name">STUFE 2 • NORMAL</strong>
+                                <span class="opt-badge badge-std">SELTEN MIX</span>
+                            </div>
+                            <p class="opt-desc">Meistens 1 Sound; mehrere Sounds überlappen nur selten.</p>
+                        </button>
+                        <button type="button" class="setup-opt-card sound-opt" data-sound-tier="3">
+                            <div class="opt-top">
+                                <span class="opt-ico">📢</span>
+                                <strong class="opt-name">STUFE 3 • CRAZY!</strong>
+                                <span class="opt-badge badge-crazy">DURCHEINANDER</span>
+                            </div>
+                            <p class="opt-desc">Crazy viele Sprüche komplett durcheinander bei jeder Aktion!</p>
+                        </button>
                     </div>
+                </div>
+
+                <div class="prestart-footer">
+                    <button id="btn-prestart-direct" class="btn btn-secondary">⚡ DIREKT IN LEVEL 1</button>
+                    <button id="btn-prestart-launch" class="btn btn-primary btn-lg">🎬 LEHRE &amp; RANDOM-INTRO STARTEN ▶</button>
                 </div>
             </div>
         </div>
@@ -417,9 +588,15 @@
                     <div>
                         <span class="game-badge">GIBB KAMPAGNE</span>
                         <h2>WÄHLE DEIN LEHRJAHR AN DER GIBB</h2>
-                        <p id="campaign-summary" class="campaign-summary">Fortschritt: 0 / 6 Lehrjahre abgeschlossen</p>
+                        <p id="campaign-summary" class="campaign-summary">Fortschritt: 0 / 10 Lehrjahre abgeschlossen</p>
                     </div>
-                    <button id="btn-close-lvl" class="btn btn-secondary">ZURÜCK</button>
+                    <div class="lvl-header-right">
+                        <div class="lvl-quick-settings">
+                            <button id="btn-lvl-diff-cycle" class="btn btn-secondary btn-sm" title="Schwierigkeit direkt wechseln">🔵 NORMAL</button>
+                            <button id="btn-lvl-sound-cycle" class="btn btn-secondary btn-sm" title="Sound-Stufe (1 / 2 / 3) wechseln">🔉 STUFE 2</button>
+                        </div>
+                        <button id="btn-close-lvl" class="btn btn-secondary">ZURÜCK</button>
+                    </div>
                 </div>
                 <div class="level-grid"></div>
             </div>
@@ -445,6 +622,12 @@
                     </button>
                     <button class="chars-tab" data-char="adam">
                         <img src="assets/sprites/adam_avatar.png" alt="">HERR ADAM
+                    </button>
+                    <button class="chars-tab" data-char="tuktuk_dual">
+                        <img src="assets/sprites/tuktuk_dual_avatar.png" alt="">DUAL-GPU MK-II
+                    </button>
+                    <button class="chars-tab" data-char="gibb_student">
+                        <img src="assets/sprites/gibb_student_avatar.png" alt="">GIBB SCHÜLER
                     </button>
                 </div>
 
