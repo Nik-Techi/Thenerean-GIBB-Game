@@ -10,7 +10,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=DIRECTORY, **kwargs)
 
+    def end_headers(self):
+        # Always serve the newest game files (no stale browser cache after updates)
+        self.send_header("Cache-Control", "no-store, max-age=0")
+        super().end_headers()
+
 def run():
+    socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer(("", PORT), Handler) as httpd:
         print(f"==================================================")
         print(f" Thenerean Selvabankumar - Das GIBB Abenteuer ")

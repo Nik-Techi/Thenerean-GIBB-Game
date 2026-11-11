@@ -4643,3 +4643,22 @@ body.touch-active #control-hint-pill {
 .ach-toast-head { font-size: 10px; font-weight: 900; letter-spacing: 1.2px; color: #ffd32a; }
 .ach-toast-name { font-size: 15px; font-weight: 900; color: #fff; }
 .ach-toast-reward { font-size: 12px; font-weight: 800; color: #2ed573; }
+
+/* V9: character dossiers */
+.chars-dossier { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.dossier-row {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: 10px;
+    align-items: start;
+    padding: 7px 11px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-left: 3px solid var(--char-accent, #ffd32a);
+}
+.dossier-row span { font-size: 11px; font-weight: 900; letter-spacing: 0.6px; color: var(--char-accent, #ffd32a); padding-top: 2px; }
+.dossier-row p { font-size: 12.5px; line-height: 1.42; color: #d5dcea; }
+.dossier-row.record { background: rgba(255, 211, 42, 0.08); }
+.dossier-row.record p { color: #ffe58a; font-weight: 700; }
+.chars-tabs.chars-tabs-v9 { flex-wrap: wrap; }
+.chars-tabs.chars-tabs-v9 .chars-tab { flex: 1 1 22%; }

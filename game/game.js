@@ -5011,7 +5011,7 @@ class Game {
     }
 
     onLavaFall(pit) {
-        const dmg = this.touchControlsEnabled ? 8 : 12;
+        const dmg = this.runHazardDamage() + 4;
         this.screenShake = 16;
         window.soundManager.playLavaSplash();
         this.spawnBurst(this.player.x + this.player.w * 0.5, this.player.groundY + 10, 26, '#ff6348', 8, 24);
@@ -5223,7 +5223,7 @@ class Game {
             if (this.player.isBlocking) {
                 this.onBlockSuccess(this.player.x + this.player.w * 0.5, playerBottom);
             } else {
-                const dmg = Math.max(6, Math.round(12 * (diff.dmgMult || 1)));
+                const dmg = Math.max(10, Math.round(22 * (diff.dmgMult || 1)));
                 this.onPlayerHit(dmg, 'climb_hazard');
                 if (this.state !== GAME_STATE.RUNNING) return;
             }
@@ -5692,7 +5692,7 @@ class Game {
                     if (this.player.isBlocking) {
                         this.onBlockSuccess(screenX, obs.y);
                     } else {
-                        const dmg = this.touchControlsEnabled ? 7 : 10;
+                        const dmg = this.runHazardDamage();
                         this.onPlayerHit(dmg, obs.type);
                     }
                 }
@@ -6392,9 +6392,9 @@ class Game {
 
     onCollectItem(type) {
         if (this.level && this.level.mode === 'time_attack' && (type === 'coffee' || type === 'energy_drink')) {
-            this.timeRemaining += 2.5;
+            this.timeRemaining += 1.0;
             this.updateMissionPill();
-            this.addFloatingText("⏱️ +2.5s ZEIT!", this.player.x + 30, this.player.y - 38, '#ffd32a', 20);
+            this.addFloatingText("⏱️ +1s ZEIT!", this.player.x + 30, this.player.y - 38, '#ffd32a', 20);
         }
 
         if (type === 'item_melon') {
@@ -6669,7 +6669,7 @@ class Game {
         if (reason === 'timeout') {
             badge = 'VERSPÄTUNG!';
             title = '⏰ SCHULGLOCKE HAT GELÄUTET!';
-            desc = 'Monika Schneider hat das Klassenzimmer abgesperrt! Sammle Kaffee (+2.5s) und nutze die Sprint-Felder!';
+            desc = 'Monika Schneider hat das Klassenzimmer abgesperrt! Sammle Kaffee (+1s) und nutze die Sprint-Felder!';
             quote = '"2.54 Sekunden zu spät — Pünktlichkeit ist oberste Gebot!"';
         } else if (reason === 'chaser') {
             badge = 'VERFOLGUNGS-CRASH';

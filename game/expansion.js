@@ -45,24 +45,24 @@ const RUN_PERKS = [
 ];
 
 const ACHIEVEMENTS = [
-    { id: 'first_win',  icon: '🎓', name: 'Erster Schultag',       desc: 'Schliesse dein erstes Level ab',                reward: 50,  test: (s) => s.wins >= 1 },
-    { id: 'chapter1',   icon: '📖', name: 'Bern überlebt',         desc: 'Schliesse alle 10 Levels von Kapitel 1 ab',     reward: 150, test: (s, g) => g.countCleared(1, 10) >= 10 },
-    { id: 'chapter2',   icon: '🚀', name: 'Melonen-Pilot',         desc: 'Schliesse alle 10 Levels von Kapitel 2 ab',     reward: 200, test: (s, g) => g.countCleared(11, 20) >= 10 },
-    { id: 'chapter3',   icon: '🏆', name: 'EFZ in der Tasche',     desc: 'Schliesse alle 10 Levels von Kapitel 3 ab',     reward: 300, test: (s, g) => g.countCleared(21, 30) >= 10 },
-    { id: 'grade6',     icon: '💯', name: 'Bestnote 6.0',          desc: 'Beende ein Level mit Note 6.0',                 reward: 100, test: (s) => s.grade6 >= 1 },
-    { id: 'combo20',    icon: '🔥', name: 'Kombo-Lehrling',        desc: 'Erreiche eine 20er-Kombo',                      reward: 80,  test: (s) => s.bestCombo >= 20 },
-    { id: 'combo50',    icon: '🌋', name: 'Kombo-Meister',         desc: 'Erreiche eine 50er-Kombo',                      reward: 200, test: (s) => s.bestCombo >= 50 },
-    { id: 'dodge10',    icon: '💨', name: 'Nicht mit mir!',        desc: 'Weiche 10 Projektilen per Dash perfekt aus',    reward: 60,  test: (s) => s.dodges >= 10 },
-    { id: 'block15',    icon: '🛡️', name: 'Niemert chunt verbi',   desc: 'Lande 15 Perfekt-Blocks',                       reward: 80,  test: (s) => s.perfectBlocks >= 15 },
-    { id: 'nohit',      icon: '🧘', name: 'Die Ruhe selbst',       desc: 'Gewinne ein Boss-Level ohne einen Treffer',     reward: 150, test: (s) => s.noHitBossWins >= 1 },
-    { id: 'crit100',    icon: '💥', name: 'Paragraphen-Reiter',    desc: 'Lande 100 kritische Treffer',                   reward: 80,  test: (s) => s.crits >= 100 },
-    { id: 'kills50',    icon: '🥊', name: 'Klassensprecher',       desc: 'Besiege 50 Gegner',                             reward: 120, test: (s) => s.kills >= 50 },
-    { id: 'hardwin',    icon: '😈', name: 'Freiwillig SCHWER',     desc: 'Gewinne ein Level auf SCHWER oder EXTREM',      reward: 150, test: (s) => s.hardWins >= 1 },
-    { id: 'shop1',      icon: '🛒', name: 'Erster Lohn',           desc: 'Kaufe etwas im Mensa-Kiosk',                    reward: 30,  test: (s) => s.purchases >= 1 },
-    { id: 'rich',       icon: '🤑', name: 'Selber Bankomat',       desc: 'Verdiene insgesamt 1500 CHF Lehrlingslohn',     reward: 100, test: (s) => s.coinsEarned >= 1500 },
-    { id: 'endless5',   icon: '♾️', name: 'Nachsitzer',            desc: 'Überstehe 5 Wellen im Nachsitzen',              reward: 100, test: (s) => s.endlessBest >= 5 },
-    { id: 'endless10',  icon: '⏳', name: 'Dauer-Nachsitzer',      desc: 'Überstehe 10 Wellen im Nachsitzen',             reward: 250, test: (s) => s.endlessBest >= 10 },
-    { id: 'endless20',  icon: '👑', name: 'Legende vom Nachsitzen', desc: 'Überstehe 20 Wellen im Nachsitzen',            reward: 500, test: (s) => s.endlessBest >= 20 }
+    { id: 'first_win',  icon: '🎓', name: 'Erster Schultag',       desc: 'Schliesse dein erstes Level ab',                reward: 30,  test: (s) => s.wins >= 1 },
+    { id: 'chapter1',   icon: '📖', name: 'Bern überlebt',         desc: 'Schliesse alle 10 Levels von Kapitel 1 ab',     reward: 90, test: (s, g) => g.countCleared(1, 10) >= 10 },
+    { id: 'chapter2',   icon: '🚀', name: 'Melonen-Pilot',         desc: 'Schliesse alle 10 Levels von Kapitel 2 ab',     reward: 120, test: (s, g) => g.countCleared(11, 20) >= 10 },
+    { id: 'chapter3',   icon: '🏆', name: 'EFZ in der Tasche',     desc: 'Schliesse alle 10 Levels von Kapitel 3 ab',     reward: 180, test: (s, g) => g.countCleared(21, 30) >= 10 },
+    { id: 'grade6',     icon: '💯', name: 'Bestnote 6.0',          desc: 'Beende ein Level mit Note 6.0',                 reward: 60, test: (s) => s.grade6 >= 1 },
+    { id: 'combo20',    icon: '🔥', name: 'Kombo-Lehrling',        desc: 'Erreiche eine 20er-Kombo',                      reward: 50,  test: (s) => s.bestCombo >= 20 },
+    { id: 'combo50',    icon: '🌋', name: 'Kombo-Meister',         desc: 'Erreiche eine 50er-Kombo',                      reward: 120, test: (s) => s.bestCombo >= 50 },
+    { id: 'dodge10',    icon: '💨', name: 'Nicht mit mir!',        desc: 'Weiche 10 Projektilen per Dash perfekt aus',    reward: 40,  test: (s) => s.dodges >= 10 },
+    { id: 'block15',    icon: '🛡️', name: 'Niemert chunt verbi',   desc: 'Lande 15 Perfekt-Blocks',                       reward: 50,  test: (s) => s.perfectBlocks >= 15 },
+    { id: 'nohit',      icon: '🧘', name: 'Die Ruhe selbst',       desc: 'Gewinne ein Boss-Level ohne einen Treffer',     reward: 90, test: (s) => s.noHitBossWins >= 1 },
+    { id: 'crit100',    icon: '💥', name: 'Paragraphen-Reiter',    desc: 'Lande 100 kritische Treffer',                   reward: 50,  test: (s) => s.crits >= 100 },
+    { id: 'kills50',    icon: '🥊', name: 'Klassensprecher',       desc: 'Besiege 50 Gegner',                             reward: 70, test: (s) => s.kills >= 50 },
+    { id: 'hardwin',    icon: '😈', name: 'Freiwillig SCHWER',     desc: 'Gewinne ein Level auf SCHWER oder EXTREM',      reward: 90, test: (s) => s.hardWins >= 1 },
+    { id: 'shop1',      icon: '🛒', name: 'Erster Lohn',           desc: 'Kaufe etwas im Mensa-Kiosk',                    reward: 20,  test: (s) => s.purchases >= 1 },
+    { id: 'rich',       icon: '🤑', name: 'Selber Bankomat',       desc: 'Verdiene insgesamt 1500 CHF Lehrlingslohn',     reward: 60, test: (s) => s.coinsEarned >= 1500 },
+    { id: 'endless5',   icon: '♾️', name: 'Nachsitzer',            desc: 'Überstehe 5 Wellen im Nachsitzen',              reward: 60, test: (s) => s.endlessBest >= 5 },
+    { id: 'endless10',  icon: '⏳', name: 'Dauer-Nachsitzer',      desc: 'Überstehe 10 Wellen im Nachsitzen',             reward: 150, test: (s) => s.endlessBest >= 10 },
+    { id: 'endless20',  icon: '👑', name: 'Legende vom Nachsitzen', desc: 'Überstehe 20 Wellen im Nachsitzen',            reward: 300, test: (s) => s.endlessBest >= 20 }
 ];
 
 const DEFAULT_STATS = {
@@ -103,6 +103,7 @@ const Expansion = {
         Object.assign(this.player, { dashTimer: 0, dashCooldown: 0, dashDir: 1, dashDX: 1, dashDY: 0, dashId: 0, airJumps: 1 });
         this.recomputeMods();
         this.buildExpansionDOM();
+        this.buildCharacterExtras();
         this.bindExpansionInput();
         this.refreshCoinUI();
     },
@@ -112,7 +113,7 @@ const Expansion = {
     },
 
     loadMeta() {
-        const meta = { coins: 0, upgrades: {}, achievements: {}, stats: { ...DEFAULT_STATS } };
+        const meta = { coins: 0, upgrades: {}, achievements: {}, bestiary: {}, stats: { ...DEFAULT_STATS } };
         try {
             const parsed = JSON.parse(localStorage.getItem(META_STORAGE_KEY) || 'null');
             if (parsed && typeof parsed === 'object') this.mergeMetaInto(meta, parsed);
@@ -131,6 +132,10 @@ const Expansion = {
         if (src.achievements && typeof src.achievements === 'object') {
             for (const a of ACHIEVEMENTS) if (src.achievements[a.id]) meta.achievements[a.id] = true;
         }
+        if (!meta.bestiary) meta.bestiary = {};
+        if (src.bestiary && typeof src.bestiary === 'object') {
+            for (const [k, v] of Object.entries(src.bestiary)) meta.bestiary[k] = Math.max(0, Math.round(Number(v) || 0));
+        }
         if (src.stats && typeof src.stats === 'object') {
             for (const k of Object.keys(DEFAULT_STATS)) meta.stats[k] = Math.max(0, Number(src.stats[k]) || 0);
         }
@@ -141,7 +146,7 @@ const Expansion = {
     adoptDiskMeta(diskMeta) {
         if (!diskMeta || typeof diskMeta !== 'object' || !diskMeta.stats) return;
         if ((Number(diskMeta.stats.coinsEarned) || 0) <= this.meta.stats.coinsEarned) return;
-        this.meta = this.mergeMetaInto({ coins: 0, upgrades: {}, achievements: {}, stats: { ...DEFAULT_STATS } }, diskMeta);
+        this.meta = this.mergeMetaInto({ coins: 0, upgrades: {}, achievements: {}, bestiary: {}, stats: { ...DEFAULT_STATS } }, diskMeta);
         try { localStorage.setItem(META_STORAGE_KEY, JSON.stringify(this.meta)); } catch (e) {}
         this.recomputeMods();
         this.refreshCoinUI();
@@ -160,7 +165,7 @@ const Expansion = {
     },
 
     upgradeCost(item, lv) {
-        return Math.round((item.base * (1 + lv * 0.75)) / 10) * 10;
+        return Math.round((item.base * 1.6 * (1 + lv * 1.0)) / 10) * 10;
     },
 
     countCleared(fromId, toId) {
@@ -612,7 +617,7 @@ const Expansion = {
         p.dashCooldown = Math.min(p.dashCooldown, 10);
         this.addFloatingText('💨 PERFEKT AUSGEWICHEN!', p.x + p.w * 0.5, p.y - 22, '#00d2d3', 22);
         this.registerCombo(2);
-        this.addCoins(2, { x: p.x + p.w * 0.5, y: p.y - 48, size: 16 });
+        this.addCoins(1, { x: p.x + p.w * 0.5, y: p.y - 48, size: 16 });
     },
 
     // ---------------------------------------------------------------------
@@ -639,6 +644,8 @@ const Expansion = {
         const lastOne = !other || other.hp <= 0 || other === e;
         this.meta.stats.kills++;
         this.run.kills++;
+        const bKey = this.bestiaryKey(e);
+        this.meta.bestiary[bKey] = (this.meta.bestiary[bKey] || 0) + 1;
         this.hitStop = 7;
         this.screenShake = 22;
         if (lastOne) {
@@ -649,7 +656,7 @@ const Expansion = {
         this.addFloatingText('K.O.!', cx, e.y - 54, '#ff4757', 44);
         this.spawnBurst(cx, e.y + e.h * 0.5, 26, '#ffd32a', 10, 30);
         this.shockwaves.push({ x: cx, y: e.y + e.h * 0.5, radius: 20, maxRadius: 260, color: '#ffd32a', alpha: 0.9 });
-        const divisor = this.level && this.level.endless ? 18 : 12;
+        const divisor = this.level && this.level.endless ? 45 : 30;
         this.addCoins((e.maxHp || 300) / divisor, { x: cx, y: e.y - 92, size: 24 });
     },
 
@@ -779,7 +786,7 @@ const Expansion = {
         this.hazards = [];
         this.clearFrisbeeTimers();
         if (cleared > this.meta.stats.endlessBest) this.meta.stats.endlessBest = cleared;
-        this.addCoins(12 + cleared * 4, { x: canvas.width * 0.5, y: canvas.height * 0.36, size: 26 });
+        this.addCoins(4 + cleared * 2, { x: canvas.width * 0.5, y: canvas.height * 0.36, size: 26 });
         window.soundManager.playWaveClear();
         this.openPerkDraft(cleared);
     },
@@ -889,6 +896,7 @@ Game.prototype.mods = { ...DEFAULT_MODS };
         if (this.player.dashTimer > 0) this.player.dashTimer--;
         orig(dt);
         this.tickExpansion();
+        this.tickCourse();
     });
 
     wrap('canPause', function (orig) {
@@ -935,7 +943,7 @@ Game.prototype.mods = { ...DEFAULT_MODS };
 
     wrap('onCollectItem', function (orig, type) {
         orig(type);
-        this.addCoins(type === 'diploma_shard' ? 8 : 3, { x: this.player.x + this.player.w * 0.5, y: this.player.y - 44, size: 16 });
+        if (type === 'diploma_shard') this.addCoins(3, { x: this.player.x + this.player.w * 0.5, y: this.player.y - 44, size: 16 });
     });
 
     wrap('reflectProjectile', function (orig, p) {
@@ -992,10 +1000,10 @@ Game.prototype.mods = { ...DEFAULT_MODS };
         if (lvl.hasBoss !== false && this.run.damageTaken === 0) s.noHitBossWins++;
         if (this.maxCombo > s.bestCombo) s.bestCombo = this.maxCombo;
 
-        const gradeBonus = Math.round(Math.max(0, this.player.score - 4) * 20);
-        const comboBonus = Math.min(40, this.maxCombo);
-        const firstBonus = wasCleared ? 0 : 50;
-        const earned = this.addCoins(30 + gradeBonus + comboBonus + firstBonus);
+        const gradeBonus = Math.round(Math.max(0, this.player.score - 4) * 8);
+        const comboBonus = Math.min(10, Math.floor(this.maxCombo / 4));
+        const firstBonus = wasCleared ? 0 : 20;
+        const earned = this.addCoins(10 + gradeBonus + comboBonus + firstBonus);
         if (this.xui.winCoins) {
             const total = this.run.coins;
             this.xui.winCoins.innerHTML = `🪙 <strong>+${total} CHF</strong> Lehrlingslohn in diesem Level` +
