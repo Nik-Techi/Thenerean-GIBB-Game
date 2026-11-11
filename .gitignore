@@ -2,6 +2,7 @@
 temp_*.wav
 *.pyc
 __pycache__/
+thenerean_save.json
 
 # Large raw video assets (optional - uncomment if you only want the ready-to-play game repository)
 # Videos/

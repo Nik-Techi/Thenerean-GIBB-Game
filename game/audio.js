@@ -129,7 +129,34 @@ class SoundManager {
             thenerean_silicon_bugs: 'assets/audio/thenerean_silicon_bugs.mp3',
             thenerean_taronuman_scream: 'assets/audio/thenerean_taronuman_scream.mp3',
             thenerean_tamil_vbucks: 'assets/audio/thenerean_tamil_vbucks.mp3',
-            thenerean_sport_late: 'assets/audio/thenerean_sport_late.mp3'
+            thenerean_sport_late: 'assets/audio/thenerean_sport_late.mp3',
+
+            // v10 Mega-Expansion Clips (25 Neue Memes, Tung Sahur & Raketen-Lore)
+            adam_nimm_frisbee_fahr: 'assets/audio/adam_nimm_frisbee_fahr.mp3',
+            monika_frisbee_aura: 'assets/audio/monika_frisbee_aura.mp3',
+            monika_panama_banana_koma: 'assets/audio/monika_panama_banana_koma.mp3',
+            sahur_baseball_swing: 'assets/audio/sahur_baseball_swing.mp3',
+            sahur_bat_smash: 'assets/audio/sahur_bat_smash.mp3',
+            thenerean_abu_gefaengnis: 'assets/audio/thenerean_abu_gefaengnis.mp3',
+            thenerean_alles_brennt: 'assets/audio/thenerean_alles_brennt.mp3',
+            thenerean_alles_schuld_monika: 'assets/audio/thenerean_alles_schuld_monika.mp3',
+            thenerean_bester_kaffee: 'assets/audio/thenerean_bester_kaffee.mp3',
+            thenerean_cataclysmic_blast: 'assets/audio/thenerean_cataclysmic_blast.mp3',
+            thenerean_dhcp_server: 'assets/audio/thenerean_dhcp_server.mp3',
+            thenerean_fix_code_tonight: 'assets/audio/thenerean_fix_code_tonight.mp3',
+            thenerean_installier_buch: 'assets/audio/thenerean_installier_buch.mp3',
+            thenerean_kloten_taronuman: 'assets/audio/thenerean_kloten_taronuman.mp3',
+            thenerean_komplett_verrueckt: 'assets/audio/thenerean_komplett_verrueckt.mp3',
+            thenerean_mach_fertig: 'assets/audio/thenerean_mach_fertig.mp3',
+            thenerean_mega_melone_rakete: 'assets/audio/thenerean_mega_melone_rakete.mp3',
+            thenerean_schatz_atlantis: 'assets/audio/thenerean_schatz_atlantis.mp3',
+            thenerean_schweiz_srilanka: 'assets/audio/thenerean_schweiz_srilanka.mp3',
+            thenerean_selber_taxi: 'assets/audio/thenerean_selber_taxi.mp3',
+            thenerean_to_the_moon: 'assets/audio/thenerean_to_the_moon.mp3',
+            thenerean_will_freunde: 'assets/audio/thenerean_will_freunde.mp3',
+            thenerean_wo_bleibt_bus: 'assets/audio/thenerean_wo_bleibt_bus.mp3',
+            thenerean_zurueck_erde: 'assets/audio/thenerean_zurueck_erde.mp3',
+            tuktuk_melone_sinn: 'assets/audio/tuktuk_melone_sinn.mp3'
         };
 
         // Preload unique Audio buffers into browser cache
@@ -432,6 +459,74 @@ class SoundManager {
             gain.connect(this.ctx.destination);
             osc.start(now);
             osc.stop(now + 0.065);
+        } catch (e) {}
+    }
+
+    playBatSmash() {
+        if (!this.enabled || !this.ctx) return;
+        try {
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(220, now);
+            osc.frequency.exponentialRampToValueAtTime(52, now + 0.22);
+            gain.gain.setValueAtTime(0.32, now);
+            gain.gain.exponentialRampToValueAtTime(0.005, now + 0.24);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.25);
+
+            const snap = this.ctx.createOscillator();
+            const sGain = this.ctx.createGain();
+            snap.type = 'square';
+            snap.frequency.setValueAtTime(760, now);
+            snap.frequency.exponentialRampToValueAtTime(160, now + 0.09);
+            sGain.gain.setValueAtTime(0.18, now);
+            sGain.gain.exponentialRampToValueAtTime(0.005, now + 0.10);
+            snap.connect(sGain);
+            sGain.connect(this.ctx.destination);
+            snap.start(now);
+            snap.stop(now + 0.11);
+        } catch (e) {}
+    }
+
+    playMelonBoost() {
+        if (!this.enabled || !this.ctx) return;
+        try {
+            const now = this.ctx.currentTime;
+            const notes = [440, 587, 784, 1046];
+            notes.forEach((f, idx) => {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(f, now + idx * 0.055);
+                gain.gain.setValueAtTime(0.18, now + idx * 0.055);
+                gain.gain.exponentialRampToValueAtTime(0.004, now + idx * 0.055 + 0.16);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now + idx * 0.055);
+                osc.stop(now + idx * 0.055 + 0.18);
+            });
+        } catch (e) {}
+    }
+
+    playRocketLaser() {
+        if (!this.enabled || !this.ctx) return;
+        try {
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(980, now);
+            osc.frequency.exponentialRampToValueAtTime(240, now + 0.12);
+            gain.gain.setValueAtTime(0.14, now);
+            gain.gain.exponentialRampToValueAtTime(0.004, now + 0.13);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.14);
         } catch (e) {}
     }
 

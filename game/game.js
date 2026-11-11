@@ -139,6 +139,11 @@ const imageSources = {
     tuktuk_dual_idle: 'assets/sprites/characters/tuktuk_dual_idle.png',
     tuktuk_dual_rage: 'assets/sprites/characters/tuktuk_dual_rage.png',
 
+    thenerean_rocket: 'assets/sprites/characters/thenerean_rocket.png',
+    sahur_idle: 'assets/sprites/characters/sahur_idle.png',
+    sahur_attack: 'assets/sprites/characters/sahur_attack.png',
+    drone_tuktuk: 'assets/sprites/characters/drone_tuktuk.png',
+
     gibb_student_idle: 'assets/sprites/characters/gibb_student_idle.png',
     gibb_student_walk: 'assets/sprites/characters/gibb_student_walk.png',
     gibb_student_windup: 'assets/sprites/characters/gibb_student_windup.png',
@@ -153,8 +158,10 @@ const imageSources = {
     tuktuk_avatar: 'assets/sprites/tuktuk_avatar.png',
     tuktuk_dual_avatar: 'assets/sprites/tuktuk_dual_avatar.png',
     gibb_student_avatar: 'assets/sprites/gibb_student_avatar.png',
+    sahur_avatar: 'assets/sprites/sahur_avatar.png',
+    drone_tuktuk_avatar: 'assets/sprites/drone_tuktuk_avatar.png',
 
-    // Stage Backgrounds (Lobby, Intro Stage + All 10 Levels)
+    // Stage Backgrounds (Lobby, Intro Stage + All 3 Chapters / 30 Levels)
     bg_lobby: 'assets/backgrounds/bg_lobby.jpg',
     bg_intro_stage: 'assets/backgrounds/bg_intro_stage.jpg',
     bg_story_intro_crazy: 'assets/backgrounds/bg_story_intro_crazy.jpg',
@@ -168,6 +175,11 @@ const imageSources = {
     bg_srilanka_highway: 'assets/backgrounds/bg_srilanka_highway.jpg',
     bg_cyber_bunker: 'assets/backgrounds/bg_cyber_bunker.jpg',
     bg_exam_auditorium: 'assets/backgrounds/bg_exam_auditorium.jpg',
+    bg_kloten_fire: 'assets/backgrounds/bg_kloten_fire.jpg',
+    bg_sky_rocket: 'assets/backgrounds/bg_sky_rocket.jpg',
+    bg_srilanka_jungle: 'assets/backgrounds/bg_srilanka_jungle.jpg',
+    bg_orbit_space: 'assets/backgrounds/bg_orbit_space.jpg',
+    bg_castle_alps: 'assets/backgrounds/bg_castle_alps.jpg',
 
     // HD Cel-Shaded Items, Obstacles & Projectiles
     frisbee: 'assets/sprites/frisbee.png',
@@ -176,6 +188,8 @@ const imageSources = {
     item_energy: 'assets/sprites/item_energy.png',
     item_diplom: 'assets/sprites/item_diplom.png',
     item_jeton: 'assets/sprites/item_jeton.png',
+    item_melon: 'assets/sprites/item_melon.png',
+    fire_pizza: 'assets/sprites/fire_pizza.png',
     projectile_mega: 'assets/sprites/projectile_mega.png',
     basketball: 'assets/sprites/basketball.png',
     red_card: 'assets/sprites/red_card.png',
@@ -270,17 +284,36 @@ class Game {
         this.jetonsCollected = 0;
         this.jetonsTotal = 0;
         this.touchDuckHeld = false;
+        this.touchJumpHeld = false;
         this.currentWaveIndex = 0;
         this.chaser = null;
         this.arenaSwitch = null;
         this.floorHazardCooldown = 0;
 
+        this.selectedChapterFilter = '1';
+        this.introTargetLevelIndex = 0;
+        this.activeIntroChapter = 1;
+        this.introBgKey = 'bg_story_intro_crazy';
+        this.climbCameraY = 0;
+        this.climbHazardY = 0;
+        this.climbMaxYReached = 0;
+        this.climbStartY = 0;
+        this.climbGoalY = 0;
+        this.rocketDistance = 0;
+        this.rocketGoalDistance = 6400;
+        this.rocketHazards = [];
+        this.rocketSpawnTimer = 45;
+        this.rocketBossTriggered = false;
+
         const urlParams = new URLSearchParams(window.location.search);
         const platformParam = urlParams.get('platform');
         this.isExplicitDesktop = platformParam === 'desktop';
+        this.localSaveEnabled = urlParams.get('localSave') === '1';
         const isExplicitAndroid = platformParam === 'android';
         const isMobileOS = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         this.touchControlsEnabled = !this.isExplicitDesktop && (isExplicitAndroid || isMobileOS);
+        this.activeChapterBannerTarget = { chapter: 1, startIndex: 0, resumeIndex: null };
+        this.pendingLaunch = { type: 'intro', chapter: 1, targetLevelIndex: 0, returnTo: 'chapters', label: '🎬 Intro & Kapitel 1 (Trailer + Level 1)' };
 
         this.worldDistance = 0;
         this.menuPan = 0;
@@ -435,6 +468,9 @@ class Game {
 
             screenMenu: document.getElementById('screen-menu'),
             screenPrestart: document.getElementById('screen-prestart'),
+            screenChapters: document.getElementById('screen-chapters'),
+            chapterCardsGrid: document.getElementById('chapter-cards-grid'),
+            chaptersSummary: document.getElementById('chapters-summary'),
             screenIntro: document.getElementById('screen-intro'),
             screenLvlSelect: document.getElementById('screen-level-select'),
             screenStory: document.getElementById('screen-story'),
@@ -445,14 +481,34 @@ class Game {
             btnClosePrestart: document.getElementById('btn-close-prestart'),
             btnPrestartDirect: document.getElementById('btn-prestart-direct'),
             btnPrestartLaunch: document.getElementById('btn-prestart-launch'),
-            btnLvlDiffCycle: document.getElementById('btn-lvl-diff-cycle'),
-            btnLvlSoundCycle: document.getElementById('btn-lvl-sound-cycle'),
+            prestartTargetPill: document.getElementById('prestart-target-pill'),
+            btnCloseChapters: document.getElementById('btn-close-chapters'),
+            btnOpenAllLevels: document.getElementById('btn-open-all-levels'),
+            btnChaptersIntroStart: document.getElementById('btn-chapters-intro-start'),
+            btnChaptersReset: document.getElementById('btn-chapters-reset'),
+            chaptersResetConfirm: document.getElementById('chapters-reset-confirm'),
+            btnChaptersResetYes: document.getElementById('btn-chapters-reset-yes'),
+            btnChaptersResetNo: document.getElementById('btn-chapters-reset-no'),
+            btnBackToChapters: document.getElementById('btn-back-to-chapters'),
+            btnLevelsReset: document.getElementById('btn-levels-reset'),
+            levelsResetConfirm: document.getElementById('levels-reset-confirm'),
+            btnLevelsResetYes: document.getElementById('btn-levels-reset-yes'),
+            btnLevelsResetNo: document.getElementById('btn-levels-reset-no'),
+            lvlChapTabs: document.querySelectorAll('.lvl-chap-tab[data-chap]'),
+            chapterOverviewBanner: document.getElementById('chapter-overview-banner'),
+            chapOvBadge: document.getElementById('chap-ov-badge'),
+            chapOvClearPill: document.getElementById('chap-ov-clear-pill'),
+            chapOvTitle: document.getElementById('chap-ov-title'),
+            chapOvDesc: document.getElementById('chap-ov-desc'),
+            btnChapterPlayStart: document.getElementById('btn-chapter-play-start'),
+            btnChapterResume: document.getElementById('btn-chapter-resume'),
             winDesc: document.getElementById('win-desc'),
             winGrade: document.getElementById('win-grade'),
             winHp: document.getElementById('win-hp'),
             winTime: document.getElementById('win-time'),
             winCombo: document.getElementById('win-combo'),
             btnNextLvl: document.getElementById('btn-next-lvl'),
+            btnWinChapters: document.getElementById('btn-win-chapters'),
             pauseLevelInfo: document.getElementById('pause-level-info'),
             loseBadge: document.getElementById('lose-badge'),
             loseTitle: document.getElementById('lose-title'),
@@ -506,6 +562,7 @@ class Game {
         this.initInput();
         this.initUIEventListeners();
         this.syncSetupControlsUI();
+        this.saveSyncPromise = this.localSaveEnabled ? this.syncSaveFromServer() : Promise.resolve(this.saveData);
 
         this.lastFrameTime = performance.now();
         requestAnimationFrame((t) => this.loop(t));
@@ -532,6 +589,7 @@ class Game {
         try {
             localStorage.setItem('thenerean_difficulty_v1', key);
         } catch (e) {}
+        this.persistSaveToDisk();
         this.syncSetupControlsUI();
         if (this.ui.screenLvlSelect && !this.ui.screenLvlSelect.classList.contains('hidden')) {
             this.populateLevelSelectGrid();
@@ -551,6 +609,7 @@ class Game {
 
     setSoundChaosLevel(level) {
         const next = window.soundManager ? window.soundManager.setSoundChaosLevel(level) : 2;
+        this.persistSaveToDisk();
         this.syncSetupControlsUI();
         return next;
     }
@@ -586,28 +645,212 @@ class Game {
         document.querySelectorAll('.sound-opt[data-sound-tier]').forEach((btn) => {
             btn.classList.toggle('active', parseInt(btn.getAttribute('data-sound-tier'), 10) === tier);
         });
-        if (this.ui.btnLvlDiffCycle) {
-            this.ui.btnLvlDiffCycle.textContent = diff.shortLabel;
-        }
-        if (this.ui.btnLvlSoundCycle) {
-            this.ui.btnLvlSoundCycle.textContent = soundShort[tier] || '🔉 STUFE 2';
-        }
         if (this.ui.introSettingsBadge) {
             this.ui.introSettingsBadge.textContent = `${diff.shortLabel} • ${soundLabels[tier] || '🔉 STUFE 2'}`;
         }
     }
 
+    collapseResetConfirms() {
+        if (this.ui.chaptersResetConfirm) this.ui.chaptersResetConfirm.classList.add('hidden');
+        if (this.ui.btnChaptersReset) this.ui.btnChaptersReset.classList.remove('hidden');
+        if (this.ui.levelsResetConfirm) this.ui.levelsResetConfirm.classList.add('hidden');
+        if (this.ui.btnLevelsReset) this.ui.btnLevelsReset.classList.remove('hidden');
+    }
+
+    async resetAllLevelProgress() {
+        this.collapseResetConfirms();
+        const prefs = {
+            difficulty: this.difficulty || 'normal',
+            soundTier: this.getSoundChaosLevel(),
+            menuMusic: window.soundManager ? window.soundManager.getMenuMusic() : undefined
+        };
+        this.saveData = { version: 1, levels: {}, prefs };
+        try {
+            localStorage.setItem('thenerean_gibb_save_v1', JSON.stringify(this.saveData));
+        } catch (e) {}
+
+        if (this.localSaveEnabled) {
+            try {
+                const res = await fetch('/api/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'reset_levels', prefs }),
+                    keepalive: true
+                });
+                if (res && res.ok) {
+                    const json = await res.json();
+                    if (json && json.data) {
+                        this.saveData = json.data;
+                        try {
+                            localStorage.setItem('thenerean_gibb_save_v1', JSON.stringify(this.saveData));
+                        } catch (e) {}
+                    }
+                }
+            } catch (e) {}
+        }
+
+        if (this.ui.screenChapters && !this.ui.screenChapters.classList.contains('hidden')) {
+            this.populateChapterCards();
+        }
+        if (this.ui.screenLvlSelect && !this.ui.screenLvlSelect.classList.contains('hidden')) {
+            this.populateLevelSelectGrid();
+        }
+        if (this.ui.chaptersSummary) {
+            this.ui.chaptersSummary.textContent = `↺ Levelstände zurückgesetzt! Fortschritt: 0 / ${LEVELS_CONFIG.length} Lehrjahre abgeschlossen`;
+        }
+        if (this.ui.campaignSummary) {
+            this.ui.campaignSummary.textContent = `↺ Levelstände zurückgesetzt! 0 / ${LEVELS_CONFIG.length} Lehrjahre abgeschlossen`;
+        }
+    }
+
+    openDifficultySetupForLaunch(config = null) {
+        if (config) {
+            this.pendingLaunch = {
+                type: config.type || 'intro',
+                chapter: config.chapter || 1,
+                targetLevelIndex: typeof config.targetLevelIndex === 'number' ? config.targetLevelIndex : 0,
+                returnTo: config.returnTo || 'chapters',
+                hasDirectOption: config.hasDirectOption !== undefined ? Boolean(config.hasDirectOption) : (config.type === 'intro'),
+                label: config.label || '🎬 Intro & Kapitel 1 (Trailer + Level 1)'
+            };
+        }
+        this.openPreStartModal();
+    }
+
+    executePendingLaunch(skipTrailer = false) {
+        const launch = this.pendingLaunch || { type: 'intro', chapter: 1, targetLevelIndex: 0 };
+        if (this.ui.screenPrestart) this.ui.screenPrestart.classList.add('hidden');
+        if (this.ui.screenChapters) this.ui.screenChapters.classList.add('hidden');
+        if (this.ui.screenLvlSelect) this.ui.screenLvlSelect.classList.add('hidden');
+        if (this.ui.screenMenu) this.ui.screenMenu.classList.add('hidden');
+
+        if (!skipTrailer && launch.type === 'intro') {
+            this.startCinematicIntro({ chapter: launch.chapter || 1, targetLevelIndex: launch.targetLevelIndex || 0 });
+        } else {
+            this.startLevel(launch.targetLevelIndex || 0);
+        }
+    }
+
     openPreStartModal() {
+        this.collapseResetConfirms();
         this.syncSetupControlsUI();
+        const launch = this.pendingLaunch || { type: 'intro', chapter: 1, targetLevelIndex: 0, returnTo: 'chapters', label: '🎬 Intro & Kapitel 1' };
+        if (this.ui.prestartTargetPill) {
+            this.ui.prestartTargetPill.textContent = launch.label || '🎬 Intro & Kapitel 1';
+        }
+        if (this.ui.btnPrestartDirect) {
+            const showDirect = launch.type === 'intro' && launch.hasDirectOption !== false;
+            this.ui.btnPrestartDirect.classList.toggle('hidden', !showDirect);
+        }
         if (this.ui.screenMenu) this.ui.screenMenu.classList.add('hidden');
         if (this.ui.screenStory) this.ui.screenStory.classList.add('hidden');
         if (this.ui.screenLvlSelect) this.ui.screenLvlSelect.classList.add('hidden');
+        if (this.ui.screenChapters) this.ui.screenChapters.classList.add('hidden');
         if (this.ui.screenPrestart) this.ui.screenPrestart.classList.remove('hidden');
     }
 
     closePreStartModal() {
         if (this.ui.screenPrestart) this.ui.screenPrestart.classList.add('hidden');
+        const ret = (this.pendingLaunch && this.pendingLaunch.returnTo) || 'chapters';
+        if (ret === 'levels') {
+            this.collapseResetConfirms();
+            this.populateLevelSelectGrid();
+            if (this.ui.screenLvlSelect) this.ui.screenLvlSelect.classList.remove('hidden');
+        } else if (ret === 'chapters') {
+            this.openChaptersModal();
+        } else {
+            if (this.ui.screenMenu) this.ui.screenMenu.classList.remove('hidden');
+        }
+    }
+
+    openChaptersModal() {
+        this.collapseResetConfirms();
+        this.populateChapterCards();
+        if (this.ui.screenMenu) this.ui.screenMenu.classList.add('hidden');
+        if (this.ui.screenPrestart) this.ui.screenPrestart.classList.add('hidden');
+        if (this.ui.screenLvlSelect) this.ui.screenLvlSelect.classList.add('hidden');
+        if (this.ui.screenStory) this.ui.screenStory.classList.add('hidden');
+        if (this.ui.screenChapters) this.ui.screenChapters.classList.remove('hidden');
+    }
+
+    closeChaptersModal() {
+        this.collapseResetConfirms();
+        if (this.ui.screenChapters) this.ui.screenChapters.classList.add('hidden');
         if (this.ui.screenMenu) this.ui.screenMenu.classList.remove('hidden');
+    }
+
+    populateChapterCards() {
+        const grid = this.ui.chapterCardsGrid;
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        const chapters = window.CHAPTERS_CONFIG || CHAPTERS_CONFIG || [];
+        const savedLevels = (this.saveData && this.saveData.levels) || {};
+        let totalCleared = 0;
+
+        LEVELS_CONFIG.forEach((lvl) => {
+            if (savedLevels[String(lvl.id)] && savedLevels[String(lvl.id)].cleared) {
+                totalCleared++;
+            }
+        });
+
+        chapters.forEach((ch) => {
+            const slice = LEVELS_CONFIG.slice(ch.startIndex, ch.endIndex + 1);
+            const cleared = slice.filter((l) => savedLevels[String(l.id)] && savedLevels[String(l.id)].cleared).length;
+            const total = slice.length || 10;
+            const pct = Math.round((cleared / total) * 100);
+            const isAllCleared = cleared >= total;
+            const badgeClass = isAllCleared ? 'done' : (cleared > 0 ? 'partial' : '');
+            const badgeText = isAllCleared ? `✔ ${cleared} / ${total} FERTIG` : (cleared > 0 ? `✓ ${cleared} / ${total}` : `0 / ${total}`);
+
+            const card = document.createElement('div');
+            card.className = `chapter-card${isAllCleared ? ' chap-completed' : ''}`;
+            card.style.setProperty('--chap-accent', ch.accentColor || '#ffd32a');
+            card.innerHTML = `
+                <div class="chapter-thumb-wrap">
+                    <img class="chapter-thumb" src="${ch.bgPath}" alt="${ch.title}">
+                    <div class="chapter-thumb-shade"></div>
+                    <span class="chapter-num-badge">${ch.badge}</span>
+                    <span class="chapter-clear-badge ${badgeClass}">${badgeText}</span>
+                </div>
+                <div class="chapter-body">
+                    <h3 class="chapter-title">${ch.title}</h3>
+                    <p class="chapter-desc">${ch.subtitle}</p>
+                    <div class="chapter-boss-chip">
+                        ${ch.bossAvatar ? `<img src="${ch.bossAvatar}" alt="Boss">` : ''}
+                        <span>${ch.bossPreview}</span>
+                    </div>
+                    <div class="chapter-progress-track"><div class="chapter-progress-fill" style="width:${pct}%"></div></div>
+                    <div class="chapter-card-actions">
+                        <button type="button" class="btn btn-primary btn-sm btn-chap-levels">📚 LEVELS ANSEHEN &amp; STARTEN ▶</button>
+                    </div>
+                </div>
+            `;
+
+            const openThisChapterLevels = () => {
+                window.soundManager.initWebAudio();
+                this.collapseResetConfirms();
+                if (this.ui.screenChapters) this.ui.screenChapters.classList.add('hidden');
+                this.selectedChapterFilter = String(ch.chapter);
+                this.populateLevelSelectGrid();
+                if (this.ui.screenLvlSelect) this.ui.screenLvlSelect.classList.remove('hidden');
+            };
+
+            const btnLevels = card.querySelector('.btn-chap-levels');
+            if (btnLevels) {
+                btnLevels.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openThisChapterLevels();
+                });
+            }
+            card.addEventListener('click', openThisChapterLevels);
+
+            grid.appendChild(card);
+        });
+
+        if (this.ui.chaptersSummary) {
+            this.ui.chaptersSummary.textContent = `Fortschritt: ${totalCleared} / ${LEVELS_CONFIG.length} Lehrjahre abgeschlossen • 3 Kapitel (klicke ein Kapitel für die Level-Übersicht)`;
+        }
     }
 
     pickRandomChaosClip() {
@@ -619,6 +862,10 @@ class Game {
     }
 
     syncDuckFromInputs() {
+        if (this.level && this.level.mode === 'rocket_flight') {
+            this.player.isDucking = false;
+            return;
+        }
         const k = this.keys || {};
         this.player.isDucking = Boolean(
             k['control'] || k['ControlLeft'] || k['ControlRight'] ||
@@ -632,12 +879,26 @@ class Game {
         const scale = Math.max(0.78, Math.min(1.38, canvas.height / 720));
         const newGroundY = canvas.height * 0.74;
         const oldGroundY = this.player ? this.player.groundY : newGroundY;
+        const mode = this.level ? this.level.mode : 'standard';
+
         if (this.player) {
             this.player.groundY = newGroundY;
-            this.player.h = Math.round(146 * scale);
-            this.player.w = Math.round(78 * scale);
-            if (this.player.isGrounded && Math.abs((this.player.y + this.player.h) - oldGroundY) < 8) {
-                this.player.y = newGroundY - this.player.h;
+            if (mode === 'rocket_flight') {
+                this.player.w = Math.round(104 * scale);
+                this.player.h = Math.round(56 * scale);
+                this.player.y = Math.max(74, Math.min(canvas.height - this.player.h - 54, this.player.y));
+            } else {
+                this.player.h = Math.round(146 * scale);
+                this.player.w = Math.round(78 * scale);
+                if (mode === 'vertical_climb') {
+                    this.player.y += (newGroundY - oldGroundY);
+                    this.climbStartY = newGroundY;
+                    this.climbGoalY = newGroundY - ((this.level.climbGoalMeters || 120) * 28);
+                    this.climbHazardY += (newGroundY - oldGroundY);
+                    this.climbMaxYReached += (newGroundY - oldGroundY);
+                } else if (this.player.isGrounded && Math.abs((this.player.y + this.player.h) - oldGroundY) < 8) {
+                    this.player.y = newGroundY - this.player.h;
+                }
             }
         }
         if (this.platforms) {
@@ -649,17 +910,30 @@ class Game {
                 }
             }
         }
+        if (this.collectibles && mode === 'vertical_climb') {
+            for (const col of this.collectibles) {
+                if (col.offsetY != null) col.y = newGroundY - col.offsetY;
+            }
+        }
         if (this.arenaSwitch) {
             const minSwY = canvas.height <= 460 ? 158 : 228;
             this.arenaSwitch.y = Math.max(minSwY, newGroundY - this.arenaSwitch.offsetY);
             this.arenaSwitch.x = Math.round(canvas.width * 0.17);
         }
         if (this.boss) {
-            this.boss.h = Math.round((this.isTukTukType(this.boss.type) ? 195 : 162) * scale);
-            this.boss.y = newGroundY - this.boss.h;
+            if (this.boss.type === 'drone_tuktuk') {
+                this.boss.h = Math.round(138 * scale);
+                this.boss.w = Math.round(170 * scale);
+                this.boss.y = Math.max(76, Math.min(canvas.height - this.boss.h - 54, this.boss.y));
+            } else {
+                const bh = this.isTukTukType(this.boss.type) ? 195 : (this.boss.type === 'tung_sahur' ? 172 : 162);
+                this.boss.h = Math.round(bh * scale);
+                this.boss.y = newGroundY - this.boss.h;
+            }
         }
         if (this.duoPartner) {
-            this.duoPartner.h = Math.round((this.isTukTukType(this.duoPartner.type) ? 195 : 162) * scale);
+            const ph = this.isTukTukType(this.duoPartner.type) ? 195 : (this.duoPartner.type === 'tung_sahur' ? 172 : 162);
+            this.duoPartner.h = Math.round(ph * scale);
             this.duoPartner.y = newGroundY - this.duoPartner.h;
         }
     }
@@ -701,6 +975,9 @@ class Game {
                 this.syncDuckFromInputs();
                 if (lower === 'arrowdown' || e.key === 'Control') e.preventDefault();
             }
+            if (this.level && this.level.mode === 'rocket_flight' && (lower === 'arrowup' || lower === 'w' || lower === 's')) {
+                e.preventDefault();
+            }
 
             if (this.state === GAME_STATE.OPENING) {
                 window.soundManager.initWebAudio();
@@ -721,7 +998,14 @@ class Game {
                 if (e.key === 'Escape') {
                     if (this.ui.screenPrestart && !this.ui.screenPrestart.classList.contains('hidden')) {
                         this.closePreStartModal();
+                    } else if (this.ui.chaptersResetConfirm && !this.ui.chaptersResetConfirm.classList.contains('hidden')) {
+                        this.collapseResetConfirms();
+                    } else if (this.ui.levelsResetConfirm && !this.ui.levelsResetConfirm.classList.contains('hidden')) {
+                        this.collapseResetConfirms();
+                    } else if (this.ui.screenChapters && !this.ui.screenChapters.classList.contains('hidden')) {
+                        this.closeChaptersModal();
                     } else if (this.ui.screenLvlSelect && !this.ui.screenLvlSelect.classList.contains('hidden')) {
+                        this.collapseResetConfirms();
                         this.ui.screenLvlSelect.classList.add('hidden');
                         this.ui.screenMenu.classList.remove('hidden');
                     } else if (this.ui.screenStory && !this.ui.screenStory.classList.contains('hidden')) {
@@ -746,12 +1030,22 @@ class Game {
                 if (lower === 'r') this.playerBlock();
                 if (lower === 's' || lower === 'x') this.triggerSprintBurst(75);
             } else if ((this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT) && !this.isPlayerStunned()) {
-                if (e.code === 'Space') this.playerJump();
-                if (!e.repeat && lower === 'e') this.playerAttackLawBook();
-                if (lower === 'q' || e.code === 'ShiftLeft') this.playerAttackMegaShout();
-                if (lower === 'f') this.playerAttackFrisbeeVolley();
-                if (lower === 'r') this.playerBlock();
-                if (lower === 's' || lower === 'x') this.triggerSprintBurst(75);
+                const isRocket = this.level && this.level.mode === 'rocket_flight';
+                const isClimb = this.level && this.level.mode === 'vertical_climb';
+                if (isRocket) {
+                    if (!e.repeat && (lower === 'e' || e.code === 'Space')) this.playerAttackLawBook();
+                    if (lower === 'q' || e.code === 'ShiftLeft') this.playerAttackMegaShout();
+                    if (lower === 'f') this.playerAttackFrisbeeVolley();
+                    if (lower === 'r') this.playerBlock();
+                    if (lower === 'x') this.triggerSprintBurst(75);
+                } else {
+                    if (e.code === 'Space' || (isClimb && (lower === 'w' || lower === 'arrowup'))) this.playerJump();
+                    if (!e.repeat && lower === 'e') this.playerAttackLawBook();
+                    if (lower === 'q' || e.code === 'ShiftLeft') this.playerAttackMegaShout();
+                    if (lower === 'f') this.playerAttackFrisbeeVolley();
+                    if (lower === 'r') this.playerBlock();
+                    if (lower === 's' || lower === 'x') this.triggerSprintBurst(75);
+                }
                 if (!e.repeat && (lower === 'd' || e.code === 'ArrowRight')) {
                     const now = performance.now();
                     if (now - this.player.lastRightTapTime < 280) this.triggerSprintBurst(75);
@@ -826,7 +1120,7 @@ class Game {
 
         document.getElementById('btn-start').addEventListener('click', () => {
             window.soundManager.initWebAudio();
-            this.openPreStartModal();
+            this.openChaptersModal();
         });
 
         if (this.ui.btnClosePrestart) {
@@ -853,18 +1147,125 @@ class Game {
         if (this.ui.btnPrestartLaunch) {
             this.ui.btnPrestartLaunch.addEventListener('click', () => {
                 window.soundManager.initWebAudio();
-                if (this.ui.screenPrestart) this.ui.screenPrestart.classList.add('hidden');
-                this.startCinematicIntro();
+                this.executePendingLaunch(false);
             });
         }
 
         if (this.ui.btnPrestartDirect) {
             this.ui.btnPrestartDirect.addEventListener('click', () => {
                 window.soundManager.initWebAudio();
-                if (this.ui.screenPrestart) this.ui.screenPrestart.classList.add('hidden');
-                this.startLevel(0);
+                this.executePendingLaunch(true);
             });
         }
+
+        if (this.ui.btnChaptersIntroStart) {
+            this.ui.btnChaptersIntroStart.addEventListener('click', () => {
+                window.soundManager.initWebAudio();
+                this.openDifficultySetupForLaunch({
+                    type: 'intro',
+                    chapter: 1,
+                    targetLevelIndex: 0,
+                    returnTo: 'chapters',
+                    hasDirectOption: true,
+                    label: 'Ziel: 🎬 Intro & Kapitel 1 — Level 1 (GIBB Vorplatz)'
+                });
+            });
+        }
+
+        if (this.ui.btnCloseChapters) {
+            this.ui.btnCloseChapters.addEventListener('click', () => {
+                this.closeChaptersModal();
+            });
+        }
+
+        if (this.ui.btnOpenAllLevels) {
+            this.ui.btnOpenAllLevels.addEventListener('click', () => {
+                window.soundManager.initWebAudio();
+                this.collapseResetConfirms();
+                if (this.ui.screenChapters) this.ui.screenChapters.classList.add('hidden');
+                this.selectedChapterFilter = 'all';
+                this.populateLevelSelectGrid();
+                this.ui.screenLvlSelect.classList.remove('hidden');
+            });
+        }
+
+        if (this.ui.btnBackToChapters) {
+            this.ui.btnBackToChapters.addEventListener('click', () => {
+                window.soundManager.initWebAudio();
+                this.collapseResetConfirms();
+                this.ui.screenLvlSelect.classList.add('hidden');
+                this.openChaptersModal();
+            });
+        }
+
+        if (this.ui.lvlChapTabs) {
+            this.ui.lvlChapTabs.forEach((tab) => {
+                tab.addEventListener('click', () => {
+                    window.soundManager.initWebAudio();
+                    this.selectedChapterFilter = tab.getAttribute('data-chap') || '1';
+                    this.populateLevelSelectGrid();
+                });
+            });
+        }
+
+        if (this.ui.btnChapterPlayStart) {
+            this.ui.btnChapterPlayStart.addEventListener('click', () => {
+                window.soundManager.initWebAudio();
+                const tgt = this.activeChapterBannerTarget || { chapter: 1, startIndex: 0 };
+                const startLvl = LEVELS_CONFIG[tgt.startIndex] || LEVELS_CONFIG[0];
+                this.openDifficultySetupForLaunch({
+                    type: 'intro',
+                    chapter: tgt.chapter,
+                    targetLevelIndex: tgt.startIndex,
+                    returnTo: 'levels',
+                    hasDirectOption: true,
+                    label: `Ziel: 🎬 Kapitel ${tgt.chapter} Start (Trailer + Level ${startLvl.id})`
+                });
+            });
+        }
+
+        if (this.ui.btnChapterResume) {
+            this.ui.btnChapterResume.addEventListener('click', () => {
+                window.soundManager.initWebAudio();
+                const tgt = this.activeChapterBannerTarget || {};
+                if (typeof tgt.resumeIndex === 'number') {
+                    const lvl = LEVELS_CONFIG[tgt.resumeIndex] || LEVELS_CONFIG[0];
+                    const isOpener = tgt.resumeIndex === 0 || tgt.resumeIndex === 10 || tgt.resumeIndex === 20;
+                    this.openDifficultySetupForLaunch({
+                        type: isOpener ? 'intro' : 'level',
+                        chapter: (lvl && lvl.chapter) || tgt.chapter || 1,
+                        targetLevelIndex: tgt.resumeIndex,
+                        returnTo: 'levels',
+                        hasDirectOption: isOpener,
+                        label: `Ziel: Weiter bei Level ${lvl.id} — ${lvl.name}`
+                    });
+                }
+            });
+        }
+
+        const wireResetConfirm = (btnOpen, confirmBox, btnYes, btnNo) => {
+            if (btnOpen && confirmBox) {
+                btnOpen.addEventListener('click', () => {
+                    window.soundManager.initWebAudio();
+                    this.collapseResetConfirms();
+                    btnOpen.classList.add('hidden');
+                    confirmBox.classList.remove('hidden');
+                });
+            }
+            if (btnNo) {
+                btnNo.addEventListener('click', () => {
+                    this.collapseResetConfirms();
+                });
+            }
+            if (btnYes) {
+                btnYes.addEventListener('click', async () => {
+                    window.soundManager.initWebAudio();
+                    await this.resetAllLevelProgress();
+                });
+            }
+        };
+        wireResetConfirm(this.ui.btnChaptersReset, this.ui.chaptersResetConfirm, this.ui.btnChaptersResetYes, this.ui.btnChaptersResetNo);
+        wireResetConfirm(this.ui.btnLevelsReset, this.ui.levelsResetConfirm, this.ui.btnLevelsResetYes, this.ui.btnLevelsResetNo);
 
         document.getElementById('btn-demo').addEventListener('click', () => {
             window.soundManager.initWebAudio();
@@ -902,26 +1303,15 @@ class Game {
         }
 
         document.getElementById('btn-level-select').addEventListener('click', () => {
+            this.collapseResetConfirms();
             this.syncSetupControlsUI();
             this.ui.screenMenu.classList.add('hidden');
             this.populateLevelSelectGrid();
             this.ui.screenLvlSelect.classList.remove('hidden');
         });
 
-        if (this.ui.btnLvlDiffCycle) {
-            this.ui.btnLvlDiffCycle.addEventListener('click', () => {
-                window.soundManager.initWebAudio();
-                this.cycleDifficulty();
-            });
-        }
-        if (this.ui.btnLvlSoundCycle) {
-            this.ui.btnLvlSoundCycle.addEventListener('click', () => {
-                window.soundManager.initWebAudio();
-                this.cycleSoundChaosLevel();
-            });
-        }
-
         document.getElementById('btn-close-lvl').addEventListener('click', () => {
+            this.collapseResetConfirms();
             this.ui.screenLvlSelect.classList.add('hidden');
             this.ui.screenMenu.classList.remove('hidden');
         });
@@ -948,12 +1338,32 @@ class Game {
 
         document.getElementById('btn-next-lvl').addEventListener('click', () => {
             this.ui.screenWin.classList.add('hidden');
-            if (this.currentLevelIndex + 1 < LEVELS_CONFIG.length) {
-                this.startLevel(this.currentLevelIndex + 1);
+            const nextIdx = this.currentLevelIndex + 1;
+            if (nextIdx === 10) {
+                this.startCinematicIntro({ chapter: 2, targetLevelIndex: 10 });
+            } else if (nextIdx === 20) {
+                this.startCinematicIntro({ chapter: 3, targetLevelIndex: 20 });
+            } else if (nextIdx < LEVELS_CONFIG.length) {
+                this.startLevel(nextIdx);
             } else {
                 this.triggerVictory();
             }
         });
+
+        if (this.ui.btnWinChapters) {
+            this.ui.btnWinChapters.addEventListener('click', () => {
+                window.soundManager.initWebAudio();
+                this.collapseResetConfirms();
+                this.hideGameplayHUDs();
+                this.ui.screenWin.classList.add('hidden');
+                this.state = GAME_STATE.MENU;
+                window.soundManager.setMusicQuietMode(false);
+                window.soundManager.playMenuMusic();
+                this.selectedChapterFilter = String((this.level && this.level.chapter) || 1);
+                this.populateLevelSelectGrid();
+                if (this.ui.screenLvlSelect) this.ui.screenLvlSelect.classList.remove('hidden');
+            });
+        }
 
         document.getElementById('btn-retry').addEventListener('click', () => {
             this.ui.screenLose.classList.add('hidden');
@@ -1012,6 +1422,7 @@ class Game {
                 window.soundManager.initWebAudio();
                 const chosen = e.target.value;
                 window.soundManager.setMenuMusic(chosen, true);
+                this.persistSaveToDisk();
                 if (!window.soundManager.musicEnabled) {
                     window.soundManager.setMusicEnabled(true);
                     updateMusicUI(true, window.soundManager.musicVolumePercent);
@@ -1024,6 +1435,7 @@ class Game {
                 window.soundManager.initWebAudio();
                 const nextSrc = window.soundManager.cycleMenuMusic(-1);
                 this.syncLobbyMusicSelect(nextSrc);
+                this.persistSaveToDisk();
                 if (!window.soundManager.musicEnabled) {
                     window.soundManager.setMusicEnabled(true);
                     updateMusicUI(true, window.soundManager.musicVolumePercent);
@@ -1035,6 +1447,7 @@ class Game {
                 window.soundManager.initWebAudio();
                 const nextSrc = window.soundManager.cycleMenuMusic(1);
                 this.syncLobbyMusicSelect(nextSrc);
+                this.persistSaveToDisk();
                 if (!window.soundManager.musicEnabled) {
                     window.soundManager.setMusicEnabled(true);
                     updateMusicUI(true, window.soundManager.musicVolumePercent);
@@ -1113,13 +1526,17 @@ class Game {
         // Right Thumb: Actions
         bindTouchBtn(this.ui.touchBtnJump,
             () => {
+                this.touchJumpHeld = true;
+                if (this.level && this.level.mode === 'rocket_flight' && (this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT)) {
+                    return;
+                }
                 if ((this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) && !this.isPlayerStunned()) {
                     this.playerJump();
                 } else if (this.state === GAME_STATE.PRE_BOSS_DIALOGUE) {
                     this.advancePreBossDialogue();
                 }
             },
-            null
+            () => { this.touchJumpHeld = false; }
         );
 
         bindTouchBtn(this.ui.touchBtnDuck,
@@ -1355,6 +1772,22 @@ class Game {
                     { clip: 'thenerean_frechheit', text: '"Das isch e absoluti Frechheit!"' },
                     { clip: 'thenerean_taronuman_scream', text: '"TARONUMAN!! AAAAAH!!"' }
                 ]
+            },
+            tung_sahur: {
+                accent: '#ffa502',
+                role: 'BOSS • KLOTEN & SRI LANKA DSCHUNGEL',
+                name: 'Tung Tung Tung Sahur',
+                sprite: 'assets/sprites/characters/sahur_idle.png',
+                bio: 'Bewacht den Sri Lanka Dschungel und die brennende Bäckerei Kloten mit seinem riesigen Holz-Baseballschläger. Wer ihn beim Schlafen stört, kassiert sofort die Bonk-Schockwelle!',
+                stats: [['HP', '🪵 820 HP'], ['WAFFE', '🏏 Schläger'], ['SCHWÄCHE', '🛡 Block [R]']],
+                sounds: [
+                    { clip: 'sahur_baseball_swing', text: '"TUNG TUNG SAHUR! *Schwung!*"' },
+                    { clip: 'sahur_bat_smash', text: '"BAT SMASH!! *BONK!*"' },
+                    { clip: 'thenerean_alles_brennt', text: '"Alles brennt i de Bäckerei Kloten!"' },
+                    { clip: 'thenerean_kloten_taronuman', text: '"Kloten TARONUMAN!!"' },
+                    { clip: 'thenerean_komplett_verrueckt', text: '"Ihr sind all komplett verrückt!"' },
+                    { clip: 'thenerean_to_the_moon', text: '"TO THE MOON!!"' }
+                ]
             }
         };
     }
@@ -1447,16 +1880,110 @@ class Game {
             if (raw) {
                 const parsed = JSON.parse(raw);
                 if (parsed && typeof parsed === 'object' && parsed.levels) {
-                    return parsed;
+                    return { version: 1, levels: parsed.levels, prefs: parsed.prefs || {} };
                 }
             }
         } catch (e) {}
-        return { levels: {} };
+        return { version: 1, levels: {}, prefs: {} };
+    }
+
+    mergeSaveLevels(baseLevels, incomingLevels) {
+        const merged = { ...(baseLevels || {}) };
+        if (!incomingLevels || typeof incomingLevels !== 'object') return merged;
+        for (const [k, rec] of Object.entries(incomingLevels)) {
+            if (!rec || !rec.cleared) continue;
+            const prev = merged[k];
+            if (!prev || !prev.cleared) {
+                merged[k] = {
+                    cleared: true,
+                    bestGrade: +(Number(rec.bestGrade) || 5.5).toFixed(1),
+                    bestTime: Math.max(0, Math.round(Number(rec.bestTime) || 0)),
+                    bestCombo: Math.max(0, Math.round(Number(rec.bestCombo) || 0))
+                };
+            } else {
+                const pt = Number(prev.bestTime) || 0;
+                const rt = Number(rec.bestTime) || 0;
+                const bestTime = (pt > 0 && rt > 0) ? Math.min(pt, rt) : (pt || rt);
+                merged[k] = {
+                    cleared: true,
+                    bestGrade: +Math.max(Number(prev.bestGrade) || 0, Number(rec.bestGrade) || 0).toFixed(1),
+                    bestTime,
+                    bestCombo: Math.max(Number(prev.bestCombo) || 0, Number(rec.bestCombo) || 0)
+                };
+            }
+        }
+        return merged;
+    }
+
+    buildDiskSavePayload() {
+        return {
+            version: 1,
+            levels: (this.saveData && this.saveData.levels) ? this.saveData.levels : {},
+            prefs: {
+                difficulty: this.difficulty || 'normal',
+                soundTier: this.getSoundChaosLevel(),
+                menuMusic: window.soundManager ? window.soundManager.getMenuMusic() : undefined
+            }
+        };
+    }
+
+    persistSaveToDisk() {
+        const payload = this.buildDiskSavePayload();
+        this.saveData = payload;
+        try {
+            localStorage.setItem('thenerean_gibb_save_v1', JSON.stringify(payload));
+        } catch (e) {}
+        if (!this.localSaveEnabled) return Promise.resolve(payload);
+        return fetch('/api/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            keepalive: true
+        }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    }
+
+    async syncSaveFromServer() {
+        if (!this.localSaveEnabled) return this.saveData;
+        try {
+            const res = await fetch(`/api/save?ts=${Date.now()}`, { cache: 'no-store' });
+            if (!res.ok) return this.saveData;
+            const json = await res.json();
+            const disk = json && json.data;
+            if (!disk || typeof disk !== 'object') return this.saveData;
+
+            const mergedLevels = this.mergeSaveLevels(disk.levels, this.saveData && this.saveData.levels);
+            const prefs = disk.prefs && typeof disk.prefs === 'object' ? disk.prefs : {};
+            if (prefs.difficulty && DIFFICULTY_PRESETS[prefs.difficulty]) {
+                this.difficulty = prefs.difficulty;
+                try { localStorage.setItem('thenerean_difficulty_v1', prefs.difficulty); } catch (e) {}
+            }
+            if (prefs.soundTier && window.soundManager) {
+                window.soundManager.setSoundChaosLevel(prefs.soundTier);
+            }
+            if (prefs.menuMusic && window.soundManager && window.soundManager.musicTracks.includes(prefs.menuMusic)) {
+                window.soundManager.setMenuMusic(prefs.menuMusic, this.state === GAME_STATE.MENU);
+                this.syncLobbyMusicSelect(prefs.menuMusic);
+            }
+            this.saveData = { version: 1, levels: mergedLevels, prefs };
+            try {
+                localStorage.setItem('thenerean_gibb_save_v1', JSON.stringify(this.saveData));
+            } catch (e) {}
+            this.syncSetupControlsUI();
+            if (this.ui.screenChapters && !this.ui.screenChapters.classList.contains('hidden')) {
+                this.populateChapterCards();
+            }
+            if (this.ui.screenLvlSelect && !this.ui.screenLvlSelect.classList.contains('hidden')) {
+                this.populateLevelSelectGrid();
+            }
+            return this.saveData;
+        } catch (e) {
+            return this.saveData;
+        }
     }
 
     saveLevelProgress(levelId, grade, timeSec, maxCombo) {
         if (!levelId || levelId <= 0) return;
-        if (!this.saveData || !this.saveData.levels) this.saveData = { levels: {} };
+        if (!this.saveData || !this.saveData.levels) this.saveData = { version: 1, levels: {}, prefs: {} };
         const key = String(levelId);
         const prev = this.saveData.levels[key];
         const bestGrade = prev ? Math.max(prev.bestGrade || 0, grade) : grade;
@@ -1469,9 +1996,7 @@ class Game {
             bestTime: bestTime,
             bestCombo: bestCombo
         };
-        try {
-            localStorage.setItem('thenerean_gibb_save_v1', JSON.stringify(this.saveData));
-        } catch (e) {}
+        this.persistSaveToDisk();
     }
 
     formatTime(sec) {
@@ -1582,6 +2107,7 @@ class Game {
 
         this.player.hp = 150;
         this.player.maxHp = 150;
+        this.player.jumpPower = -15.2;
         this.player.score = 5.5;
         this.player.megaEnergy = 100;
         this.player.frisbeeCooldown = 0;
@@ -1649,13 +2175,30 @@ class Game {
             icon = '⏱️';
             text = `GLOCKE IN ${Math.max(0, this.timeRemaining).toFixed(1)}s`;
             urgent = this.timeRemaining <= 7;
+        } else if (mode === 'vertical_climb' && this.state === GAME_STATE.RUNNING) {
+            const startY = this.climbStartY || this.player.groundY;
+            const goalM = this.level.climbGoalMeters || 120;
+            const curM = Math.max(0, Math.min(goalM, Math.round((startY - (this.player.y + this.player.h)) / 28)));
+            const distHaz = Math.max(0, Math.round(this.climbHazardY - (this.player.y + this.player.h)));
+            show = true;
+            icon = '🧗';
+            text = `${curM} / ${goalM}m • 🔥 ${distHaz}px`;
+            urgent = distHaz < 145;
+            highlight = curM >= Math.round(goalM * 0.85);
+        } else if (mode === 'rocket_flight' && !inBossPhase) {
+            const goalD = Math.max(1, this.rocketGoalDistance || 6400);
+            const remKm = Math.max(0, (goalD - this.rocketDistance) / 1000).toFixed(1);
+            show = true;
+            icon = '🚀';
+            text = this.level.hasBoss ? `DRONE MK-III IN ${remKm} km` : `KURS-ZIEL: ${remKm} km`;
+            highlight = parseFloat(remKm) <= 1.2;
         } else if (mode === 'wave_rush' && inBossPhase) {
             const totalW = (this.level.waves && this.level.waves.length) || 3;
             show = true;
             icon = '🌊';
             text = `WELLE ${Math.min(totalW, this.currentWaveIndex + 1)} / ${totalW}`;
             bossSide = true;
-        } else if (mode === 'target_run_boss' && this.state === GAME_STATE.RUNNING) {
+        } else if ((mode === 'target_run_boss' || mode === 'target_run_clear') && this.state === GAME_STATE.RUNNING) {
             show = true;
             icon = '🎯';
             text = `ZIELE: ${this.targetsHit} / ${this.targetsTotal}`;
@@ -1734,9 +2277,27 @@ class Game {
         }
     }
 
+    updateTouchControlsForMode(mode = 'standard') {
+        if (this.isExplicitDesktop || !this.ui.touchOverlay) return;
+        const isRocket = mode === 'rocket_flight';
+        if (this.ui.touchBtnJump) {
+            const sub = this.ui.touchBtnJump.querySelector('.touch-sub');
+            if (sub) sub.textContent = isRocket ? 'HOCH' : 'SPRUNG';
+        }
+        if (this.ui.touchBtnDuck) {
+            const sub = this.ui.touchBtnDuck.querySelector('.touch-sub');
+            if (sub) sub.textContent = isRocket ? 'RUNTER' : 'DUCK';
+        }
+        if (this.ui.touchBtnAttack) {
+            const sub = this.ui.touchBtnAttack.querySelector('.touch-sub');
+            if (sub) sub.textContent = isRocket ? 'LASER' : 'GESETZ';
+        }
+    }
+
     returnToMenu() {
         this.clearFrisbeeTimers();
         this.isPaused = false;
+        this.collapseResetConfirms();
         window.soundManager.stopAllClips();
         this.hideGameplayHUDs();
         this.ui.screenLose.classList.add('hidden');
@@ -1744,6 +2305,7 @@ class Game {
         this.ui.screenWin.classList.add('hidden');
         if (this.ui.screenPause) this.ui.screenPause.classList.add('hidden');
         if (this.ui.screenPrestart) this.ui.screenPrestart.classList.add('hidden');
+        if (this.ui.screenChapters) this.ui.screenChapters.classList.add('hidden');
         if (this.ui.screenStory) this.ui.screenStory.classList.add('hidden');
         if (this.ui.screenLvlSelect) this.ui.screenLvlSelect.classList.add('hidden');
         if (this.ui.screenIntro) this.ui.screenIntro.classList.add('hidden');
@@ -1774,78 +2336,185 @@ class Game {
     populateLevelSelectGrid() {
         const grid = document.querySelector('.level-grid');
         grid.innerHTML = '';
+        const filter = String(this.selectedChapterFilter || '1');
         const savedLevels = (this.saveData && this.saveData.levels) || {};
+        const chapCounts = { 1: { cleared: 0, total: 0 }, 2: { cleared: 0, total: 0 }, 3: { cleared: 0, total: 0 } };
         let clearedCount = 0;
         let gradeSum = 0;
 
-        LEVELS_CONFIG.forEach((lvl, idx) => {
+        LEVELS_CONFIG.forEach((lvl) => {
+            const c = lvl.chapter || 1;
+            if (!chapCounts[c]) chapCounts[c] = { cleared: 0, total: 0 };
+            chapCounts[c].total++;
             const rec = savedLevels[String(lvl.id)];
             if (rec && rec.cleared) {
                 clearedCount++;
+                chapCounts[c].cleared++;
                 gradeSum += rec.bestGrade || 5.5;
             }
-            const statusHtml = (rec && rec.cleared)
+        });
+
+        const tabBaseMeta = {
+            '1': { ico: '📖', label: 'KAPITEL 1' },
+            '2': { ico: '🚀', label: 'KAPITEL 2' },
+            '3': { ico: '🛸', label: 'KAPITEL 3' },
+            'all': { ico: '🌟', label: 'ALLE 30' }
+        };
+        if (this.ui.lvlChapTabs) {
+            this.ui.lvlChapTabs.forEach((tab) => {
+                const tc = tab.getAttribute('data-chap') || 'all';
+                tab.classList.toggle('active', tc === filter);
+                const meta = tabBaseMeta[tc] || { ico: '📘', label: tc };
+                if (tc === 'all') {
+                    tab.textContent = `${meta.ico} ${meta.label} (${clearedCount}/${LEVELS_CONFIG.length}${clearedCount >= LEVELS_CONFIG.length ? ' ✔' : ''})`;
+                } else {
+                    const st = chapCounts[Number(tc)] || { cleared: 0, total: 10 };
+                    const doneMark = st.cleared >= st.total ? ' ✔' : (st.cleared > 0 ? ' ✓' : '');
+                    tab.textContent = `${meta.ico} ${meta.label} (${st.cleared}/${st.total}${doneMark})`;
+                }
+            });
+        }
+
+        // Render clean Chapter Overview Start Strip for Kapitel 1 / 2 / 3
+        const banner = this.ui.chapterOverviewBanner;
+        if (banner) {
+            const chapters = window.CHAPTERS_CONFIG || CHAPTERS_CONFIG || [];
+            const activeChap = filter !== 'all' ? chapters.find((c) => String(c.chapter) === filter) : null;
+            if (activeChap) {
+                const slice = LEVELS_CONFIG.slice(activeChap.startIndex, activeChap.endIndex + 1);
+                const cCleared = slice.filter((l) => savedLevels[String(l.id)] && savedLevels[String(l.id)].cleared).length;
+                const cTotal = slice.length || 10;
+                const firstOpenRel = slice.findIndex((l) => !(savedLevels[String(l.id)] && savedLevels[String(l.id)].cleared));
+                const resumeIdx = firstOpenRel > 0 ? activeChap.startIndex + firstOpenRel : null;
+
+                this.activeChapterBannerTarget = {
+                    chapter: activeChap.chapter,
+                    startIndex: activeChap.startIndex,
+                    resumeIndex: resumeIdx
+                };
+
+                banner.style.setProperty('--chap-accent', activeChap.accentColor || '#ffd32a');
+                if (this.ui.chapOvBadge) this.ui.chapOvBadge.textContent = activeChap.badge;
+                if (this.ui.chapOvTitle) this.ui.chapOvTitle.textContent = activeChap.title;
+                if (this.ui.chapOvDesc) this.ui.chapOvDesc.textContent = activeChap.subtitle;
+                if (this.ui.chapOvClearPill) {
+                    const allDone = cCleared >= cTotal;
+                    this.ui.chapOvClearPill.classList.toggle('done', allDone);
+                    this.ui.chapOvClearPill.textContent = allDone ? `✔ ${cCleared} / ${cTotal} ABGESCHLOSSEN` : (cCleared > 0 ? `✓ ${cCleared} / ${cTotal} erledigt` : `0 / ${cTotal} offen`);
+                }
+                if (this.ui.btnChapterPlayStart) {
+                    const startLvlNum = activeChap.startIndex + 1;
+                    this.ui.btnChapterPlayStart.textContent = `🎬 KAPITEL ${activeChap.chapter} STARTEN (TRAILER + LEVEL ${startLvlNum}) ▶`;
+                }
+                if (this.ui.btnChapterResume) {
+                    if (cCleared > 0 && resumeIdx !== null) {
+                        this.ui.btnChapterResume.textContent = `▶ WEITER: LEVEL ${LEVELS_CONFIG[resumeIdx].id}`;
+                        this.ui.btnChapterResume.classList.remove('hidden');
+                    } else {
+                        this.ui.btnChapterResume.classList.add('hidden');
+                    }
+                }
+                banner.classList.remove('hidden');
+            } else {
+                banner.classList.add('hidden');
+            }
+        }
+
+        LEVELS_CONFIG.forEach((lvl, idx) => {
+            if (filter !== 'all' && String(lvl.chapter) !== filter) {
+                return;
+            }
+            const rec = savedLevels[String(lvl.id)];
+            const isCleared = Boolean(rec && rec.cleared);
+            const isChapterOpener = idx === 0 || idx === 10 || idx === 20;
+
+            const statusHtml = isCleared
                 ? `<div class="lvl-save-row">
-                        <span class="lvl-cleared-badge">✅ BESTANDEN</span>
-                        <span class="lvl-grade-pill">⭐ Note ${(rec.bestGrade || 5.5).toFixed(1)}</span>
+                        <span class="lvl-cleared-badge">✔ ABGESCHLOSSEN</span>
+                        <span class="lvl-grade-pill">⭐ ${(rec.bestGrade || 5.5).toFixed(1)}</span>
                         <span class="lvl-grade-pill">⏱️ ${this.formatTime(rec.bestTime || 0)}</span>
                         ${rec.bestCombo > 0 ? `<span class="lvl-grade-pill">🔥 ${rec.bestCombo}×</span>` : ''}
                    </div>`
-                : `<div class="lvl-save-row"><span class="lvl-open-badge">Noch nicht abgeschlossen</span></div>`;
+                : `<div class="lvl-save-row"><span class="lvl-open-badge">Noch offen • Klicken zum Starten</span></div>`;
 
             const sBossHP = this.scaleBossHP(lvl.bossHP || 500);
             const sPartnerHP = lvl.partnerHP ? this.scaleBossHP(lvl.partnerHP) : 0;
             const sVanHP = lvl.vanguardHP ? this.scaleBossHP(lvl.vanguardHP) : 0;
             let modeDesc = `${lvl.hasMiniBoss ? 'Mini-Boss + ' : ''}Boss: <strong>${lvl.bossName}</strong> (HP: ${sBossHP})`;
             if (lvl.mode === 'time_attack') {
-                modeDesc = `Modus: <strong>Reiner Zeit-Sprint (Kein Boss)</strong> &bull; Zeitlimit: <strong>${lvl.timeLimitSec}s</strong>`;
+                modeDesc = `Zeit-Sprint (Kein Boss) &bull; Limit: <strong>${lvl.timeLimitSec}s</strong>`;
+            } else if (lvl.mode === 'target_run_clear') {
+                modeDesc = `Ziel-Sprint (${lvl.targetGoalCount || 8} Ziele, Kein Boss) &bull; <strong>${Math.round((lvl.targetDistance || 3600) / 40)}m</strong>`;
+            } else if (lvl.mode === 'vertical_climb') {
+                modeDesc = `Turm-Klettern (Kein Boss) &bull; <strong>${lvl.climbGoalMeters || 120}m</strong> über <strong>${lvl.climbHazardName || 'Gefahr'}</strong>`;
+            } else if (lvl.mode === 'rocket_flight') {
+                modeDesc = lvl.hasBoss
+                    ? `Raketen-Flug &rarr; Luft-Boss: <strong>${lvl.bossName}</strong> (${sBossHP} HP)`
+                    : `Melonen-Raketenflug (Kein Boss) &bull; <strong>${((lvl.flightGoalDistance || 6400) / 1000).toFixed(1)} km</strong>`;
             } else if (lvl.mode === 'direct_boss') {
-                modeDesc = `Direkt-Arena: <strong>${lvl.bossName}</strong> (HP: ${sBossHP})`;
+                modeDesc = `Direkt-Arena: <strong>${lvl.bossName}</strong> (${sBossHP} HP)`;
             } else if (lvl.mode === 'wave_rush') {
                 modeDesc = `Direkt-Ansturm: <strong>${(lvl.waves && lvl.waves.length) || 3} Rivalen-Wellen</strong>`;
             } else if (lvl.mode === 'target_run_boss') {
                 modeDesc = `Ziel-Parcours (${lvl.targetGoalCount || 6} Ziele) &rarr; <strong>${lvl.bossName}</strong> (${sBossHP} HP)`;
             } else if (lvl.mode === 'tuktuk_chase_boss') {
-                modeDesc = `Phase 1: <strong>TukTuk-Flucht</strong> &rarr; Phase 2: <strong>${lvl.bossName}</strong> (${sBossHP} HP)`;
+                modeDesc = `TukTuk-Flucht &rarr; <strong>${lvl.bossName}</strong> (${sBossHP} HP)`;
             } else if (lvl.mode === 'abu_duo_ambush') {
-                modeDesc = `ABU-Parcours &rarr; Duo: <strong>Monika + GIBB Schüler</strong> (${sBossHP + sPartnerHP} HP)`;
+                modeDesc = `Parcours &rarr; Duo: <strong>${lvl.bossName} + ${lvl.partnerName || 'Partner'}</strong> (${sBossHP + sPartnerHP} HP)`;
             } else if (lvl.mode === 'bankomat_survival') {
-                modeDesc = `${lvl.targetGoalCount || 8} Bankomat-Jetons &rarr; <strong>Adam + Kiosk-Boss</strong> (${sBossHP + sPartnerHP} HP)`;
+                modeDesc = `${lvl.targetGoalCount || 8} Jetons &rarr; <strong>${lvl.bossName} + ${lvl.partnerName || 'Kiosk-Boss'}</strong> (${sBossHP + sPartnerHP} HP)`;
             } else if (lvl.mode === 'tuktuk_overclock_duel') {
                 modeDesc = `Highway-Sprint &rarr; <strong>${lvl.bossName}</strong> (${sBossHP} HP)`;
             } else if (lvl.mode === 'gauntlet_trio_combo') {
-                modeDesc = `Direkt-Kombo: <strong>Monika + Dual-GPU TukTuk</strong> (${sBossHP + sPartnerHP} HP)`;
-            } else if (lvl.mode === 'final_efz_gauntlet' || lvl.mode === 'duo_finale_platforms') {
-                modeDesc = `2-Phasen EFZ-Finale: <strong>Vorhut (${sVanHP || this.scaleBossHP(420)}) + Duo (${sBossHP + (sPartnerHP || this.scaleBossHP(1080))} HP)</strong>`;
+                modeDesc = `Direkt-Kombo: <strong>${lvl.bossName} + ${lvl.partnerName || 'Dual-GPU MK-II'}</strong> (${sBossHP + sPartnerHP} HP)`;
+            } else if (lvl.mode === 'final_efz_gauntlet' || lvl.hasVanguard) {
+                modeDesc = `2-Phasen Finale: <strong>Vorhut (${sVanHP || this.scaleBossHP(420)}) + Duo (${sBossHP + (sPartnerHP || this.scaleBossHP(1080))} HP)</strong>`;
+            } else if (lvl.mode === 'duo_finale_platforms') {
+                modeDesc = `Plattform-Duo: <strong>${lvl.bossName} + ${lvl.partnerName || 'Partner'}</strong> (${sBossHP + sPartnerHP} HP)`;
             }
 
             const div = document.createElement('div');
-            div.className = 'level-btn-card';
+            div.className = `level-btn-card${isCleared ? ' level-cleared' : ''}`;
+            div.setAttribute('data-level-id', String(lvl.id));
             div.innerHTML = `
-                <img class="lvl-thumb" src="${lvl.bgPath}" alt="${lvl.name}">
+                <div class="lvl-thumb-wrap">
+                    <img class="lvl-thumb" src="${lvl.bgPath}" alt="${lvl.name}">
+                    <span class="lvl-step-num">${String(lvl.id).padStart(2, '0')}</span>
+                </div>
                 <div class="lvl-info">
-                    <div class="lvl-num">${lvl.yearText}</div>
+                    <div class="lvl-top-row">
+                        <span class="lvl-num">${lvl.yearText}</span>
+                        ${lvl.modeBadge ? `<span class="lvl-mode-pill">${lvl.modeBadge}</span>` : ''}
+                        ${isChapterOpener ? '<span class="lvl-trailer-pill">🎬 TRAILER</span>' : ''}
+                    </div>
                     <div class="lvl-title">${lvl.name}</div>
-                    ${lvl.modeBadge ? `<div class="lvl-mode-pill">${lvl.modeBadge}</div>` : ''}
-                    <div class="lvl-feature-tag">${lvl.featureTag || ''}</div>
                     <p>${modeDesc}</p>
                     ${statusHtml}
                 </div>
+                <div class="lvl-check-corner${isCleared ? ' checked' : ''}" title="${isCleared ? 'Abgeschlossen!' : 'Noch nicht abgeschlossen'}">${isCleared ? '✓' : ''}</div>
             `;
             div.addEventListener('click', () => {
-                this.ui.screenLvlSelect.classList.add('hidden');
                 window.soundManager.initWebAudio();
-                this.startLevel(idx);
+                this.openDifficultySetupForLaunch({
+                    type: isChapterOpener ? 'intro' : 'level',
+                    chapter: lvl.chapter,
+                    targetLevelIndex: idx,
+                    returnTo: 'levels',
+                    hasDirectOption: isChapterOpener,
+                    label: isChapterOpener
+                        ? `Ziel: Level ${lvl.id} — ${lvl.name} (inkl. Kapitel-${lvl.chapter}-Trailer)`
+                        : `Ziel: Level ${lvl.id} — ${lvl.name}`
+                });
             });
             grid.appendChild(div);
         });
 
         if (this.ui.campaignSummary) {
             if (clearedCount === 0) {
-                this.ui.campaignSummary.textContent = `Fortschritt: 0 / ${LEVELS_CONFIG.length} Lehrjahre abgeschlossen • Hole dir Note 6.0!`;
+                this.ui.campaignSummary.textContent = `Fortschritt: 0 / ${LEVELS_CONFIG.length} Lehrjahre abgeschlossen • Hole dir grüne Haken & Note 6.0!`;
             } else {
                 const avg = (gradeSum / clearedCount).toFixed(1);
-                this.ui.campaignSummary.textContent = `Fortschritt: ${clearedCount} / ${LEVELS_CONFIG.length} Lehrjahre abgeschlossen • Ø Bestnote: ${avg}`;
+                this.ui.campaignSummary.textContent = `Fortschritt: ✔ ${clearedCount} / ${LEVELS_CONFIG.length} Lehrjahre abgeschlossen • Ø Bestnote: ${avg}`;
             }
         }
     }
@@ -1898,10 +2567,26 @@ class Game {
         this.jetonsCollected = 0;
         this.jetonsTotal = 0;
         this.touchDuckHeld = false;
+        this.touchJumpHeld = false;
         this.currentWaveIndex = 0;
         this.chaser = null;
         this.arenaSwitch = null;
         this.floorHazardCooldown = 0;
+
+        this.selectedChapterFilter = '1';
+        this.introTargetLevelIndex = 0;
+        this.activeIntroChapter = 1;
+        this.introBgKey = 'bg_story_intro_crazy';
+        this.climbCameraY = 0;
+        this.climbHazardY = 0;
+        this.climbMaxYReached = 0;
+        this.climbStartY = 0;
+        this.climbGoalY = 0;
+        this.rocketDistance = 0;
+        this.rocketGoalDistance = 6400;
+        this.rocketHazards = [];
+        this.rocketSpawnTimer = 45;
+        this.rocketBossTriggered = false;
         this.demoComboHits = 0;
         this.demoTotalDamage = 0;
         this.resetCombatExtras();
@@ -2326,10 +3011,10 @@ class Game {
     }
 
     // =====================================================================
-    // FULLSCREEN CRAZY RANDOM-CONVERSATION STORY INTRO
+    // FULLSCREEN CHAPTER TRAILERS & RANDOM STORY INTRO
     // =====================================================================
-    buildRandomIntroConversation() {
-        const CAST = {
+    getIntroCastCatalog() {
+        return {
             thenerean: {
                 key: 'thenerean', name: 'THENEREAN', tag: 'THENEREAN • EFZ', tagClass: 'tag-hero',
                 faces: 'right', wide: false,
@@ -2338,7 +3023,8 @@ class Game {
                     attack: 'assets/sprites/characters/thenerean_attack.png',
                     block: 'assets/sprites/characters/thenerean_block.png',
                     jump: 'assets/sprites/characters/thenerean_jump.png',
-                    duck: 'assets/sprites/characters/thenerean_duck.png'
+                    duck: 'assets/sprites/characters/thenerean_duck.png',
+                    rocket: 'assets/sprites/characters/thenerean_rocket.png'
                 }
             },
             monika: {
@@ -2386,8 +3072,99 @@ class Game {
                     idle: 'assets/sprites/characters/tuktuk_dual_idle.png',
                     rage: 'assets/sprites/characters/tuktuk_dual_rage.png'
                 }
+            },
+            tung_sahur: {
+                key: 'tung_sahur', name: 'TUNG TUNG SAHUR', tag: 'TUNG SAHUR', tagClass: 'tag-orange',
+                faces: 'left', wide: false,
+                sprites: {
+                    idle: 'assets/sprites/characters/sahur_idle.png',
+                    attack: 'assets/sprites/characters/sahur_attack.png'
+                }
+            },
+            drone_tuktuk: {
+                key: 'drone_tuktuk', name: 'DRONE TUKTUK MK-III', tag: 'DRONE MK-III', tagClass: 'tag-cyan',
+                faces: 'left', wide: true,
+                sprites: {
+                    idle: 'assets/sprites/characters/drone_tuktuk.png',
+                    rage: 'assets/sprites/characters/drone_tuktuk.png'
+                }
             }
         };
+    }
+
+    buildChapterIntro(chapterNum = 1) {
+        const CAST = this.getIntroCastCatalog();
+        const CHAPTER_TRAILERS = {
+            1: {
+                badgeText: '📖 KAPITEL 1 TRAILER • LEVEL 1–10',
+                title: 'BERN, GIBB & DER TUKTUK-AUSBRUCH',
+                context: 'Montag 08:04 an der GIBB Bern — 2.54s Verspätung, fliegende Frisbees, ABU-Witze & ein wildgewordenes Server-TukTuk!',
+                bgPath: 'assets/backgrounds/bg_story_intro_crazy.jpg',
+                bgKey: 'bg_story_intro_crazy',
+                left: 'monika',
+                right: 'thenerean',
+                beats: [
+                    { side: 'left',  actor: 'monika',    pose: 'point',  text: "2.54 Sekunden z'spät vor der GIBB!! Pünktlichkeit ist oberste Gebot!", clip: 'monika_puenktlichkeit', emoji: '⏱️', quote: '08:04 UHR — TOR GEHT ZU!', dur: 4.5 },
+                    { side: 'right', actor: 'thenerean', pose: 'attack', text: "Morgartenstrasse isch kaputt und blockiert! Aber ich bi schon da!", clip: 'thenerean_morgarten_blockiert', emoji: '🚧', quote: 'BERNER MORGEN-SPRINT!', dur: 4.4 },
+                    { side: 'left',  actor: 'adam',      pose: 'throw',  text: "Silvankumar! Im Korridor & i dr Turnhalle warted 20 Frisbees uf di!", clip: 'adam_20_frisbees', emoji: '🥏', quote: '20 FRISBEES & ABU B404!', dur: 4.3 },
+                    { side: 'left',  actor: 'tuktuk',    pose: 'rage',   text: "VROOOM!! De Serverraum überhitzt — s'TukTuk MK-I jagt di bis zum Not-Aus!", clip: 'tuktuk_melone_sinn', emoji: '🛺', quote: 'SERVERRAUM FLUCHT!', dur: 4.5 },
+                    { side: 'right', actor: 'thenerean', pose: 'block',  text: "Kapitel 1 (Level 1–10): Ich sprint dur d'GIBB & stopp das TukTuk!", clip: 'thenerean_stah', emoji: '🏫', quote: 'AUF IN LEVEL 1!', dur: 4.4 }
+                ]
+            },
+            2: {
+                badgeText: '🚀 KAPITEL 2 TRAILER • LEVEL 11–20',
+                title: 'MEGA-MELONEN-RAKETE, KLOTEN & SRI LANKA',
+                context: 'Nach dem TukTuk-Kampf startet Thenerean per Melonen-Rakete nach Kloten, trifft Tung Tung Tung Sahur & das Dual-GPU MK-II!',
+                bgPath: 'assets/backgrounds/bg_sky_rocket.jpg',
+                bgKey: 'bg_sky_rocket',
+                left: 'monika',
+                right: 'thenerean',
+                beats: [
+                    { side: 'right', actor: 'thenerean',   pose: 'rocket', text: "Ab id Mega-Melonen-Rakete!! Kurs uf Kloten & Sri Lanka!!", clip: 'thenerean_mega_melone_rakete', emoji: '🚀', quote: 'MELONEN-ANTRIEB AKTIV!', dur: 4.5 },
+                    { side: 'right', actor: 'thenerean',   pose: 'jump',   text: "ALARM! D'Bäckerei Kloten brennt & glühendi Feuer-Pizzas flüged dur d'Luft!", clip: 'thenerean_alles_brennt', emoji: '🍕', quote: 'FEUER IN KLOTEN!', dur: 4.4 },
+                    { side: 'left',  actor: 'monika',      pose: 'point',  text: "Panama-Banana-Koma! Sogar am Mensa-Bankomat warted Kiosk-Bosse uf di!", clip: 'monika_panama_banana_koma', emoji: '🪙', quote: 'BANKOMAT-ÜBERFALL!', dur: 4.4 },
+                    { side: 'left',  actor: 'tung_sahur',  pose: 'attack', text: "TUNG TUNG TUNG SAHUR!! Wer weckt mich im Sri Lanka Dschungel mit dr Melone?!", clip: 'sahur_baseball_swing', emoji: '🪵', quote: 'NEUER BOSS: TUNG SAHUR!', dur: 4.5 },
+                    { side: 'left',  actor: 'tuktuk_dual', pose: 'rage',   text: "TÄSCHFRESSER!! Zwei RTX Grafikkarten uf em Colombo Highway — Vollgas!", clip: 'tuktuk_taeschfresser_gpu', emoji: '🔥', quote: 'ABFLUG IN LEVEL 11!', dur: 4.5 }
+                ]
+            },
+            3: {
+                badgeText: '🛸 KAPITEL 3 TRAILER • LEVEL 21–30',
+                title: 'ORBIT, ALPENFESTUNG & DAS EFZ-FINALE 6.0',
+                context: 'Ab in den Orbit, vorbei an Cyber Drone TukTuk MK-III & der Alpenfestung — bis zurück ins EFZ Auditorium!',
+                bgPath: 'assets/backgrounds/bg_orbit_space.jpg',
+                bgKey: 'bg_orbit_space',
+                left: 'drone_tuktuk',
+                right: 'thenerean',
+                beats: [
+                    { side: 'right', actor: 'thenerean',    pose: 'rocket', text: "TO THE MOON!! Mit dr Melonen-Rakete bis i d'Stratosphäre & dr Orbit!", clip: 'thenerean_to_the_moon', emoji: '🛸', quote: 'STRATOSPHÄRE & ORBIT!', dur: 4.5 },
+                    { side: 'left',  actor: 'drone_tuktuk', pose: 'rage',   text: "DRONE MK-III AKTIVIERT!! Drei Turbinen, Laser-Strahl — machet Melone im All Sinn?!", clip: 'tuktuk_gpu_melone', emoji: '🚁', quote: 'CYBER DRONE TUKTUK MK-III!', dur: 4.5 },
+                    { side: 'left',  actor: 'tung_sahur',   pose: 'attack', text: "I dr Alpenfestung warted d'Elite-Welle & de Schatz vo Atlantis!", clip: 'sahur_bat_smash', emoji: '🏰', quote: 'ALPENFESTUNG ELITE!', dur: 4.4 },
+                    { side: 'left',  actor: 'monika',       pose: 'attack', text: "Zurück uf d'Erde! Prüfungs-Aufsicht + Monika & Herr Adam verteidiged s'Auditorium!", clip: 'monika_altstadt_lehre', emoji: '🎓', quote: 'EFZ PRÜFUNGS-FINALE!', dur: 4.5 },
+                    { side: 'right', actor: 'thenerean',    pose: 'block',  text: "Kapitel 3 (Level 21–30): Jetzt hol ich mir s'Heilige Gral EFZ 6.0!!", clip: 'thenerean_heilig_gral', emoji: '🏆', quote: 'MISSION NOTE 6.0!', dur: 4.5 }
+                ]
+            }
+        };
+
+        const ch = CHAPTER_TRAILERS[chapterNum] || CHAPTER_TRAILERS[1];
+        const beats = ch.beats.map((b) => ({ ...b }));
+        const totalDuration = beats.reduce((acc, b) => acc + (b.dur || 4.4), 0);
+        return {
+            episodeNum: chapterNum,
+            badgeText: ch.badgeText,
+            title: ch.title,
+            context: ch.context,
+            bgPath: ch.bgPath,
+            bgKey: ch.bgKey,
+            defaultLeft: ch.left,
+            defaultRight: ch.right,
+            castCatalog: CAST,
+            beats,
+            totalDuration
+        };
+    }
+
+    buildRandomIntroConversation() {
+        const CAST = this.getIntroCastCatalog();
 
         const SCENARIOS = [
             {
@@ -2399,7 +3176,19 @@ class Game {
                     { side: 'right', actor: 'thenerean', pose: 'attack', text: "Herr Adam, ich stah doch da! Ich ha nur mini Lippenstift verlore!", clip: 'thenerean_lippenstift', emoji: '💄', quote: "4 MINUTEN + 1 LIPPENSTIFT!", dur: 4.3 },
                     { side: 'left',  actor: 'monika',    pose: 'attack', text: "Kei Chopfhörer! Ussedem staht mis Passwort i de Gsetzestext!", clip: 'monika_passwort_buech', emoji: '🔐', quote: "PASSWORT = OR / ZGB?", dur: 4.3 },
                     { side: 'right', actor: 'thenerean', pose: 'block',  text: "Morgartenstrasse isch blockiert! Das isch e absoluti Frechheit!", clip: 'thenerean_morgarten_blockiert', emoji: '🚧', quote: "VERKEHRS-BLOCKADE IN BERN!", dur: 4.3 },
-                    { side: 'left',  actor: 'monika',    pose: 'point',  text: "Dini Lehrziit gaht i d'Altstadt abe — AB IN LEVEL 1!!", clip: 'monika_altstadt_lehre', emoji: '🏫', quote: "LEHRE GEGEN ALLE!", dur: 4.6 }
+                    { side: 'left',  actor: 'monika',    pose: 'point',  text: "Dini Lehrziit gaht i d'Altstadt abe — AB INS KAPITEL!!", clip: 'monika_altstadt_lehre', emoji: '🏫', quote: "LEHRE GEGEN ALLE!", dur: 4.6 }
+                ]
+            },
+            {
+                title: "MELONEN-RAKETE NACH KLOTEN & TUNG SAHUR",
+                context: "Die Bäckerei Kloten brennt — und mitten im Dschungel wacht Tung Sahur auf!",
+                left: 'tung_sahur', right: 'thenerean',
+                beats: [
+                    { side: 'right', actor: 'thenerean',    pose: 'rocket', text: "Ab id Mega-Melonen-Rakete!! Vollgas nach Kloten!", clip: 'thenerean_mega_melone_rakete', emoji: '🚀', quote: "MELONEN-SCHUB!", dur: 4.4 },
+                    { side: 'right', actor: 'thenerean',    pose: 'jump',   text: "Alles brennt i de Bäckerei Kloten! Kloten TARONUMAN!!", clip: 'thenerean_alles_brennt', emoji: '🔥', quote: "KLOTEN IM FEUER!", dur: 4.3 },
+                    { side: 'left',  actor: 'tung_sahur',   pose: 'attack', text: "TUNG TUNG TUNG SAHUR!! *Bong!* Wer stört min Dschungel-Schlaf?!", clip: 'sahur_baseball_swing', emoji: '🪵', quote: "HOLZSCHLÄGER BEREIT!", dur: 4.4 },
+                    { side: 'left',  actor: 'drone_tuktuk', pose: 'rage',   text: "*Drohnen-Alarm im Orbit* Machet d'Melone überhaupt Sinn?!", clip: 'tuktuk_melone_sinn', emoji: '🛸', quote: "ORBIT-TUKTUK MK-III!", dur: 4.4 },
+                    { side: 'right', actor: 'thenerean',    pose: 'attack', text: "Zurück uf d'Erde!! Ich mach dich fertig — Note 6.0!!", clip: 'thenerean_zurueck_erde', emoji: '🌍', quote: "VOLLGAS VORAUS!", dur: 4.4 }
                 ]
             },
             {
@@ -2415,7 +3204,7 @@ class Game {
                 ]
             },
             {
-                title: "MENSA-KONFERENZ: CHICKEN CURRY & V-BUCKS",
+                title: "MENSA-KONFERENZ: CHICKEN CURRY & BANKOMAT-JETONS",
                 context: "Krise am GIBB-Kiosk: Der Bankomat nimmt nur noch Jetons und Melonen.",
                 left: 'monika', right: 'thenerean',
                 beats: [
@@ -2434,44 +3223,20 @@ class Game {
                     { side: 'left',  actor: 'tuktuk_dual', pose: 'idle', text: "VROOOOM!! Isst d'Melone mit zwei RTX Grafikkarten!!", clip: 'tuktuk_gpu_melone', emoji: '🍉', quote: "2× RTX MELONEN-KÜHLUNG!", dur: 4.4 },
                     { side: 'right', actor: 'thenerean',   pose: 'duck', text: "Nein! Schon wieder Grafikkarte Fehler! Verdammte Maschine!", clip: 'thenerean_gpu', emoji: '🔧', quote: "TREIBER ABGESTÜRZT!", dur: 4.4 },
                     { side: 'left',  actor: 'tuktuk_dual', pose: 'rage', text: "TÄSCHFRESSER!! VRAM bei 120 Grad — Overclock aktiviert!!", clip: 'tuktuk_taeschfresser_gpu', emoji: '🔥', quote: "GPU OVERCLOCK MK-II!", dur: 4.5 },
-                    { side: 'right', actor: 'thenerean',   pose: 'attack', text: "Ich bring Stickstoff direkt aus Sri Lanka! Niemert chunt verbi!", clip: 'thenerean_srilanka', emoji: '🇱🇰', quote: "SRI LANKA NITRO!", dur: 4.2 },
+                    { side: 'right', actor: 'thenerean',   pose: 'attack', text: "Vun d'Schwiiz direkt bis nach Sri Lanka — niemand stoppt mich!", clip: 'thenerean_schweiz_srilanka', emoji: '🇱🇰', quote: "SRI LANKA NITRO!", dur: 4.2 },
                     { side: 'left',  actor: 'monika',      pose: 'attack', text: "KEI CHOPFHÖRER AM TUKTUK!! AUF ZUM PRÜFUNGS-KAMPF!", clip: 'monika_keine_kopfhoerer', emoji: '⚡', quote: "ABFAHRT IN D'LEHRE!", dur: 4.5 }
                 ]
             },
             {
-                title: "ABU B404: EINGESPERRT MIT DEM CRINGE KING",
+                title: "ABU B404: PANAMA-BANANA-KOMA",
                 context: "Zwischen ABU-Test und TikTok verliert jeder komplett den Faden.",
                 left: 'student', right: 'monika',
                 beats: [
                     { side: 'left',  actor: 'student',   pose: 'attack', text: "Ich bin der Cringe King von TikTok — kei Modulprüefig für mich!", clip: 'student_cringe_king', emoji: '📱', quote: "TIKTOK BOSSFIGHT!", dur: 4.3 },
-                    { side: 'right', actor: 'monika',    pose: 'point',  text: "Das isch jetzt würkli en ABU-Test! Mir spärred di im Zimmer B404 ii!", clip: 'monika_abu_eingesperrt', emoji: '🔒', quote: "ABU-ZIMMER VERRIEGELT!", dur: 4.5 },
-                    { side: 'left',  actor: 'adam',      pose: 'throw',  text: "Silvankumar! Du bisch als abwesend iigtreit worde!", clip: 'adam_abwesend_sketch', emoji: '📝', quote: "ROT IN DER LISTE!", dur: 4.3 },
-                    { side: 'right', actor: 'thenerean', pose: 'block',  text: "Z'SPÄT?! Da git's nüt z'diskutiere — ICH RASCHT COMPLETELY US!!", clip: 'thenerean_zspaet_raschtaus', emoji: '💢', quote: "ULTRA-ESKALATION!", dur: 4.4 },
-                    { side: 'left',  actor: 'monika',    pose: 'attack', text: "Selberbank! Si müend das jetz uf em Spielfeld korrigiere!!", clip: 'monika_adam_korrigiere', emoji: '📘', quote: "LEHRE WIRD JETZT GEKLÄRT!", dur: 4.5 }
-                ]
-            },
-            {
-                title: "TARONUMAN-BEICHTE VOR DEM MIKROFON",
-                context: "Durchsage über den GIBB-Schullautsprecher — ergibt 0% Sinn, klingt 100% legendär.",
-                left: 'adam', right: 'thenerean',
-                beats: [
-                    { side: 'left',  actor: 'monika',    pose: 'idle',   text: "Hallo? Mikrofon-Test? Hilf mir, d'Schüeler losed nöd zue!", clip: 'monika_mikrofon_hilfe', emoji: '🎙️', quote: "DURCHSAGE IM HAUS!", dur: 4.3 },
-                    { side: 'right', actor: 'thenerean', pose: 'attack', text: "BANANA MONIKA!! Das isch dr Heiligi Gral vom Informatik-EFZ!", clip: 'thenerean_banana_monika', emoji: '🍌', quote: "BANANA-TAKTIK!", dur: 4.3 },
-                    { side: 'left',  actor: 'tuktuk',    pose: 'rage',   text: "*TukTuk hupt ins Mikrofon* TÄSCHFRESSER!! Grafikkarte brennt!!", clip: 'tuktuk_taeschfresser_gpu', emoji: '🛺', quote: "TUKTUK AM MIKRO!", dur: 4.3 },
-                    { side: 'right', actor: 'thenerean', pose: 'jump',   text: "TARONUMAN!! AAAAAAHHH!! Ich stah doch schon die ganzi Ziit da!", clip: 'thenerean_taronuman_scream', emoji: '💥', quote: "MAXIMALER SCHREI!", dur: 4.2 },
-                    { side: 'left',  actor: 'adam',      pose: 'throw',  text: "Du hesch de Schuss verpasst — zur Strafe startisch bi Level 1!!", clip: 'adam_strafe_verpasst', emoji: '⚽', quote: "STRAFE = LEVEL 1 START!", dur: 4.4 }
-                ]
-            },
-            {
-                title: "EFZ NOTFALL-SITZUNG: DIE VERSPÄTUNGS-AUSREDE",
-                context: "Montag 08:06 — Alle widersprechen sich gleichzeitig (aber schön der Reihe nach).",
-                left: 'monika', right: 'thenerean',
-                beats: [
-                    { side: 'right', actor: 'thenerean', pose: 'idle',   text: "Entschuldigung Monika Schneider... ich bi würkli nur 4 Minute z'spät!", clip: 'thenerean_entschuldigung', emoji: '🚆', quote: "SBB HATTE SCHULD!", dur: 4.5 },
-                    { side: 'left',  actor: 'monika',    pose: 'point',  text: "2.54 Sekunde langed scho! Gang uf di Platz!!", clip: 'monika_gang_uf_platz', emoji: '🪑', quote: "SOFORT UF D'PLATZ!", dur: 4.2 },
-                    { side: 'right', actor: 'thenerean', pose: 'attack', text: "Ultra-Prozessore im Rucksack hend's Netz überlaschtet!", clip: 'thenerean_ultra', emoji: '⚡', quote: "ULTRA-AUSREDE!", dur: 4.2 },
-                    { side: 'left',  actor: 'adam',      pose: 'idle',   text: "MWAHAHAHA — niemert chunt ohni EFZ-Prüefig durs Tor!", clip: 'boss_evil_laugh', emoji: '😈', quote: "PRÜFUNGS-KOMMISSION!", dur: 4.2 },
-                    { side: 'right', actor: 'thenerean', pose: 'block',  text: "Holt euch s'Heilige Gral Diplom — ich stah bis zum Schluss!!", clip: 'thenerean_heilig_gral', emoji: '🏆', quote: "AUF ZUR NOTE 6.0!", dur: 4.5 }
+                    { side: 'right', actor: 'monika',    pose: 'point',  text: "Panama-Banana-Koma!! Mir spärred di im Zimmer B404 ii!", clip: 'monika_panama_banana_koma', emoji: '🔒', quote: "ABU-ZIMMER VERRIEGELT!", dur: 4.5 },
+                    { side: 'left',  actor: 'adam',      pose: 'throw',  text: "Nimm diin Frisbee und fahr ab!! Du bisch abwesend iitreit!", clip: 'adam_nimm_frisbee_fahr', emoji: '📝', quote: "ROT IN DER LISTE!", dur: 4.3 },
+                    { side: 'right', actor: 'thenerean', pose: 'block',  text: "ABU-Gfängnis?! ICH RASCHT COMPLETELY US!!", clip: 'thenerean_abu_gefaengnis', emoji: '💢', quote: "ULTRA-ESKALATION!", dur: 4.4 },
+                    { side: 'left',  actor: 'monika',    pose: 'attack', text: "Min Frisbee hät unendlich Aura — AB IN D'ARENA!!", clip: 'monika_frisbee_aura', emoji: '📘', quote: "LEHRE WIRD JETZT GEKLÄRT!", dur: 4.5 }
                 ]
             }
         ];
@@ -2480,15 +3245,14 @@ class Game {
             { side: 'left',  actor: 'monika',      pose: 'idle',   text: "Moment mal kurz — s'Chicken Curry hüt isch eifach überragend, gell?", clip: 'monika_chicken_curry', emoji: '🍛', quote: "PLOT-TWIST: CHICKEN CURRY!", dur: 4.2 },
             { side: 'right', actor: 'thenerean',   pose: 'jump',   text: "BANANA MONIKA!! Kei Ahnung was lauft, aber ich mach trotzdem Note 6.0!", clip: 'thenerean_banana_monika', emoji: '🍌', quote: "SINN = OPTIONAL!", dur: 4.2 },
             { side: 'left',  actor: 'tuktuk_dual', pose: 'rage',   text: "*Rauscht quer durchs Zimmer* Melone mit ZWEI RTX Grafikkarten!!", clip: 'tuktuk_gpu_melone', emoji: '🍉', quote: "TUKTUK CAMEO!", dur: 4.2 },
-            { side: 'left',  actor: 'adam',        pose: 'windup', text: "HILF MIR!! Wer hät 20 Frisbees im Serverraum bstellt?!", clip: 'adam_hilf_mir', emoji: '🆘', quote: "HERR ADAM PANIK!", dur: 4.0 },
-            { side: 'right', actor: 'thenerean',   pose: 'attack', text: "Du bisch selber en Bankomat! Jetzt gits s'Heilige Gral-Update!", clip: 'thenerean_selber_bankomat', emoji: '🏧', quote: "RANDOM KONTER!", dur: 4.1 },
+            { side: 'left',  actor: 'tung_sahur',  pose: 'attack', text: "BONK!! BAT SMASH!! Wer hät miin Schläger im Korridor versteckt?!", clip: 'sahur_bat_smash', emoji: '🪵', quote: "TUNG SAHUR CAMEO!", dur: 4.1 },
+            { side: 'right', actor: 'thenerean',   pose: 'rocket', text: "CATACLYSMIC MELON BLAST!! Ab durch die Bäckerei Kloten!", clip: 'thenerean_cataclysmic_blast', emoji: '💥', quote: "MELONEN-SCHOCK!", dur: 4.1 },
             { side: 'left',  actor: 'student',     pose: 'windup', text: "TikTok Live!! Lueget wie Monika s'Gsetzbuech wirft!", clip: 'student_tiktok_fortnite', emoji: '📱', quote: "LIVESTREAM AN!", dur: 4.1 }
         ];
 
         const base = SCENARIOS[Math.floor(Math.random() * SCENARIOS.length)];
         const beats = base.beats.map((b) => ({ ...b }));
 
-        // Optionally splice 1 completely random non-sequitur punchline on turn 2 or 3 for fresh chaos!
         if (Math.random() > 0.35) {
             const slotIdx = Math.random() > 0.5 ? 2 : 3;
             const filtered = WILDCARD_BEATS.filter((w) => w.clip !== beats[slotIdx].clip);
@@ -2501,8 +3265,11 @@ class Game {
         const totalDuration = beats.reduce((acc, b) => acc + (b.dur || 4.3), 0);
         return {
             episodeNum: 101 + Math.floor(Math.random() * 899),
+            badgeText: `🎲 RANDOM GIBB EPISODE #${101 + Math.floor(Math.random() * 899)}`,
             title: base.title,
             context: base.context,
+            bgPath: 'assets/backgrounds/bg_story_intro_crazy.jpg',
+            bgKey: 'bg_story_intro_crazy',
             defaultLeft: base.left,
             defaultRight: base.right,
             castCatalog: CAST,
@@ -2511,16 +3278,24 @@ class Game {
         };
     }
 
-    startCinematicIntro() {
+    startCinematicIntro(opts = {}) {
         this.state = GAME_STATE.INTRO;
         if (this.ui.screenMenu) this.ui.screenMenu.classList.add('hidden');
         if (this.ui.screenPrestart) this.ui.screenPrestart.classList.add('hidden');
+        if (this.ui.screenChapters) this.ui.screenChapters.classList.add('hidden');
         if (this.ui.screenStory) this.ui.screenStory.classList.add('hidden');
         if (this.ui.screenLvlSelect) this.ui.screenLvlSelect.classList.add('hidden');
         if (this.ui.screenIntro) this.ui.screenIntro.classList.remove('hidden');
 
-        this.introScript = this.buildRandomIntroConversation();
+        const targetLevelIndex = typeof opts.targetLevelIndex === 'number' ? opts.targetLevelIndex : 0;
+        const chapter = opts.chapter || ((LEVELS_CONFIG[targetLevelIndex] && LEVELS_CONFIG[targetLevelIndex].chapter) || 1);
+        const randomChaos = Boolean(opts.randomChaos);
+        this.activeIntroChapter = chapter;
+        this.introTargetLevelIndex = targetLevelIndex;
+
+        this.introScript = randomChaos ? this.buildRandomIntroConversation() : this.buildChapterIntro(chapter);
         this.introChapters = this.introScript.beats;
+        this.introBgKey = this.introScript.bgKey || 'bg_story_intro_crazy';
         this.introState.active = true;
         this.introState.elapsed = 0;
         this.introState.beatElapsed = 0;
@@ -2528,8 +3303,11 @@ class Game {
         this.introState.currentStep = -1;
         this.introState.beats = this.introScript.beats;
 
+        if (this.ui.introBgImg && this.introScript.bgPath) {
+            this.ui.introBgImg.src = this.introScript.bgPath;
+        }
         if (this.ui.introEpisodeBadge) {
-            this.ui.introEpisodeBadge.textContent = `🎲 GIBB EPISODE #${this.introScript.episodeNum}`;
+            this.ui.introEpisodeBadge.textContent = this.introScript.badgeText || `📖 KAPITEL ${chapter} TRAILER`;
         }
         if (this.ui.introStepTitle) this.ui.introStepTitle.textContent = this.introScript.title;
         if (this.ui.introSpeechText) this.ui.introSpeechText.textContent = this.introScript.context;
@@ -2542,13 +3320,17 @@ class Game {
         if (this.ui.introFxLayer) this.ui.introFxLayer.innerHTML = '';
 
         window.soundManager.setMusicQuietMode(true);
-        window.soundManager.playMusic('assets/music/That_s_The_One.mp3');
+        window.soundManager.playMusic(chapter === 2 ? 'assets/music/Beyond_the_Frame.mp3' : (chapter === 3 ? 'assets/music/Rewrite_The_Sky.mp3' : 'assets/music/That_s_The_One.mp3'));
         this.applyIntroBeat(0);
     }
 
     rerollIntroConversation() {
         if (this.state !== GAME_STATE.INTRO) return;
-        this.startCinematicIntro();
+        this.startCinematicIntro({
+            chapter: this.activeIntroChapter || 1,
+            targetLevelIndex: this.introTargetLevelIndex || 0,
+            randomChaos: true
+        });
     }
 
     setIntroActorVisual(side, actorKey, pose = 'idle') {
@@ -2624,7 +3406,8 @@ class Game {
         }
 
         if (this.ui.btnNextIntro) {
-            this.ui.btnNextIntro.textContent = (idx + 1 >= beats.length) ? 'INS LEVEL 1 ▶' : 'WEITER [ENTER] ▶';
+            const targetLvlNum = (this.introTargetLevelIndex || 0) + 1;
+            this.ui.btnNextIntro.textContent = (idx + 1 >= beats.length) ? `INS LEVEL ${targetLvlNum} ▶` : 'WEITER [ENTER] ▶';
         }
 
         this.spawnIntroFx(beat.side, beat.emoji || '⚡');
@@ -2680,7 +3463,7 @@ class Game {
         this.introState.active = false;
         window.soundManager.stopAllClips();
         if (this.ui.screenIntro) this.ui.screenIntro.classList.add('hidden');
-        this.startLevel(0);
+        this.startLevel(this.introTargetLevelIndex || 0);
     }
 
     // =====================================================================
@@ -2727,14 +3510,28 @@ class Game {
         this.jetonsCollected = 0;
         this.jetonsTotal = 0;
         this.touchDuckHeld = false;
+        this.touchJumpHeld = false;
         this.currentWaveIndex = 0;
         this.chaser = null;
         this.arenaSwitch = null;
         this.floorHazardCooldown = 0;
+
+        this.selectedChapterFilter = String((this.level && this.level.chapter) || 1);
+        this.climbCameraY = 0;
+        this.climbHazardY = 0;
+        this.climbMaxYReached = 0;
+        this.climbStartY = 0;
+        this.climbGoalY = 0;
+        this.rocketDistance = 0;
+        this.rocketGoalDistance = 6400;
+        this.rocketHazards = [];
+        this.rocketSpawnTimer = 45;
+        this.rocketBossTriggered = false;
         this.resetCombatExtras();
 
         this.ui.screenMenu.classList.add('hidden');
         if (this.ui.screenPrestart) this.ui.screenPrestart.classList.add('hidden');
+        if (this.ui.screenChapters) this.ui.screenChapters.classList.add('hidden');
         this.ui.screenIntro.classList.add('hidden');
         this.ui.screenWin.classList.add('hidden');
         this.ui.screenLose.classList.add('hidden');
@@ -2746,7 +3543,18 @@ class Game {
 
         this.ui.bar.classList.remove('hidden');
         this.ui.abilityDock.classList.remove('hidden');
-        this.ui.controlHintPill.classList.remove('hidden');
+        const mode = this.level.mode || 'standard';
+        if (this.ui.controlHintPill) {
+            if (mode === 'rocket_flight') {
+                this.ui.controlHintPill.innerHTML = '<span><kbd>W</kbd>/<kbd>S</kbd> oder <kbd>↑</kbd>/<kbd>↓</kbd> Fliegen &bull; <kbd>E</kbd> Melonen-Laser &bull; <kbd>Q</kbd> Mega &bull; <kbd>R</kbd> Schild &bull; <kbd>ESC</kbd> Pause</span>';
+            } else if (mode === 'vertical_climb') {
+                this.ui.controlHintPill.innerHTML = '<span><kbd>A</kbd><kbd>D</kbd> Lenken &bull; <kbd>SPACE</kbd>/<kbd>W</kbd> Hochspringen &bull; Grüne Pads = Super-Sprung &bull; <kbd>ESC</kbd> Pause</span>';
+            } else {
+                this.ui.controlHintPill.innerHTML = '<span><kbd>A</kbd><kbd>D</kbd> Laufen &bull; <kbd>CTRL</kbd>/<kbd>↓</kbd> Ducken &bull; <kbd>S</kbd> Sprint &bull; <kbd>R</kbd> Block &bull; <kbd>ESC</kbd> Pause</span>';
+            }
+            this.ui.controlHintPill.classList.remove('hidden');
+        }
+        this.updateTouchControlsForMode(mode);
         clearTimeout(this.hintTimeout);
         this.hintTimeout = setTimeout(() => {
             if (this.ui.controlHintPill) this.ui.controlHintPill.classList.add('hidden');
@@ -2762,9 +3570,24 @@ class Game {
         window.soundManager.setMusicQuietMode(false);
         window.soundManager.playMusic(this.level.music);
 
-        const mode = this.level.mode || 'standard';
         if (this.level.featureTag) {
             this.showMemePopup(this.level.featureTag);
+        }
+
+        if (mode === 'vertical_climb') {
+            this.initVerticalClimb();
+            this.state = GAME_STATE.RUNNING;
+            this.updateMissionPill();
+            this.updateTouchControlsVisibility();
+            return;
+        }
+
+        if (mode === 'rocket_flight') {
+            this.initRocketFlight();
+            this.state = GAME_STATE.RUNNING;
+            this.updateMissionPill();
+            this.updateTouchControlsVisibility();
+            return;
         }
 
         if (this.level.hasVanguard) {
@@ -2801,7 +3624,7 @@ class Game {
 
         this.generateLevelObstacles();
 
-        if (mode === 'target_run_boss') {
+        if (mode === 'target_run_boss' || mode === 'target_run_clear') {
             this.spawnRunTargets(this.level.targetGoalCount || 6);
         }
 
@@ -3054,10 +3877,14 @@ class Game {
 
         const groundPos = this.player.groundY;
         const scale = Math.max(0.78, Math.min(1.38, canvas.height / 720));
-        const bH = Math.round(160 * scale);
-        const bW = Math.round(92 * scale);
+        const getWaveSize = (type) => {
+            if (this.isTukTukType(type)) return { w: Math.round(175 * scale), h: Math.round(195 * scale) };
+            if (type === 'tung_sahur') return { w: Math.round(108 * scale), h: Math.round(172 * scale) };
+            return { w: Math.round(92 * scale), h: Math.round(160 * scale) };
+        };
 
         const pSpec = wave.primary;
+        const pSize = getWaveSize(pSpec.type);
         const pHp = this.scaleBossHP(pSpec.hp);
         this.boss = {
             name: pSpec.name,
@@ -3065,10 +3892,10 @@ class Game {
             isWaveEnemy: true,
             isMiniBoss: true,
             avatar: pSpec.avatar || 'assets/sprites/gibb_student_avatar.png',
-            x: canvas.width * (wave.partner ? 0.67 : 0.74),
-            y: groundPos - bH,
-            w: bW,
-            h: bH,
+            x: canvas.width * (this.isTukTukType(pSpec.type) ? 0.62 : (wave.partner ? 0.67 : 0.74)),
+            y: groundPos - pSize.h,
+            w: pSize.w,
+            h: pSize.h,
             hp: pHp,
             maxHp: pHp,
             facing: -1,
@@ -3082,6 +3909,7 @@ class Game {
 
         if (wave.partner) {
             const ptSpec = wave.partner;
+            const ptSize = getWaveSize(ptSpec.type);
             const ptHp = this.scaleBossHP(ptSpec.hp);
             this.duoPartner = {
                 name: ptSpec.name,
@@ -3090,10 +3918,10 @@ class Game {
                 isWaveEnemy: true,
                 isMiniBoss: true,
                 avatar: ptSpec.avatar || 'assets/sprites/gibb_student_avatar.png',
-                x: canvas.width * 0.85,
-                y: groundPos - bH,
-                w: bW,
-                h: bH,
+                x: canvas.width * (this.isTukTukType(ptSpec.type) ? 0.79 : 0.85),
+                y: groundPos - ptSize.h,
+                w: ptSize.w,
+                h: ptSize.h,
                 hp: ptHp,
                 maxHp: ptHp,
                 facing: -1,
@@ -3391,7 +4219,7 @@ class Game {
     // PLAYER ATTACKS
     // =====================================================================
 
-    // ATTACK 1 (E): Straight-ahead Gesetzestext (no upward arc!)
+    // ATTACK 1 (E): Straight-ahead Gesetzestext (or Melonen-Laser in rocket_flight!)
     playerAttackLawBook() {
         if (this.player.lawBookCooldown > 0) return;
         this.player.lawBookCooldown = this.state === GAME_STATE.DEMO ? 10 : this.player.maxLawBookCooldown;
@@ -3399,6 +4227,30 @@ class Game {
         this.player.attackAnimTimer = 18;
         const dir = this.player.facing || 1;
         const dmgMult = this.player.powerTimer > 0 ? 1.5 : 1.0;
+
+        if (this.level && this.level.mode === 'rocket_flight') {
+            const lx = dir > 0 ? this.player.x + this.player.w - 8 : this.player.x - 54;
+            const ly = this.player.y + this.player.h * 0.45 - 9;
+            this.projectiles.push({
+                x: lx,
+                y: ly,
+                vx: 17.5 * dir,
+                vy: 0.0,
+                w: 62,
+                h: 18,
+                type: 'melon_laser',
+                isPlayer: true,
+                noSpin: true,
+                damage: Math.round(32 * dmgMult),
+                rotation: 0,
+                trailColor: '#2ed573'
+            });
+            if (window.soundManager.playRocketLaser) window.soundManager.playRocketLaser();
+            else window.soundManager.playThrow();
+            this.spawnBurst(lx + (dir > 0 ? 54 : 0), ly + 9, 7, '#2ed573', 4.5, 14);
+            return;
+        }
+
         this.projectiles.push({
             x: dir > 0 ? this.player.x + this.player.w * 0.72 : this.player.x - 20,
             y: this.player.y + this.player.h * 0.38,
@@ -3621,8 +4473,8 @@ class Game {
             this.spawnRunDust(this.player.x + this.player.w * 0.4, this.player.groundY);
             window.soundManager.playJump();
         } else {
-            // Mobile jump buffer: if tapped right before landing, jump instantly on touchdown
-            if (this.player.y >= this.player.groundY - this.player.h - 60) {
+            // Mobile / climb jump buffer: if tapped right before landing, jump instantly on touchdown
+            if ((this.level && this.level.mode === 'vertical_climb') || this.player.y >= this.player.groundY - this.player.h - 60) {
                 this.player.jumpBuffered = true;
             }
         }
@@ -3768,22 +4620,34 @@ class Game {
         const scale = Math.max(0.78, Math.min(1.38, canvas.height / 720));
         const isDuo = this.level.bossType === 'duo';
         const isTukTuk = this.isTukTukType(this.level.bossType);
+        const isDrone = this.level.bossType === 'drone_tuktuk';
+        const isSahur = this.level.bossType === 'tung_sahur';
+        const isRocketMode = this.level && this.level.mode === 'rocket_flight';
         this.chaser = null;
         this.resetCombatExtras();
-        this.spawnArenaPlatforms();
-        this.initArenaSwitch();
+        if (!isRocketMode) {
+            this.spawnArenaPlatforms();
+            this.initArenaSwitch();
+        } else {
+            this.platforms = [];
+            this.arenaSwitch = null;
+        }
         const isL10StageB = this.level && this.level.mode === 'final_efz_gauntlet';
         this.floorHazardCooldown = (this.level && this.level.arenaFloorHazards) ? (isL10StageB ? 260 : 300) : 0;
-        const bossH = Math.round((isTukTuk ? 195 : 162) * scale);
-        const bossW = Math.round((isTukTuk ? 175 : 94) * scale);
+        const bossH = Math.round((isDrone ? 138 : (isTukTuk ? 195 : (isSahur ? 172 : 162))) * scale);
+        const bossW = Math.round((isDrone ? 170 : (isTukTuk ? 175 : (isSahur ? 108 : 94))) * scale);
+        const bossY = isDrone
+            ? Math.max(76, Math.round(canvas.height * 0.38 - bossH * 0.5))
+            : (groundPos - bossH);
         const mainHp = this.scaleBossHP(this.level.bossHP);
 
         this.boss = {
             name: this.level.bossName,
             type: this.level.bossType,
+            isAerial: isDrone,
             avatar: this.level.bossAvatar,
-            x: canvas.width * (isDuo ? 0.65 : 0.74),
-            y: groundPos - bossH,
+            x: canvas.width * (isDuo ? 0.65 : (isDrone || isTukTuk ? 0.70 : 0.74)),
+            y: bossY,
             w: bossW,
             h: bossH,
             hp: mainHp,
@@ -3800,11 +4664,14 @@ class Game {
         if (isDuo) {
             const pType = this.level.partnerType || 'adam';
             const isPartnerTukTuk = this.isTukTukType(pType);
+            const isPartnerSahur = pType === 'tung_sahur';
             const defaultAvatar = pType === 'gibb_student'
                 ? 'assets/sprites/gibb_student_avatar.png'
-                : (isPartnerTukTuk ? 'assets/sprites/tuktuk_dual_avatar.png' : 'assets/sprites/adam_avatar.png');
-            const pH = Math.round((isPartnerTukTuk ? 195 : 162) * scale);
-            const pW = Math.round((isPartnerTukTuk ? 175 : 92) * scale);
+                : (isPartnerTukTuk
+                    ? 'assets/sprites/tuktuk_dual_avatar.png'
+                    : (isPartnerSahur ? 'assets/sprites/sahur_avatar.png' : 'assets/sprites/adam_avatar.png'));
+            const pH = Math.round((isPartnerTukTuk ? 195 : (isPartnerSahur ? 172 : 162)) * scale);
+            const pW = Math.round((isPartnerTukTuk ? 175 : (isPartnerSahur ? 108 : 92)) * scale);
             const partnerHp = this.scaleBossHP(this.level.partnerHP || 850);
             this.duoPartner = {
                 name: this.level.partnerName || "Herr Adam",
@@ -4161,7 +5028,457 @@ class Game {
         }
     }
 
+    // =====================================================================
+    // VERTICAL CLIMB & ROCKET FLIGHT MODES (v10 MEGA-EXPANSION)
+    // =====================================================================
+    initVerticalClimb() {
+        const gy = this.player.groundY;
+        const goalMeters = this.level.climbGoalMeters || 120;
+        const pxPerMeter = 28;
+        this.climbStartY = gy;
+        this.climbGoalY = gy - goalMeters * pxPerMeter;
+        this.climbHazardY = gy + 240;
+        this.climbCameraY = 0;
+        this.climbMaxYReached = gy - this.player.h;
+
+        this.player.jumpPower = -17.4;
+        this.player.x = Math.round(canvas.width * 0.5 - this.player.w * 0.5);
+        this.player.y = gy - this.player.h;
+        this.player.vx = 0;
+        this.player.vy = 0;
+        this.player.isGrounded = true;
+
+        this.platforms = [];
+        this.collectibles = [];
+
+        const pStyle = (this.level.mechanics && this.level.mechanics.platformStyle) || 'concrete';
+        const stepY = 108;
+        const marginX = 54;
+        const platW = Math.max(154, Math.min(220, Math.round(canvas.width * 0.165)));
+        const maxX = Math.max(marginX + 40, canvas.width - marginX - platW);
+        let prevX = Math.max(marginX, Math.min(maxX, Math.round(canvas.width * 0.5 - platW * 0.5)));
+
+        const colPool = (this.level.collectibleTypes && this.level.collectibleTypes.length > 0)
+            ? this.level.collectibleTypes
+            : ['coffee', 'energy_drink'];
+
+        let curY = gy - stepY;
+        let stepIdx = 0;
+        while (curY > this.climbGoalY + 95) {
+            const minNext = Math.max(marginX, prevX - 210);
+            const maxNext = Math.min(maxX, prevX + 210);
+            let nextX = Math.round(minNext + Math.random() * Math.max(20, maxNext - minNext));
+            // Encourage zig-zag variety so platforms don't stack purely vertically
+            if (Math.abs(nextX - prevX) < 55) {
+                nextX = prevX > canvas.width * 0.45
+                    ? Math.max(marginX, prevX - 135)
+                    : Math.min(maxX, prevX + 135);
+            }
+            const isBounce = stepIdx % 4 === 3;
+            const moveDrift = (this.level.id >= 17 && !isBounce && stepIdx % 5 === 2);
+
+            this.platforms.push({
+                x: nextX,
+                baseX: nextX,
+                y: curY,
+                offsetY: gy - curY,
+                baseOffsetY: gy - curY,
+                w: platW,
+                h: 22,
+                style: pStyle,
+                isClimb: true,
+                isBounce: isBounce,
+                moveAxis: moveDrift ? 'x' : null,
+                moveAmp: moveDrift ? 34 : 0,
+                moveSpeed: moveDrift ? 1.7 : 0,
+                phase: stepIdx * 0.9
+            });
+
+            if (stepIdx % 3 === 1) {
+                const cType = colPool[stepIdx % colPool.length];
+                const colY = curY - 56;
+                this.collectibles.push({
+                    x: nextX + platW * 0.5 - 20,
+                    y: colY,
+                    offsetY: gy - colY,
+                    w: 40,
+                    h: 40,
+                    type: cType,
+                    collected: false,
+                    isClimb: true,
+                    phase: stepIdx * 0.7
+                });
+            }
+
+            prevX = nextX;
+            curY -= stepY;
+            stepIdx++;
+        }
+
+        // Guaranteed Summit Platform right at the goal arch
+        const sumW = Math.min(360, Math.round(canvas.width * 0.34));
+        const sumX = Math.round(canvas.width * 0.5 - sumW * 0.5);
+        this.platforms.push({
+            x: sumX,
+            baseX: sumX,
+            y: this.climbGoalY + 26,
+            offsetY: gy - (this.climbGoalY + 26),
+            w: sumW,
+            h: 26,
+            style: pStyle,
+            isClimb: true,
+            isSummit: true
+        });
+    }
+
+    updateVerticalClimb(dt) {
+        const diff = this.getActiveDifficulty();
+        const prevStanding = this.player.standingPlatform;
+        this.player.standingPlatform = null;
+        this.updateMovingPlatforms();
+        if (prevStanding && this.player.vy >= 0 && prevStanding.dx) {
+            this.player.x += prevStanding.dx;
+        }
+
+        if (this.player.sprintTimer > 0) this.player.sprintTimer--;
+        const speedMult = this.player.sprintTimer > 0 ? 1.38 : 1.05;
+
+        if (this.keys['arrowright'] || this.keys['d']) {
+            this.player.vx = this.player.speed * speedMult;
+            this.player.facing = 1;
+        } else if (this.keys['arrowleft'] || this.keys['a']) {
+            this.player.vx = -this.player.speed * speedMult;
+            this.player.facing = -1;
+        } else {
+            this.player.vx = 0;
+        }
+
+        const prevBottom = this.player.y + this.player.h;
+        this.player.x = Math.max(24, Math.min(canvas.width - this.player.w - 24, this.player.x + this.player.vx));
+        this.player.y += this.player.vy;
+        this.player.vy += 0.68;
+        this.player.isGrounded = false;
+
+        // One-way platform landing
+        const footL = this.player.x + 12;
+        const footR = this.player.x + this.player.w - 12;
+        for (const plat of this.platforms) {
+            if (!plat.isClimb) continue;
+            if (footR > plat.x && footL < plat.x + plat.w) {
+                const snapSlack = prevStanding === plat ? 6 : 0;
+                if (this.player.vy >= 0 && prevBottom <= plat.y + 18 && (this.player.y + this.player.h) >= plat.y - snapSlack) {
+                    this.player.y = plat.y - this.player.h;
+                    if (plat.isBounce) {
+                        this.player.vy = -23.0;
+                        this.player.isGrounded = false;
+                        this.player.jumpBuffered = false;
+                        window.soundManager.playJump();
+                        this.spawnBurst(this.player.x + this.player.w * 0.5, plat.y, 14, '#2ed573', 6, 18);
+                        this.addFloatingText('🟢 SUPER-SPRUNG!', this.player.x + this.player.w * 0.5, plat.y - 24, '#2ed573', 18);
+                    } else {
+                        this.player.vy = 0;
+                        this.player.isGrounded = true;
+                        this.player.standingPlatform = plat;
+                        if (this.player.jumpBuffered) {
+                            this.player.jumpBuffered = false;
+                            this.playerJump();
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        // Solid starting ground floor at gy
+        if (!this.player.isGrounded && (this.player.y + this.player.h) >= this.player.groundY) {
+            this.player.y = this.player.groundY - this.player.h;
+            this.player.vy = 0;
+            this.player.isGrounded = true;
+            if (this.player.jumpBuffered) {
+                this.player.jumpBuffered = false;
+                this.playerJump();
+            }
+        }
+
+        // Smooth camera follow upwards
+        const targetCamY = Math.min(0, (this.player.y + this.player.h * 0.5) - canvas.height * 0.48);
+        this.climbCameraY += (targetCamY - this.climbCameraY) * 0.14;
+
+        // Rising hazard barrier (gentle rubberband so it keeps tension without being unfair)
+        const playerBottom = this.player.y + this.player.h;
+        let riseSpeed = (this.level.climbRiseSpeed || 0.78) * (diff.speedMult || 1);
+        if (this.climbHazardY - playerBottom > canvas.height * 0.68) {
+            riseSpeed = Math.max(riseSpeed, 1.38);
+        }
+        this.climbHazardY -= riseSpeed;
+
+        if (playerBottom >= this.climbHazardY - 6) {
+            if (this.player.isBlocking) {
+                this.onBlockSuccess(this.player.x + this.player.w * 0.5, playerBottom);
+            } else {
+                const dmg = Math.max(6, Math.round(12 * (diff.dmgMult || 1)));
+                this.onPlayerHit(dmg, 'climb_hazard');
+                if (this.state !== GAME_STATE.RUNNING) return;
+            }
+            this.player.vy = -20.5;
+            this.player.isGrounded = false;
+            this.climbHazardY = Math.max(this.climbHazardY + 75, playerBottom + 145);
+        }
+
+        // Collectibles in tower space
+        for (const col of this.collectibles) {
+            if (col.collected) continue;
+            if (this.checkCollision(this.player.x - 10, this.player.y - 10, this.player.w + 20, this.player.h + 20, col.x, col.y, col.w, col.h)) {
+                col.collected = true;
+                this.onCollectItem(col.type);
+            }
+        }
+
+        this.tickPlayerBanter();
+        this.updateProjectiles();
+
+        const goalM = this.level.climbGoalMeters || 120;
+        const curM = Math.max(0, Math.min(goalM, Math.round((this.climbStartY - playerBottom) / 28)));
+        const prog = Math.min(100, Math.round((curM / goalM) * 100));
+        this.ui.progBar.style.width = `${prog}%`;
+        this.ui.progValText.textContent = `${prog}%`;
+        this.updateMissionPill();
+
+        if (playerBottom <= this.climbGoalY + 34) {
+            this.player.score = Math.min(6.0, +(this.player.score + 0.3).toFixed(1));
+            this.updateBars();
+            window.soundManager.playWaveClear();
+            this.spawnBurst(this.player.x + this.player.w * 0.5, this.player.y + this.player.h * 0.5, 32, '#ffd32a', 9, 26);
+            this.triggerLevelWin();
+        }
+    }
+
+    initRocketFlight() {
+        const scale = Math.max(0.78, Math.min(1.38, canvas.height / 720));
+        this.rocketDistance = 0;
+        this.rocketGoalDistance = this.level.flightGoalDistance || 6400;
+        this.rocketHazards = [];
+        this.rocketSpawnTimer = 50;
+        this.rocketBossTriggered = false;
+        this.collectibles = [];
+
+        this.player.w = Math.round(104 * scale);
+        this.player.h = Math.round(56 * scale);
+        this.player.x = Math.round(canvas.width * 0.14);
+        this.player.y = Math.round(canvas.height * 0.45 - this.player.h * 0.5);
+        this.player.vx = 0;
+        this.player.vy = 0;
+        this.player.facing = 1;
+        this.player.isGrounded = false;
+        this.player.isDucking = false;
+    }
+
+    updateRocketControls() {
+        const p = this.player;
+        const up = this.keys['w'] || this.keys['arrowup'] || this.touchJumpHeld;
+        const down = this.keys['s'] || this.keys['arrowdown'] || this.keys['c'] || this.touchDuckHeld;
+        const left = this.keys['a'] || this.keys['arrowleft'];
+        const right = this.keys['d'] || this.keys['arrowright'];
+
+        if (up) p.vy -= 0.72;
+        if (down) p.vy += 0.72;
+        p.vy = Math.max(-7.2, Math.min(7.2, p.vy));
+        p.vy *= 0.89;
+
+        if (right) p.vx += 0.82;
+        else if (left) p.vx -= 0.82;
+        p.vx = Math.max(-5.5, Math.min(5.8, p.vx));
+        p.vx *= 0.85;
+        p.facing = 1;
+
+        const maxX = canvas.width * (this.state === GAME_STATE.BOSS_FIGHT ? 0.56 : 0.74);
+        p.x = Math.max(28, Math.min(maxX, p.x + p.vx));
+        p.y = Math.max(74, Math.min(canvas.height - p.h - 54, p.y + p.vy));
+
+        if (this.player.sprintTimer > 0) this.player.sprintTimer--;
+
+        // Exhaust particles from watermelon rocket tail
+        if (Math.random() > 0.22) {
+            this.particles.push({
+                x: p.x + 8,
+                y: p.y + p.h * 0.54 + (Math.random() - 0.5) * 10,
+                vx: -3.5 - Math.random() * 2.5,
+                vy: (Math.random() - 0.5) * 1.4,
+                life: 16,
+                maxLife: 16,
+                color: Math.random() > 0.45 ? '#2ed573' : (Math.random() > 0.5 ? '#ffd32a' : '#ff6348'),
+                size: 5 + Math.random() * 4
+            });
+        }
+    }
+
+    updateRocketFlight(dt) {
+        const diff = this.getActiveDifficulty();
+        this.updateRocketControls();
+
+        const turboMult = (this.player.powerTimer > 0 || this.player.sprintTimer > 0) ? 1.25 : 1.0;
+        const forwardBoost = (this.keys['d'] || this.keys['arrowright']) ? 0.48 : 0;
+        this.rocketDistance += (1.55 + forwardBoost) * turboMult;
+        this.worldDistance += (5.2 + forwardBoost * 4) * turboMult;
+
+        // Spawn aerial hazards & melon collectibles
+        this.rocketSpawnTimer--;
+        if (this.rocketSpawnTimer <= 0) {
+            const baseInterval = Math.round(58 / (diff.aggroMult || 1));
+            this.rocketSpawnTimer = Math.max(28, Math.min(76, baseInterval + Math.floor(Math.random() * 18)));
+            const hy = 92 + Math.random() * Math.max(120, canvas.height - 230);
+            const isOrbit = this.level.bgType === 'orbit_space' || this.level.id >= 21;
+            const spawnDrone = Math.random() < (isOrbit ? 0.46 : 0.28);
+
+            if (spawnDrone) {
+                this.rocketHazards.push({
+                    kind: 'mini_drone',
+                    x: canvas.width + 70,
+                    y: hy,
+                    baseY: hy,
+                    w: 76,
+                    h: 58,
+                    vx: -(4.4 + Math.random() * 1.4) * (diff.speedMult || 1),
+                    hp: Math.round(48 * (diff.hpMult || 1)),
+                    maxHp: Math.round(48 * (diff.hpMult || 1)),
+                    damage: Math.max(6, Math.round(11 * (diff.dmgMult || 1))),
+                    phase: Math.random() * Math.PI * 2,
+                    fireCd: isOrbit ? (65 + Math.floor(Math.random() * 45)) : 999
+                });
+            } else {
+                this.rocketHazards.push({
+                    kind: 'fire_pizza',
+                    x: canvas.width + 60,
+                    y: hy,
+                    baseY: hy,
+                    w: 52,
+                    h: 52,
+                    vx: -(5.8 + Math.random() * 2.1) * (diff.speedMult || 1),
+                    hp: 26,
+                    maxHp: 26,
+                    damage: Math.max(6, Math.round(10 * (diff.dmgMult || 1))),
+                    phase: Math.random() * Math.PI * 2,
+                    rot: 0
+                });
+            }
+
+            if (Math.random() < 0.48) {
+                const cPool = (this.level.collectibleTypes && this.level.collectibleTypes.length > 0)
+                    ? this.level.collectibleTypes
+                    : ['item_melon', 'energy_drink'];
+                const cType = cPool[Math.floor(Math.random() * cPool.length)];
+                const cy = 92 + Math.random() * Math.max(120, canvas.height - 230);
+                this.collectibles.push({
+                    x: canvas.width + 130,
+                    y: cy,
+                    w: 44,
+                    h: 44,
+                    type: cType,
+                    collected: false,
+                    isRocket: true,
+                    phase: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        // Update aerial hazards
+        for (let i = this.rocketHazards.length - 1; i >= 0; i--) {
+            const h = this.rocketHazards[i];
+            h.x += h.vx;
+            if (h.kind === 'fire_pizza') {
+                h.y = h.baseY + Math.sin(this.animClock * 4.5 + h.phase) * 24;
+                h.rot += 0.16;
+            } else {
+                h.y = h.baseY + Math.sin(this.animClock * 3.0 + h.phase) * 34;
+                if (h.fireCd > 0) h.fireCd--;
+                if (h.fireCd <= 0 && h.x < canvas.width - 40 && h.x > this.player.x + 120) {
+                    h.fireCd = Math.max(65, Math.round(125 / (diff.aggroMult || 1)));
+                    this.projectiles.push({
+                        x: h.x - 10,
+                        y: h.y + h.h * 0.42,
+                        vx: -9.8 * (diff.projSpeedMult || 1),
+                        vy: 0,
+                        w: 58,
+                        h: 16,
+                        isPlayer: false,
+                        noSpin: true,
+                        type: 'drone_laser',
+                        damage: Math.max(5, Math.round(9 * (diff.dmgMult || 1))),
+                        rotation: 0,
+                        trailColor: '#00d2d3'
+                    });
+                }
+            }
+
+            if (this.checkCollision(this.player.x + 10, this.player.y + 8, this.player.w - 20, this.player.h - 16, h.x + 6, h.y + 6, h.w - 12, h.h - 12)) {
+                if (this.player.isBlocking) {
+                    this.onBlockSuccess(h.x + h.w * 0.5, h.y + h.h * 0.5);
+                } else {
+                    this.onPlayerHit(h.damage, h.kind === 'fire_pizza' ? 'fire_pizza' : 'drone_laser');
+                    if (this.state !== GAME_STATE.RUNNING) return;
+                }
+                this.spawnBurst(h.x + h.w * 0.5, h.y + h.h * 0.5, 16, '#ff6348', 7, 18);
+                this.rocketHazards.splice(i, 1);
+                continue;
+            }
+
+            if (h.x < -120) {
+                this.rocketHazards.splice(i, 1);
+            }
+        }
+
+        // Scroll & pick up rocket collectibles
+        for (let i = this.collectibles.length - 1; i >= 0; i--) {
+            const col = this.collectibles[i];
+            if (col.collected || col.x < -100) {
+                this.collectibles.splice(i, 1);
+                continue;
+            }
+            col.x -= 4.6;
+            if (this.checkCollision(this.player.x - 14, this.player.y - 14, this.player.w + 28, this.player.h + 28, col.x, col.y, col.w, col.h)) {
+                col.collected = true;
+                this.onCollectItem(col.type);
+                this.collectibles.splice(i, 1);
+            }
+        }
+
+        this.tickPlayerBanter();
+        this.updateProjectiles();
+
+        const prog = Math.min(100, Math.round((this.rocketDistance / Math.max(1, this.rocketGoalDistance)) * 100));
+        this.ui.progBar.style.width = `${prog}%`;
+        this.ui.progValText.textContent = `${prog}%`;
+        this.updateMissionPill();
+
+        if (this.rocketDistance >= this.rocketGoalDistance) {
+            if (this.level.hasBoss && !this.rocketBossTriggered) {
+                this.rocketBossTriggered = true;
+                this.rocketHazards = [];
+                this.collectibles = [];
+                this.projectiles = [];
+                window.soundManager.playSwitch();
+                this.screenShake = 16;
+                this.showMemePopup('🚁 ACHTUNG! CYBER DRONE TUKTUK MK-III IM ORBIT!');
+                this.triggerPreBossEncounter();
+                return;
+            }
+            this.player.score = Math.min(6.0, +(this.player.score + 0.3).toFixed(1));
+            this.updateBars();
+            window.soundManager.playWaveClear();
+            this.spawnBurst(this.player.x + this.player.w * 0.5, this.player.y + this.player.h * 0.5, 30, '#2ed573', 9, 26);
+            this.triggerLevelWin();
+        }
+    }
+
     updateRunning(dt) {
+        if (this.level && this.level.mode === 'vertical_climb') {
+            this.updateVerticalClimb(dt);
+            return;
+        }
+        if (this.level && this.level.mode === 'rocket_flight') {
+            this.updateRocketFlight(dt);
+            return;
+        }
         if (this.level && this.level.mode === 'time_attack') {
             this.timeRemaining = Math.max(0, this.timeRemaining - dt);
             const secCeil = Math.ceil(this.timeRemaining);
@@ -4313,10 +5630,16 @@ class Game {
         }
 
         if (this.worldDistance >= this.level.targetDistance) {
-            if (this.level.mode === 'time_attack' || this.level.hasBoss === false) {
-                if (this.timeRemaining >= 8) {
+            if (this.level.mode === 'time_attack' || this.level.mode === 'target_run_clear' || this.level.hasBoss === false) {
+                if (this.level.mode === 'time_attack' && this.timeRemaining >= 8) {
                     this.player.score = Math.min(6.0, +(this.player.score + 0.3).toFixed(1));
                     this.updateBars();
+                } else if (this.level.mode === 'target_run_clear' && this.targetsTotal > 0) {
+                    const bonus = this.targetsHit >= this.targetsTotal ? 0.3 : (this.targetsHit >= Math.ceil(this.targetsTotal * 0.6) ? 0.1 : 0);
+                    if (bonus > 0) {
+                        this.player.score = Math.min(6.0, +(this.player.score + bonus).toFixed(1));
+                        this.updateBars();
+                    }
                 }
                 window.soundManager.playWaveClear();
                 this.spawnBurst(this.player.x + this.player.w * 0.5, this.player.y + this.player.h * 0.5, 28, '#ffd32a', 8, 24);
@@ -4434,6 +5757,21 @@ class Game {
     }
 
     updatePreBossWalk(dt) {
+        if (this.level && this.level.mode === 'rocket_flight') {
+            const targetX = canvas.width * 0.24;
+            const targetY = canvas.height * 0.45 - this.player.h * 0.5;
+            this.player.facing = 1;
+            this.player.vy = 0;
+            this.player.y += (targetY - this.player.y) * 0.1;
+            if (this.player.x < targetX) {
+                this.player.vx = 4.2;
+                this.player.x += 4.2;
+            } else {
+                this.player.vx = 0;
+                this.startPreBossDialogue();
+            }
+            return;
+        }
         this.updateMovingPlatforms();
         const targetX = canvas.width * 0.34;
         this.player.facing = 1;
@@ -4480,6 +5818,69 @@ class Game {
     }
 
     updateBossFight(dt) {
+        if (this.level && this.level.mode === 'rocket_flight') {
+            this.updateRocketControls();
+            this.worldDistance += 4.2;
+
+            // Occasional in-flight melon heals
+            if (Math.random() < 0.008 && this.collectibles.length < 2) {
+                const cy = 96 + Math.random() * Math.max(120, canvas.height - 230);
+                this.collectibles.push({
+                    x: canvas.width + 60, y: cy, w: 42, h: 42,
+                    type: Math.random() > 0.35 ? 'item_melon' : 'energy_drink',
+                    collected: false, isRocket: true, phase: Math.random() * Math.PI * 2
+                });
+            }
+            for (let i = this.collectibles.length - 1; i >= 0; i--) {
+                const col = this.collectibles[i];
+                if (col.collected || col.x < -100) { this.collectibles.splice(i, 1); continue; }
+                col.x -= 4.2;
+                if (this.checkCollision(this.player.x - 14, this.player.y - 14, this.player.w + 28, this.player.h + 28, col.x, col.y, col.w, col.h)) {
+                    col.collected = true;
+                    this.onCollectItem(col.type);
+                    this.collectibles.splice(i, 1);
+                }
+            }
+
+            this.tickPlayerBanter();
+            if (this.boss && this.boss.hp > 0) {
+                if (this.boss.hitFlash > 0) this.boss.hitFlash--;
+                if (this.boss.attackAnimTimer > 0) this.boss.attackAnimTimer--;
+                if (this.boss.banterAnimTimer > 0) this.boss.banterAnimTimer--;
+
+                this.boss.facing = this.player.x < this.boss.x ? -1 : 1;
+                if (this.bossCanMove(this.boss)) {
+                    this.boss.x += this.boss.moveDir * 3.1 * this.bossSpeedMult(this.boss);
+                    const targetBossY = this.player.y + Math.sin(this.animClock * 2.5) * 65 - this.boss.h * 0.25;
+                    this.boss.y += (targetBossY - this.boss.y) * 0.032;
+                }
+                if (this.boss.x < canvas.width * 0.52) this.boss.moveDir = 1;
+                else if (this.boss.x > canvas.width - this.boss.w - 30) this.boss.moveDir = -1;
+                this.boss.y = Math.max(76, Math.min(canvas.height - this.boss.h - 54, this.boss.y));
+
+                this.updateBossAI(this.boss, null);
+                this.boss.banterTimer--;
+                if (this.boss.banterTimer <= 0) {
+                    const chaosR = this.getSoundChaosLevel();
+                    this.boss.banterTimer = chaosR >= 3 ? (90 + Math.random() * 60) : (180 + Math.random() * 110);
+                    if (this.level.bossLines && this.level.bossLines.length > 0) {
+                        const line = this.level.bossLines[Math.floor(Math.random() * this.level.bossLines.length)];
+                        if (line.clip) window.soundManager.playClip(line.clip, null, 1.0, chaosR <= 2 ? { lowPriority: true } : {});
+                        this.addFloatingText(`"${line.text}"`, this.boss.x + this.boss.w * 0.4, this.boss.y - 26, '#00d2d3', 17);
+                    }
+                }
+            }
+
+            if (this.boss && this.boss.hp <= 0) {
+                this.triggerLevelWin();
+                return;
+            }
+            this.updateBossHUD();
+            this.updateMissionPill();
+            this.updateProjectiles();
+            return;
+        }
+
         const prevStanding = this.player.standingPlatform;
         this.player.standingPlatform = null;
         this.updateMovingPlatforms();
@@ -4690,7 +6091,7 @@ class Game {
                         : (chaosP === 1 ? (260 + Math.random() * 120) : (180 + Math.random() * 100));
                     this.duoPartner.banterAnimTimer = 35;
                     if (this.duoPartner.isMiniBoss || this.duoPartner.type === 'gibb_student') {
-                        const studentLine = this.duoPartner.type === 'gibb_student' && this.level && this.level.id === 7
+                        const studentLine = this.duoPartner.type === 'gibb_student' && this.level && this.level.mode === 'bankomat_survival'
                             ? 'Kiosk-Verstärkung! Energy-Wurf! ⚡'
                             : '"Modul-Prüefig!" 💻';
                         this.addFloatingText(studentLine, this.duoPartner.x + this.duoPartner.w * 0.4, this.duoPartner.y - 26, '#38bdf8', 17);
@@ -4817,6 +6218,33 @@ class Game {
                 }
             }
 
+            // Player projectile hits in-flight Rocket Hazards (mini_drone / fire_pizza)
+            if (p.isPlayer && this.rocketHazards && this.rocketHazards.length > 0 && this.state === GAME_STATE.RUNNING) {
+                let hitHazard = false;
+                for (let hi = this.rocketHazards.length - 1; hi >= 0; hi--) {
+                    const h = this.rocketHazards[hi];
+                    if (this.checkCollision(p.x, p.y, p.w, p.h, h.x, h.y, h.w, h.h)) {
+                        h.hp -= p.damage;
+                        hitHazard = true;
+                        window.soundManager.playHit();
+                        this.spawnBurst(p.x + p.w * 0.5, p.y + p.h * 0.5, 10, '#2ed573', 6, 16);
+                        if (h.hp <= 0) {
+                            this.spawnBurst(h.x + h.w * 0.5, h.y + h.h * 0.5, 22, '#ff6348', 8, 22);
+                            this.addFloatingText('💥 TREFFER!', h.x + h.w * 0.5, h.y, '#ffd32a', 19);
+                            this.player.megaEnergy = Math.min(this.player.maxMegaEnergy, this.player.megaEnergy + 8);
+                            this.updateBars();
+                            this.registerCombo(1);
+                            this.rocketHazards.splice(hi, 1);
+                        }
+                        break;
+                    }
+                }
+                if (hitHazard && p.type !== 'mega_beam') {
+                    this.projectiles.splice(i, 1);
+                    continue;
+                }
+            }
+
             // Player projectile hits primary Boss
             if (p.isPlayer && this.boss && this.boss.hp > 0) {
                 if (this.checkCollision(p.x, p.y, p.w, p.h, this.boss.x, this.boss.y, this.boss.w, this.boss.h)) {
@@ -4907,7 +6335,10 @@ class Game {
                 }
             }
 
-            if (p.x < -120 || p.x > canvas.width + 120 || p.y < -80 || p.y > canvas.height + 80) {
+            const isClimbMode = this.level && this.level.mode === 'vertical_climb';
+            const minY = isClimbMode ? (this.climbCameraY - 120) : -80;
+            const maxY = isClimbMode ? (this.climbCameraY + canvas.height + 120) : (canvas.height + 80);
+            if (p.x < -120 || p.x > canvas.width + 120 || p.y < minY || p.y > maxY) {
                 this.projectiles.splice(i, 1);
             }
         }
@@ -4946,6 +6377,21 @@ class Game {
             this.timeRemaining += 2.5;
             this.updateMissionPill();
             this.addFloatingText("⏱️ +2.5s ZEIT!", this.player.x + 30, this.player.y - 38, '#ffd32a', 20);
+        }
+
+        if (type === 'item_melon') {
+            if (window.soundManager.playMelonBoost) window.soundManager.playMelonBoost();
+            else window.soundManager.playPowerUp();
+            this.player.hp = Math.min(this.player.maxHp, this.player.hp + 25);
+            this.player.megaEnergy = Math.min(this.player.maxMegaEnergy, this.player.megaEnergy + 40);
+            this.player.powerTimer = Math.max(this.player.powerTimer || 0, 300);
+            this.player.score = Math.min(6.0, +(this.player.score + 0.1).toFixed(1));
+            this.updateBars();
+            this.updateComboAndPowerHUD();
+            this.addFloatingText("🍈 MELONEN-TURBO! +25 HP & 1.5× DMG", this.player.x + 25, this.player.y - 16, '#2ed573', 20);
+            this.spawnBurst(this.player.x + this.player.w * 0.5, this.player.y + this.player.h * 0.4, 16, '#2ed573', 6, 18);
+            this.spawnBurst(this.player.x + this.player.w * 0.5, this.player.y + this.player.h * 0.4, 10, '#ff4757', 5, 16);
+            return;
         }
 
         if (type === 'energy_drink') {
@@ -5149,7 +6595,15 @@ class Game {
         if (this.ui.winTime) this.ui.winTime.textContent = this.formatTime(this.elapsedSeconds);
         if (this.ui.winCombo) this.ui.winCombo.textContent = `${this.maxCombo}×`;
         if (this.ui.winDesc) {
-            if (this.level.hasBoss === false) {
+            if (this.level.mode === 'vertical_climb') {
+                this.ui.winDesc.textContent = `Gipfel auf ${this.level.climbGoalMeters || 120}m im ${this.level.yearText} erklommen und der ${this.level.climbHazardName || 'Gefahr'} entkommen!`;
+            } else if (this.level.mode === 'rocket_flight') {
+                this.ui.winDesc.textContent = this.level.hasBoss
+                    ? `Cyber Drone TukTuk MK-III im Orbit zerstört! Kurs für Kapitel 3 gesichert!`
+                    : `Mega-Melonen-Raketenflug im ${this.level.yearText} sicher gelandet!`;
+            } else if (this.level.mode === 'target_run_clear') {
+                this.ui.winDesc.textContent = `Ziel-Sprint gemeistert (${this.targetsHit}/${this.targetsTotal || 8} Ziele) im ${this.level.yearText}!`;
+            } else if (this.level.hasBoss === false) {
                 this.ui.winDesc.textContent = `Pünktlich durchs GIBB-Tor im ${this.level.yearText} (${this.timeRemaining.toFixed(1)}s Restzeit)! Keine Verspätung!`;
             } else if (this.level.mode === 'wave_rush') {
                 this.ui.winDesc.textContent = `Alle ${(this.level.waves && this.level.waves.length) || 3} Rivalen-Wellen im ${this.level.yearText} komplett dominiert!`;
@@ -5160,9 +6614,16 @@ class Game {
             }
         }
         if (this.ui.btnNextLvl) {
-            this.ui.btnNextLvl.textContent = (this.currentLevelIndex + 1 < LEVELS_CONFIG.length)
-                ? 'NÄCHSTES LEHRJAHR ANTRETEN ▶'
-                : '🏆 EFZ-DIPLOM ABHOLEN ▶';
+            const nextIdx = this.currentLevelIndex + 1;
+            if (nextIdx === 10) {
+                this.ui.btnNextLvl.textContent = '🚀 KAPITEL 2 TRAILER STARTEN ▶';
+            } else if (nextIdx === 20) {
+                this.ui.btnNextLvl.textContent = '🛸 KAPITEL 3 TRAILER STARTEN ▶';
+            } else if (nextIdx < LEVELS_CONFIG.length) {
+                this.ui.btnNextLvl.textContent = 'NÄCHSTES LEHRJAHR ANTRETEN ▶';
+            } else {
+                this.ui.btnNextLvl.textContent = '🏆 EFZ-DIPLOM ABHOLEN ▶';
+            }
         }
 
         this.ui.screenWin.classList.remove('hidden');
@@ -5212,6 +6673,26 @@ class Game {
             title = '⚡ VOM GIBB SCHÜLER GESTOPPT!';
             desc = 'Der Average GIBB Schüler hat dich mit Energy-Dosen & Laptops eingedeckt! Blocke mit [R] oder spring auf Plattformen!';
             quote = '"Erst mal Energy exen — an mir chunnsch nöd verbi!"';
+        } else if (reason === 'climb_hazard') {
+            badge = 'TURM-ABSTURZ';
+            title = `🔥 VON ${(this.level && this.level.climbHazardName) || 'GEFAHR'} EINGEHOLT!`;
+            desc = 'Springe zügig von Plattform zu Plattform nach oben und nutze die grünen Super-Sprung-Pads!';
+            quote = '"Wer beim Hochklettern zögert, wird von der Flut eingeholt!"';
+        } else if (reason === 'fire_pizza') {
+            badge = 'KLOTEN FEUER-PIZZA';
+            title = '🍕 VON FEUER-PIZZA GETROFFEN!';
+            desc = 'Steuere deine Mega-Melonen-Rakete mit [W]/[S] um die brennenden Pizzas herum oder zerlege sie mit [E]!';
+            quote = '"Alles brennt in Kloten — schieß dir den Weg frei!"';
+        } else if (reason === 'sahur_bat') {
+            badge = 'SCHLÄGER-KO';
+            title = '🪵 TUNG SAHUR HAT ZUGESCHLAGEN!';
+            desc = 'Weiche seinen Bonk-Schockwellen mit Sprung aus und blocke den Holzschläger im richtigen Moment mit [R]!';
+            quote = '"TUNG TUNG TUNG SAHUR!! Mit Timing konterst du den Schläger!"';
+        } else if (reason === 'drone_laser') {
+            badge = 'ORBIT-TREFFER';
+            title = '🚁 CYBER DRONE TUKTUK MK-III TREFFER!';
+            desc = 'Weiche den blauen Drone-Lasern vertikal aus und feuere ununterbrochen Melonen-Laser [E] + Mega [Q]!';
+            quote = '"Im Orbit zählt jede Ausweich-Bewegung — vollen Melonen-Schub!"';
         } else if (reason === 'tuktuk_charge' || reason === 'fire' || reason === 'broken_cable') {
             badge = 'HARDWARE-CRASH';
             title = '🛺 VOM TUKTUK ÜBERFAHREN!';
@@ -5236,8 +6717,14 @@ class Game {
             loseClip = 'adam_strafe_verpasst';
         } else if (reason === 'energy_can' || reason === 'laptop') {
             loseClip = 'student_cringe_king';
-        } else if (reason === 'tuktuk_charge' || reason === 'fire' || reason === 'broken_cable') {
+        } else if (reason === 'tuktuk_charge' || reason === 'fire' || reason === 'broken_cable' || reason === 'drone_laser') {
             loseClip = 'tuktuk_taeschfresser_gpu';
+        } else if (reason === 'sahur_bat') {
+            loseClip = 'sahur_bat_smash';
+        } else if (reason === 'fire_pizza') {
+            loseClip = 'thenerean_alles_brennt';
+        } else if (reason === 'climb_hazard') {
+            loseClip = 'thenerean_raste_aus';
         } else if (reason === 'floor_zone') {
             loseClip = 'monika_abu_eingesperrt';
         }
@@ -5283,64 +6770,101 @@ class Game {
             return;
         }
 
-        // Layer 3: Foreground Ground Accent, Lava Pits, Boost Pads & Elevated Platforms
-        this.drawGroundOverlay();
+        const mode = (this.level && this.level.mode) || 'standard';
+        const isClimb = mode === 'vertical_climb' && this.state === GAME_STATE.RUNNING;
+        const isRocket = mode === 'rocket_flight';
         const inBossPhase = this.state === GAME_STATE.PRE_BOSS_WALK ||
             this.state === GAME_STATE.PRE_BOSS_DIALOGUE ||
             this.state === GAME_STATE.BOSS_FIGHT;
-        if (this.state === GAME_STATE.RUNNING) {
-            this.drawLavaPits();
-            this.drawBoostPads();
+
+        if (isClimb) {
+            ctx.save();
+            ctx.translate(0, -this.climbCameraY);
+            if ((this.player.groundY - this.climbCameraY) < canvas.height + 60) {
+                this.drawGroundOverlay();
+            }
             this.drawPlatforms();
-            this.drawGoalArch();
-        } else if (inBossPhase) {
-            this.drawPlatforms();
-            this.drawArenaSwitch();
-        }
-        this.drawHazards();
-
-        // Collectibles, Obstacles & Mode Targets
-        if (this.state === GAME_STATE.RUNNING) {
-            this.drawObstacles();
             this.drawCollectibles();
-            this.drawTargets();
-        } else if (this.state === GAME_STATE.DEMO) {
-            this.drawObstacles();
-            this.drawCollectibles();
+            this.drawVerticalClimbVisuals();
+            this.drawPlayer();
+            this.drawPlayerStatus();
+            this.drawProjectiles();
+            this.drawParticles();
+            this.drawFloatingTexts();
+            ctx.restore();
+        } else if (isRocket) {
+            if (this.state === GAME_STATE.RUNNING) {
+                this.drawRocketHazards();
+                this.drawCollectibles();
+            } else if (inBossPhase) {
+                this.drawCollectibles();
+            }
+            this.drawShockwaves();
+            if (this.boss && (inBossPhase || this.state === GAME_STATE.DEMO) && this.boss.hp > 0) {
+                this.drawBoss(this.boss);
+            }
+            this.drawPlayer();
+            this.drawPlayerStatus();
+            this.drawProjectiles();
+            this.drawParticles();
+            this.drawFloatingTexts();
+        } else {
+            // Layer 3: Foreground Ground Accent, Lava Pits, Boost Pads & Elevated Platforms
+            this.drawGroundOverlay();
+            if (this.state === GAME_STATE.RUNNING) {
+                this.drawLavaPits();
+                this.drawBoostPads();
+                this.drawPlatforms();
+                this.drawGoalArch();
+            } else if (inBossPhase) {
+                this.drawPlatforms();
+                this.drawArenaSwitch();
+            }
+            this.drawHazards();
+
+            // Collectibles, Obstacles & Mode Targets
+            if (this.state === GAME_STATE.RUNNING) {
+                this.drawObstacles();
+                this.drawCollectibles();
+                this.drawTargets();
+            } else if (this.state === GAME_STATE.DEMO) {
+                this.drawObstacles();
+                this.drawCollectibles();
+            }
+
+            // Expanding Shockwave Rings
+            this.drawShockwaves();
+
+            // Chasing TukTuk behind player during escape run
+            if (this.chaser && this.state === GAME_STATE.RUNNING) {
+                this.drawChaser();
+            }
+
+            // Bosses (drawn behind player projectiles so projectiles visibly impact them)
+            if (
+                this.boss &&
+                (this.state === GAME_STATE.PRE_BOSS_WALK ||
+                 this.state === GAME_STATE.PRE_BOSS_DIALOGUE ||
+                 this.state === GAME_STATE.BOSS_FIGHT ||
+                 this.state === GAME_STATE.DEMO)
+            ) {
+                if (this.boss.hp > 0) this.drawBoss(this.boss);
+                if (this.duoPartner && this.duoPartner.hp > 0) this.drawBoss(this.duoPartner);
+            }
+
+            // Player Character Sprite
+            this.drawPlayer();
+            this.drawPlayerStatus();
+
+            // Flying Projectiles + Trails
+            this.drawProjectiles();
+
+            // Particle Bursts
+            this.drawParticles();
+
+            // Outlined Comic Floating Numbers
+            this.drawFloatingTexts();
         }
-
-        // Expanding Shockwave Rings
-        this.drawShockwaves();
-
-        // Chasing TukTuk behind player during escape run
-        if (this.chaser && this.state === GAME_STATE.RUNNING) {
-            this.drawChaser();
-        }
-
-        // Bosses (drawn behind player projectiles so projectiles visibly impact them)
-        if (
-            this.boss &&
-            (this.state === GAME_STATE.PRE_BOSS_WALK ||
-             this.state === GAME_STATE.PRE_BOSS_DIALOGUE ||
-             this.state === GAME_STATE.BOSS_FIGHT ||
-             this.state === GAME_STATE.DEMO)
-        ) {
-            if (this.boss.hp > 0) this.drawBoss(this.boss);
-            if (this.duoPartner && this.duoPartner.hp > 0) this.drawBoss(this.duoPartner);
-        }
-
-        // Player Character Sprite
-        this.drawPlayer();
-        this.drawPlayerStatus();
-
-        // Flying Projectiles + Trails
-        this.drawProjectiles();
-
-        // Particle Bursts
-        this.drawParticles();
-
-        // Outlined Comic Floating Numbers
-        this.drawFloatingTexts();
 
         // Radial Comic Speedlines on Mega-Shock / Fight Start
         if (this.radialFlashTimer > 0) {
@@ -5371,7 +6895,7 @@ class Game {
             return 'bg_intro_stage';
         }
         if (this.state === GAME_STATE.INTRO) {
-            return 'bg_story_intro_crazy';
+            return this.introBgKey || 'bg_story_intro_crazy';
         }
         const bg = this.level.bgType;
         if (bg === 'classroom') return 'bg_classroom';
@@ -5383,6 +6907,11 @@ class Game {
         if (bg === 'srilanka_highway') return 'bg_srilanka_highway';
         if (bg === 'cyber_bunker') return 'bg_cyber_bunker';
         if (bg === 'exam_auditorium') return 'bg_exam_auditorium';
+        if (bg === 'kloten_fire') return 'bg_kloten_fire';
+        if (bg === 'sky_rocket') return 'bg_sky_rocket';
+        if (bg === 'srilanka_jungle') return 'bg_srilanka_jungle';
+        if (bg === 'orbit_space') return 'bg_orbit_space';
+        if (bg === 'castle_alps') return 'bg_castle_alps';
         return 'bg_gibb_entrance';
     }
 
@@ -5390,6 +6919,7 @@ class Game {
         const bgKey = this.getStageImageKey();
         const bgImg = images[bgKey];
         const groundY = this.player.groundY;
+        const mode = (this.level && this.level.mode) || 'standard';
 
         if (bgImg && bgImg.complete && bgImg.naturalWidth > 0 && this.state === GAME_STATE.MENU) {
             const scale = Math.max((canvas.width * 1.06) / bgImg.naturalWidth, (canvas.height * 1.06) / bgImg.naturalHeight);
@@ -5400,34 +6930,53 @@ class Game {
             const drawY = Math.min(0, Math.max(canvas.height - drawH, groundY - drawH * 0.74));
             ctx.drawImage(bgImg, drawX, drawY, drawW, drawH);
         } else if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
-            // Scale illustration so full image height matches viewport height (aligning floor at 0.74!)
-            const scale = Math.max(canvas.height / bgImg.naturalHeight, canvas.width / (bgImg.naturalWidth * 1.15));
+            // Scale illustration smoothly; in vertical_climb give vertical headroom to reveal more sky as player climbs
+            const minHScale = mode === 'vertical_climb'
+                ? (canvas.height * 1.24) / bgImg.naturalHeight
+                : canvas.height / bgImg.naturalHeight;
+            const scale = Math.max(minHScale, canvas.width / bgImg.naturalWidth);
             const tileW = bgImg.naturalWidth * scale;
             const tileH = bgImg.naturalHeight * scale;
-            // Align horizon line (~74% of source art) cleanly with player.groundY
-            const drawY = groundY - tileH * 0.74;
+            let drawY = groundY - tileH * 0.74;
+            if (mode === 'vertical_climb') {
+                const maxClimbPx = Math.max(1, (this.level.climbGoalMeters || 120) * 28);
+                const climbFrac = Math.min(1, Math.max(0, -this.climbCameraY / maxClimbPx));
+                const bottomBoundY = Math.min(0, canvas.height - tileH);
+                drawY = bottomBoundY * (1 - climbFrac);
+            }
 
             const scrollDist = (this.state === GAME_STATE.OPENING)
                 ? this.menuPan
                 : this.worldDistance * 0.35;
 
-            const rawOffset = scrollDist % tileW;
-            let startX = -rawOffset;
+            const safeScroll = Math.max(0, scrollDist);
+            let tileIdx = Math.floor(safeScroll / Math.max(1, tileW));
+            let startX = -(safeScroll - tileIdx * tileW);
+            // Mirror alternating tiles on text-free scenic sky stages so clouds & skylines join 100% seamlessly
+            const allowMirrorTile = bgKey === 'bg_sky_rocket';
 
-            // Draw non-mirrored seamless tiles so wall jokes & cyber signs stay forward-readable
             while (startX < canvas.width + tileW) {
                 if (startX + tileW > -10) {
-                    ctx.drawImage(bgImg, startX, drawY, tileW + 2, tileH);
-                    if (startX > 0 && startX < canvas.width) {
+                    if (allowMirrorTile && (tileIdx % 2 === 1)) {
+                        ctx.save();
+                        ctx.translate(startX + tileW, 0);
+                        ctx.scale(-1, 1);
+                        ctx.drawImage(bgImg, -1, drawY, tileW + 2, tileH);
+                        ctx.restore();
+                    } else {
+                        ctx.drawImage(bgImg, startX, drawY, tileW + 2, tileH);
+                    }
+                    if (!allowMirrorTile && startX > 0 && startX < canvas.width) {
                         const seamGrad = ctx.createLinearGradient(startX - 18, 0, startX + 18, 0);
                         seamGrad.addColorStop(0, 'rgba(8, 12, 22, 0)');
-                        seamGrad.addColorStop(0.5, 'rgba(8, 12, 22, 0.38)');
+                        seamGrad.addColorStop(0.5, 'rgba(8, 12, 22, 0.24)');
                         seamGrad.addColorStop(1, 'rgba(8, 12, 22, 0)');
                         ctx.fillStyle = seamGrad;
                         ctx.fillRect(startX - 18, 0, 36, groundY + 12);
                     }
                 }
                 startX += tileW;
+                tileIdx++;
             }
         } else {
             // Clean dark gradient before image decode completes
@@ -5571,6 +7120,53 @@ class Game {
         const p = this.player;
         const footX = p.x + p.w / 2;
         const footY = p.y + p.h;
+        const isRocketMode = this.level && this.level.mode === 'rocket_flight';
+
+        if (isRocketMode) {
+            const centerY = p.y + p.h * 0.5;
+            const pitchTilt = Math.max(-0.32, Math.min(0.32, p.vy * 0.032));
+            const rocketDrawH = Math.round(p.h * 1.48);
+
+            // Animated Twin Melonen-Antrieb Glow behind tail
+            ctx.save();
+            const pulse = 0.85 + Math.sin(this.animClock * 24) * 0.15;
+            const flameX = p.x + 8;
+            const flameY = centerY + p.h * 0.06;
+            const tGrad = ctx.createRadialGradient(flameX, flameY, 4, flameX, flameY, rocketDrawH * 0.55 * pulse);
+            tGrad.addColorStop(0, 'rgba(0, 210, 211, 0.72)');
+            tGrad.addColorStop(0.45, 'rgba(46, 213, 115, 0.45)');
+            tGrad.addColorStop(1, 'rgba(255, 99, 72, 0)');
+            ctx.fillStyle = tGrad;
+            ctx.beginPath();
+            ctx.arc(flameX, flameY, rocketDrawH * 0.55 * pulse, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            if (p.powerTimer > 0) {
+                ctx.save();
+                const haloR = rocketDrawH * 0.82 * (1 + Math.sin(this.animClock * 14) * 0.06);
+                const pGrad = ctx.createRadialGradient(footX, centerY, haloR * 0.18, footX, centerY, haloR);
+                pGrad.addColorStop(0, 'rgba(46, 213, 115, 0.40)');
+                pGrad.addColorStop(0.6, 'rgba(255, 211, 42, 0.22)');
+                pGrad.addColorStop(1, 'rgba(255, 211, 42, 0)');
+                ctx.fillStyle = pGrad;
+                ctx.beginPath();
+                ctx.arc(footX, centerY, haloR, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            const rocketSprite = images.thenerean_rocket || images.thenerean_idle;
+            this.drawCharacterSprite(rocketSprite, footX, centerY + rocketDrawH * 0.5, rocketDrawH, p.facing || 1, p.hitFlash, 1.0, 1.0, pitchTilt);
+
+            if (p.isBlocking) {
+                this.drawShieldAura(footX, centerY + rocketDrawH * 0.45, Math.max(rocketDrawH, 92), p.facing || 1);
+            }
+
+            const rLabel = (p.isBlocking ? 'Thenerean [BLOCK] 🚀' : 'Thenerean 🚀') + (p.powerTimer > 0 ? ' [⚡1.5×]' : '');
+            this.drawNamePill(rLabel, footX, centerY - rocketDrawH * 0.55, p.powerTimer > 0 ? '#2ed573' : '#ffd32a');
+            return;
+        }
 
         // Ground Drop Shadow (shrinks slightly when jumping high)
         const heightAboveGround = Math.max(0, p.groundY - footY);
@@ -5707,7 +7303,9 @@ class Game {
 
     drawBoss(bossEntity) {
         const isStudent = bossEntity.type === 'gibb_student';
-        const isAdam = !isStudent && (bossEntity.name.includes("Adam") || bossEntity.type === 'adam' || bossEntity.type === 'adam_miniboss' || bossEntity.isDummy);
+        const isSahur = bossEntity.type === 'tung_sahur';
+        const isDrone = bossEntity.type === 'drone_tuktuk';
+        const isAdam = !isStudent && !isSahur && !isDrone && (bossEntity.name.includes("Adam") || bossEntity.type === 'adam' || bossEntity.type === 'adam_miniboss' || bossEntity.isDummy);
         const isTukTuk = this.isTukTukType(bossEntity.type);
         const ai = bossEntity.ai;
         const telegraphing = !!(ai && ai.telegraph);
@@ -5716,17 +7314,46 @@ class Game {
         const footX = bossEntity.x + bossEntity.w / 2;
         const footY = bossEntity.y + bossEntity.h;
 
-        // Shadow
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.48)';
-        ctx.beginPath();
-        ctx.ellipse(footX, this.player.groundY + 4, bossEntity.w * 0.56, 11, 0, 0, Math.PI * 2);
-        ctx.fill();
+        // Shadow (skip floor ellipse on flying Cyber Drone MK-III; draw hovering jet glow instead)
+        if (isDrone) {
+            ctx.save();
+            const pulse = 0.8 + Math.sin(this.animClock * 18) * 0.2;
+            const cy = footY - bossEntity.h * 0.14;
+            const dGrad = ctx.createRadialGradient(footX, cy, 8, footX, cy, bossEntity.w * 0.58 * pulse);
+            dGrad.addColorStop(0, 'rgba(0, 210, 211, 0.58)');
+            dGrad.addColorStop(0.5, 'rgba(255, 99, 72, 0.30)');
+            dGrad.addColorStop(1, 'rgba(0, 210, 211, 0)');
+            ctx.fillStyle = dGrad;
+            ctx.beginPath();
+            ctx.arc(footX, cy, bossEntity.w * 0.58 * pulse, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        } else {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.48)';
+            ctx.beginPath();
+            ctx.ellipse(footX, this.player.groundY + 4, bossEntity.w * 0.56, 11, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
 
         // Pose & Facing Selection (All extracted boss sprites naturally face LEFT!)
         let spriteKey;
         let sx = 1.0, sy = 1.0, tilt = 0;
 
-        if (isStudent) {
+        if (isDrone) {
+            spriteKey = 'drone_tuktuk';
+            const hover = Math.sin(this.animClock * 4.2);
+            sy = 1.0 + 0.025 * Math.sin(this.animClock * 12);
+            tilt = hover * 0.045;
+        } else if (isSahur) {
+            if (bossEntity.attackAnimTimer > 0 || telegraphing || !!(ai && ai.charge)) {
+                spriteKey = 'sahur_attack';
+                sx = 1.04;
+            } else {
+                const stride = Math.sin(this.animClock * 10);
+                spriteKey = 'sahur_idle';
+                sy = 1.0 + 0.03 * Math.abs(stride);
+            }
+        } else if (isStudent) {
             if (bossEntity.attackAnimTimer > 0) {
                 spriteKey = 'gibb_student_attack';
             } else if (telegraphing) {
@@ -5842,6 +7469,7 @@ class Game {
             case 'broken_cable': return 'broken_cable';
             case 'server_stack': return 'server_stack';
             case 'clock': return 'item_clock';
+            case 'fire_pizza': return 'fire_pizza';
             default: return 'traffic_cone';
         }
     }
@@ -5931,17 +7559,23 @@ class Game {
             this.state === GAME_STATE.BOSS_FIGHT;
 
         for (const plat of this.platforms) {
-            if (inBossPhase ? !plat.isArena : plat.isArena) continue;
-            const sx = plat.x - this.worldDistance;
+            if (!plat.isClimb) {
+                if (inBossPhase ? !plat.isArena : plat.isArena) continue;
+            }
+            const sx = plat.isClimb ? plat.x : (plat.x - this.worldDistance);
             if (sx > canvas.width + 80 || sx + plat.w < -80) continue;
-            const pal = colors[plat.style] || colors.concrete;
+            const pal = plat.isBounce
+                ? { body: '#065f46', top: '#2ed573', edge: '#ffd32a' }
+                : (plat.isSummit
+                    ? { body: '#78350f', top: '#ffd32a', edge: '#ffffff' }
+                    : (colors[plat.style] || colors.concrete));
             ctx.save();
             ctx.fillStyle = 'rgba(0, 0, 0, 0.36)';
             ctx.beginPath();
             ctx.roundRect(sx + 4, plat.y + 6, plat.w, plat.h, 8);
             ctx.fill();
             ctx.fillStyle = pal.body;
-            ctx.strokeStyle = plat.moveAxis ? '#00d2d3' : '#11141e';
+            ctx.strokeStyle = plat.isBounce ? '#2ed573' : (plat.isSummit ? '#ffd32a' : (plat.moveAxis ? '#00d2d3' : '#11141e'));
             ctx.lineWidth = 3;
             ctx.beginPath();
             ctx.roundRect(sx, plat.y, plat.w, plat.h, 8);
@@ -5952,8 +7586,11 @@ class Game {
             ctx.fillStyle = pal.edge;
             ctx.fillRect(sx + 10, plat.y + plat.h - 6, plat.w - 20, 3);
 
-            // Visual indicator for moving platforms (x or y)
-            if (plat.moveAxis) {
+            if (plat.isBounce) {
+                this.drawNamePill('🟢 SUPER-SPRUNG', sx + plat.w * 0.5, plat.y - 8, '#2ed573');
+            } else if (plat.isSummit) {
+                this.drawNamePill('🏁 GIPFEL!', sx + plat.w * 0.5, plat.y - 8, '#ffd32a');
+            } else if (plat.moveAxis) {
                 ctx.fillStyle = '#00d2d3';
                 const pulse = 0.75 + 0.25 * Math.sin(this.animClock * 9 + (plat.phase || 0));
                 ctx.globalAlpha = pulse;
@@ -5969,7 +7606,7 @@ class Game {
     drawGoalArch() {
         if (!this.level || !this.level.targetDistance || this.level.targetDistance <= 0) return;
         const mode = this.level.mode || 'standard';
-        if (mode !== 'time_attack' && mode !== 'tuktuk_chase_boss') return;
+        if (mode !== 'time_attack' && mode !== 'tuktuk_chase_boss' && mode !== 'target_run_clear') return;
 
         const screenX = (this.level.targetDistance - this.worldDistance) + canvas.width * 0.35 + this.player.w;
         if (screenX < -120 || screenX > canvas.width + 140) return;
@@ -5978,7 +7615,8 @@ class Game {
         const archW = 112;
         const archH = 190;
         const isNotAus = mode === 'tuktuk_chase_boss';
-        const mainColor = isNotAus ? '#ff4757' : '#2ed573';
+        const isTargetGoal = mode === 'target_run_clear';
+        const mainColor = isNotAus ? '#ff4757' : (isTargetGoal ? '#ffd32a' : '#2ed573');
         const pulse = 0.78 + 0.22 * Math.sin(this.animClock * 8);
 
         ctx.save();
@@ -6006,7 +7644,7 @@ class Game {
         ctx.font = '900 14px "Segoe UI", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(isNotAus ? '🔴 NOT-AUS!' : '🏁 GIBB TOR!', screenX + archW * 0.5, gy - archH - 14);
+        ctx.fillText(isNotAus ? '🔴 NOT-AUS!' : (isTargetGoal ? '🎯 ZIEL-TOR!' : '🏁 GIBB TOR!'), screenX + archW * 0.5, gy - archH - 14);
         ctx.restore();
     }
 
@@ -6187,7 +7825,7 @@ class Game {
     drawCollectibles() {
         for (const col of this.collectibles) {
             if (col.collected) continue;
-            const screenX = col.x - this.worldDistance;
+            const screenX = (col.isClimb || col.isRocket) ? col.x : (col.x - this.worldDistance);
             if (screenX > -80 && screenX < canvas.width + 80) {
                 const floatY = col.y + Math.sin(this.animClock * 4.5 + (col.phase || 0)) * 7;
                 const cx = screenX + col.w / 2;
@@ -6196,7 +7834,7 @@ class Game {
                 // Soft glowing aura behind collectible
                 const pulse = 0.85 + 0.15 * Math.sin(this.animClock * 6);
                 ctx.save();
-                ctx.globalAlpha = col.type === 'energy_drink' ? 0.5 : 0.38;
+                ctx.globalAlpha = (col.type === 'energy_drink' || col.type === 'item_melon') ? 0.52 : 0.38;
                 ctx.fillStyle = col.type === 'coffee'
                     ? '#ffa502'
                     : (col.type === 'diploma_shard' || col.type === 'jeton'
@@ -6215,11 +7853,167 @@ class Game {
                         ? images.item_energy
                         : col.type === 'diploma_shard'
                             ? images.item_diplom
-                            : (col.type === 'jeton' ? images.item_jeton : images.item_gesetz);
+                            : col.type === 'jeton'
+                                ? images.item_jeton
+                                : (col.type === 'item_melon' ? images.item_melon : images.item_gesetz);
 
                 if (img && img.complete && img.naturalWidth > 0) {
                     ctx.drawImage(img, screenX, floatY, col.w, col.h);
                 }
+            }
+        }
+    }
+
+    drawVerticalClimbVisuals() {
+        if (!this.level || this.level.mode !== 'vertical_climb') return;
+
+        // 1. Summit Finish Arch at climbGoalY
+        const gy = this.climbGoalY + 26;
+        const archW = 200;
+        const archH = 148;
+        const archX = Math.round(canvas.width * 0.5 - archW * 0.5);
+        const pulse = 0.8 + 0.2 * Math.sin(this.animClock * 8);
+
+        ctx.save();
+        const summitGlow = ctx.createRadialGradient(
+            canvas.width * 0.5, gy - 50, 12,
+            canvas.width * 0.5, gy - 50, 175 * pulse
+        );
+        summitGlow.addColorStop(0, 'rgba(255, 211, 42, 0.36)');
+        summitGlow.addColorStop(1, 'rgba(255, 211, 42, 0)');
+        ctx.fillStyle = summitGlow;
+        ctx.beginPath();
+        ctx.arc(canvas.width * 0.5, gy - 50, 175 * pulse, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#141928';
+        ctx.strokeStyle = '#ffd32a';
+        ctx.lineWidth = 3;
+        ctx.fillRect(archX, gy - archH, 16, archH);
+        ctx.strokeRect(archX, gy - archH, 16, archH);
+        ctx.fillRect(archX + archW - 16, gy - archH, 16, archH);
+        ctx.strokeRect(archX + archW - 16, gy - archH, 16, archH);
+
+        ctx.globalAlpha = pulse;
+        ctx.fillStyle = '#ffd32a';
+        ctx.beginPath();
+        ctx.roundRect(archX - 24, gy - archH - 36, archW + 48, 42, 11);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        ctx.fillStyle = '#080b12';
+        ctx.font = '900 15px "Segoe UI", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`🏁 GIPFEL-ZIEL (${this.level.climbGoalMeters || 120}m)!`, canvas.width * 0.5, gy - archH - 15);
+        ctx.restore();
+
+        // 2. Rising Hazard Barrier / Flood / Lava / Plasma Wave
+        const hazY = this.climbHazardY;
+        const hazColor = this.level.climbHazardColor || '#ff4757';
+        const hazName = this.level.climbHazardName || 'GEFAHR';
+        const fillH = canvas.height + 650;
+
+        ctx.save();
+        const hazGrad = ctx.createLinearGradient(0, hazY - 12, 0, hazY + 260);
+        hazGrad.addColorStop(0, hazColor);
+        hazGrad.addColorStop(0.28, 'rgba(255, 71, 87, 0.72)');
+        hazGrad.addColorStop(1, 'rgba(12, 8, 18, 0.96)');
+
+        ctx.fillStyle = hazGrad;
+        ctx.beginPath();
+        ctx.moveTo(-20, hazY + fillH);
+        for (let x = -20; x <= canvas.width + 40; x += 26) {
+            const wave = Math.sin(this.animClock * 7.5 + x * 0.045) * 8;
+            ctx.lineTo(x, hazY + wave);
+        }
+        ctx.lineTo(canvas.width + 40, hazY + fillH);
+        ctx.closePath();
+        ctx.fill();
+
+        // Bright hazard crest line
+        ctx.strokeStyle = '#ffd32a';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        for (let x = -20; x <= canvas.width + 40; x += 22) {
+            const wave = Math.sin(this.animClock * 7.5 + x * 0.045) * 8;
+            if (x <= -20) ctx.moveTo(x, hazY + wave);
+            else ctx.lineTo(x, hazY + wave);
+        }
+        ctx.stroke();
+
+        // Warning banner just above or on the rising wave crest (kept readable even near bottom edge)
+        const bannerY = Math.min(this.climbCameraY + canvas.height - 26, hazY + 18);
+        this.drawNamePill(`⚠️ ${hazName} STEIGT! ⬆ HOCH!`, canvas.width * 0.5, bannerY, '#ffd32a');
+        ctx.restore();
+    }
+
+    drawRocketHazards() {
+        if (!this.rocketHazards || this.rocketHazards.length === 0) return;
+
+        for (const h of this.rocketHazards) {
+            if (h.x < -120 || h.x > canvas.width + 120) continue;
+            const cx = h.x + h.w * 0.5;
+            const cy = h.y + h.h * 0.5;
+
+            ctx.save();
+            if (h.kind === 'fire_pizza') {
+                const pulse = 0.85 + 0.15 * Math.sin(this.animClock * 16 + (h.phase || 0));
+                const glow = ctx.createRadialGradient(cx, cy, 4, cx, cy, h.w * 0.82 * pulse);
+                glow.addColorStop(0, 'rgba(255, 165, 2, 0.58)');
+                glow.addColorStop(0.55, 'rgba(255, 71, 87, 0.36)');
+                glow.addColorStop(1, 'rgba(255, 71, 87, 0)');
+                ctx.fillStyle = glow;
+                ctx.beginPath();
+                ctx.arc(cx, cy, h.w * 0.82 * pulse, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.translate(cx, cy);
+                ctx.rotate(h.rot || 0);
+                const img = images.fire_pizza;
+                if (img && img.complete && img.naturalWidth > 0) {
+                    ctx.drawImage(img, -h.w * 0.5, -h.h * 0.5, h.w, h.h);
+                } else {
+                    ctx.fillStyle = '#ff6348';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, h.w * 0.45, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else {
+                // Mini Cyber Drone TukTuk flying left toward player
+                const pulse = 0.85 + 0.15 * Math.sin(this.animClock * 18 + (h.phase || 0));
+                const dGlow = ctx.createRadialGradient(cx, cy, 6, cx, cy, h.w * 0.72 * pulse);
+                dGlow.addColorStop(0, 'rgba(0, 210, 211, 0.48)');
+                dGlow.addColorStop(0.6, 'rgba(255, 71, 87, 0.24)');
+                dGlow.addColorStop(1, 'rgba(0, 210, 211, 0)');
+                ctx.fillStyle = dGlow;
+                ctx.beginPath();
+                ctx.arc(cx, cy, h.w * 0.72 * pulse, 0, Math.PI * 2);
+                ctx.fill();
+
+                const img = images.drone_tuktuk;
+                const tilt = Math.sin(this.animClock * 9 + (h.phase || 0)) * 0.07;
+                if (img && img.complete && img.naturalWidth > 0) {
+                    this.drawCharacterSprite(img, cx, h.y + h.h, h.h, 1, 0, 1.0, 1.0, tilt);
+                } else {
+                    ctx.fillStyle = '#00d2d3';
+                    ctx.fillRect(h.x, h.y, h.w, h.h);
+                }
+            }
+            ctx.restore();
+
+            if (h.hp < h.maxHp) {
+                const bw = Math.max(46, Math.round(h.w * 0.75));
+                const bh = 6;
+                const bx = cx - bw * 0.5;
+                const by = h.y - 11;
+                ctx.fillStyle = 'rgba(8, 10, 18, 0.85)';
+                ctx.fillRect(bx - 1, by - 1, bw + 2, bh + 2);
+                ctx.fillStyle = h.kind === 'mini_drone' ? '#00d2d3' : '#ff6348';
+                ctx.fillRect(bx, by, Math.max(0, bw * (h.hp / Math.max(1, h.maxHp))), bh);
             }
         }
     }

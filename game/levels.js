@@ -1,22 +1,67 @@
 /**
- * Thenerean Selvabankumar - High-End Levels Configuration
- * 10 abwechslungsreiche GIBB Bern & Sri Lanka Levels quer durch alle 4 Lehrjahre:
- * - Level 1:  GIBB Vorplatz — 34s Time-Attack Sprint (ohne Boss, faire Sprung/Duck-Parcours)
- * - Level 2:  Klassenzimmer 302 — Direkt-Duell gegen Monika mit Beamer-Schalter & Schild
- * - Level 3:  Sporthalle Korridor — 3-Wellen Rivalen-Ansturm (inkl. Duo-Welle)
- * - Level 4:  GIBB Turnhalle — Zielschuss-Parcours (6 Ziele) -> Herr Adam mit Boden-Sperrzonen
- * - Level 5:  Serverraum & Sri Lanka — TukTuk-Verfolgungsjagd -> Pflicht-Bosskampf TukTuk MK-I
- * - Level 6:  ABU-Zimmer B404 (mit Tafel-Witzen) — Monika + GIBB Schüler Boss-Kombo #1
- * - Level 7:  GIBB Mensa & Kiosk — Bankomat-Jeton-Rush -> Herr Adam + GIBB Schüler Kombo #2 (+HP-Switch)
- * - Level 8:  Colombo Cyber-Highway (Sri Lanka) — High-Speed Lauf -> Dual-GPU TukTuk MK-II (Turbo-Rebound!)
- * - Level 9:  GIBB Server-Bunker — Monika + Dual-GPU TukTuk MK-II Super-Kombo (1580 HP)
- * - Level 10: EFZ Prüfungs-Auditorium — Grosses Finale: Stage A Aufsicht -> Stage B Ultimatives Duo (Monika + Adam, 2230 HP)
+ * Thenerean Selvabankumar — v10 Mega-Expansion: 3 Kapitel × 10 Levels (30 Lehr-Etappen)
+ *
+ * Struktur im Angry-Birds-Stil:
+ *  - Kapitel 1 (Level 1–10):  Bern, GIBB & TukTuk-Ausbruch (Finale: TukTuk MK-I)
+ *  - Kapitel 2 (Level 11–20): Mega-Melonen-Rakete, Kloten & Sri Lanka (Tung Sahur & Dual-GPU MK-II)
+ *  - Kapitel 3 (Level 21–30): Orbit, Alpenfestung & Ultimatives EFZ 6.0 (Drone-TukTuk MK-III & Monika+Adam)
+ *
+ * Strenge Abwechslung:
+ *  - Alle ungeraden Levels (1,3,5,...,29) sind reine Action/Parcours/Turm/Raketen-Stages (`hasBoss: false`).
+ *  - Alle geraden Levels (2,4,6,...,30) sind einzigartige Boss- & Wellen-Kämpfe (0 Boss-Kämpfe direkt hintereinander).
  */
 
+const CHAPTERS_CONFIG = [
+    {
+        chapter: 1,
+        startIndex: 0,
+        endIndex: 9,
+        badge: "KAPITEL 1 • LEVEL 1–10",
+        title: "Bern, GIBB & TukTuk-Ausbruch",
+        subtitle: "2.54s Verspätung, fliegende Frisbees, ABU B404 & die TukTuk-Flucht im Serverraum.",
+        bgPath: "assets/backgrounds/bg_gibb_entrance.jpg",
+        accentColor: "#ff4757",
+        bossPreview: "Kapitel-Finale: TukTuk MK-I (700 HP)",
+        bossAvatar: "assets/sprites/tuktuk_avatar.png",
+        trailerTitle: "KAPITEL 1 TRAILER: MONTAGMORGEN AN DER GIBB"
+    },
+    {
+        chapter: 2,
+        startIndex: 10,
+        endIndex: 19,
+        badge: "KAPITEL 2 • LEVEL 11–20",
+        title: "Melonen-Rakete, Kloten & Sri Lanka",
+        subtitle: "Raketenflug nach Kloten, brennende Pizzas, Tung Tung Tung Sahur & Dual-GPU MK-II!",
+        bgPath: "assets/backgrounds/bg_sky_rocket.jpg",
+        accentColor: "#ff9f1a",
+        bossPreview: "Kapitel-Finale: Dual-GPU MK-II (980 HP)",
+        bossAvatar: "assets/sprites/tuktuk_dual_avatar.png",
+        trailerTitle: "KAPITEL 2 TRAILER: ABFLUG MIT DER MEGA-MELONEN-RAKETE"
+    },
+    {
+        chapter: 3,
+        startIndex: 20,
+        endIndex: 29,
+        badge: "KAPITEL 3 • LEVEL 21–30",
+        title: "Orbit, Alpenfestung & EFZ 6.0",
+        subtitle: "Stratosphäre, Cyber Drone TukTuk MK-III, Rückflug zur Erde & das Ultimative EFZ-Finale!",
+        bgPath: "assets/backgrounds/bg_orbit_space.jpg",
+        accentColor: "#00d2d3",
+        bossPreview: "Gesamt-Finale: Aufsicht + Monika & Adam (2230 HP)",
+        bossAvatar: "assets/sprites/monika_avatar.png",
+        trailerTitle: "KAPITEL 3 TRAILER: TO THE MOON & ZURÜCK ZUM EFZ 6.0"
+    }
+];
+window.CHAPTERS_CONFIG = CHAPTERS_CONFIG;
+
 const LEVELS_CONFIG = [
+    // =========================================================================
+    // KAPITEL 1 (LEVEL 1–10): BERN, GIBB & TUKTUK-AUSBRUCH
+    // =========================================================================
     {
         id: 1,
-        yearText: "1. LEHRJAHR (TEIL 1)",
+        chapter: 1,
+        yearText: "KAP. 1 • LEVEL 1",
         name: "GIBB Vorplatz: 4-Minuten-Sprint",
         mode: "time_attack",
         modeBadge: "⏱️ ZEIT-SPRINT",
@@ -42,7 +87,6 @@ const LEVELS_CONFIG = [
         bossType: "monika_miniboss",
         bossName: "Schulglocke 08:00 Uhr",
         bossAvatar: "assets/sprites/monika_avatar.png",
-        bossSprite: "assets/sprites/monika_sprite.png",
         bossHP: 0,
         bossLines: [
             { text: "Pünktlichkeit ist oberste Gebot!", clip: "monika_puenktlichkeit" },
@@ -51,7 +95,7 @@ const LEVELS_CONFIG = [
         playerLines: [
             { text: "Ich bi genau 2.54 später!", clip: "thenerean_254" },
             { text: "Morgartenstrasse isch kaputt und blockiert!", clip: "thenerean_morgarten_blockiert" },
-            { text: "Gsetzestext?! Ich rascht us!", clip: "thenerean_zspaet_raschtaus" },
+            { text: "Das isch de beschte Kaffee vom Bäcker!", clip: "thenerean_bester_kaffee" },
             { text: "Entschuldigung, ich bi 4 Minute später!", clip: "thenerean_entschuldigung" },
             { text: "Lippenstift?!", clip: "thenerean_lippenstift" }
         ],
@@ -60,12 +104,14 @@ const LEVELS_CONFIG = [
     },
     {
         id: 2,
-        yearText: "1. LEHRJAHR (TEIL 2)",
+        chapter: 1,
+        yearText: "KAP. 1 • LEVEL 2",
         name: "Klassenzimmer 302: Direkt-Duell Monika",
         mode: "direct_boss",
         modeBadge: "🔔 SCHALTER-ARENA",
         featureTag: "🔔 DIREKT IM KLASSENZIMMER! NUTZE DEN BEAMER-SCHALTER & PERFEKT-BLOCK [R]!",
         missionBadge: "🔔 SCHUL-BEAMER",
+        hasBoss: true,
         bgType: "classroom",
         bgPath: "assets/backgrounds/bg_classroom.jpg",
         accentColor: "#3742fa",
@@ -95,24 +141,22 @@ const LEVELS_CONFIG = [
             avatar: "assets/sprites/monika_avatar.png",
             text: "Sofort weg mit dem Ding! Kei Chopfhörer im Unterricht — gang uf die Platz!",
             clip: "monika_keine_kopfhoerer",
-            playerResponse: "Ich will doch nur d'Gsetzestext! DNS Request cha nöd gmacht werde!",
-            playerClip: "thenerean_gesetz_dns"
+            playerResponse: "Ich installier s'Buech grad uf mini Konsole! DNS Request cha nöd gmacht werde!",
+            playerClip: "thenerean_installier_buch"
         },
         bossType: "monika",
         bossName: "Monika Schneider (Klassenlehrerin)",
         bossAvatar: "assets/sprites/monika_avatar.png",
-        bossSprite: "assets/sprites/monika_sprite.png",
         bossHP: 540,
         bossLines: [
             { text: "Kei Chopfhörer im Unterricht! Gib mir das da ane!", clip: "monika_keine_kopfhoerer" },
             { text: "S'Mikrofon gaht scho wieder nöd! — Moment!", clip: "monika_mikrofon_hilfe" },
             { text: "Mis Passwort staht im Buech i de Gsetzestext!", clip: "monika_passwort_buech" },
             { text: "Gang uf die Platz!", clip: "monika_gang_uf_platz" },
-            { text: "Pünktlichkeit ist oberste Gebot!", clip: "monika_puenktlichkeit" },
-            { text: "Ganz ruhig!", clip: "monika_ganz_ruhig" }
+            { text: "Pünktlichkeit ist oberste Gebot!", clip: "monika_puenktlichkeit" }
         ],
         playerLines: [
-            { text: "Ich bi genau 2.54 später!", clip: "thenerean_254" },
+            { text: "Installier s'Buech uf mini Konsole!", clip: "thenerean_installier_buch" },
             { text: "Ich will doch nur d'Gsetzestext!", clip: "thenerean_gesetz_dns" },
             { text: "Herr Adam, ich stah doch da!", clip: "thenerean_stah" },
             { text: "Gsetzestext?! Das isch mir egal — ich rascht us!", clip: "thenerean_zspaet_raschtaus" }
@@ -122,404 +166,958 @@ const LEVELS_CONFIG = [
     },
     {
         id: 3,
-        yearText: "2. LEHRJAHR (TEIL 1)",
-        name: "Sporthalle Korridor: 3-Wellen Rivalen-Ansturm",
-        mode: "wave_rush",
-        modeBadge: "🌊 3-WELLEN-BRAWL",
-        featureTag: "🎒 KEIN VORLAUF! ÜBERSTEHE 3 RIVALEN-WELLEN IM KORRIDOR!",
-        missionBadge: "🎒 WELLE 1 / 3",
+        chapter: 1,
+        yearText: "KAP. 1 • LEVEL 3",
+        name: "Korridor Ziel-Sprint: 8 Zielscheiben",
+        mode: "target_run_clear",
+        modeBadge: "🎯 ZIEL-PARCOURS",
+        featureTag: "🎯 KEIN BOSS! TRIFF ALLE 8 ZIELE MIT [E] UND LAUF BIS ZUM KORRIDOR-ENDE!",
+        missionBadge: "🎯 ZIELE TREFFEN",
+        hasBoss: false,
+        targetGoalCount: 8,
         bgType: "gym_hallway",
         bgPath: "assets/backgrounds/bg_gym_hallway.jpg",
-        accentColor: "#ffa502",
-        ambientStyle: "corridor",
-        targetDistance: 0,
-        music: "assets/music/Sivassklicumar_Morning.mp3",
-        hasMiniBoss: false,
-        mechanics: {
-            platforms: true,
-            duckObstacles: false,
-            lavaPits: false,
-            sprintPads: false,
-            platformStyle: "gym_box"
-        },
-        waves: [
-            {
-                title: "WELLE 1 / 3: KORRIDOR-SCOUT",
-                banner: "⚡ WELLE 1 / 3 — ENERGY-SPRINTER GREIFT AN!",
-                primary: { name: "Average GIBB Schüler (Scout)", type: "gibb_student", hp: 200, avatar: "assets/sprites/gibb_student_avatar.png" },
-                partner: null
-            },
-            {
-                title: "WELLE 2 / 3: DOPPEL-TEAM!",
-                banner: "🎒🎒 WELLE 2 / 3 — ZWEI GIBB-RIVALEN GLEICHZEITIG!",
-                primary: { name: "GIBB Energy-Sprinter", type: "gibb_student", hp: 185, avatar: "assets/sprites/gibb_student_avatar.png" },
-                partner: { name: "GIBB Laptop-Nerd", type: "gibb_student", hp: 185, avatar: "assets/sprites/gibb_student_avatar.png" }
-            },
-            {
-                title: "WELLE 3 / 3: CHEF-RIVALE!",
-                banner: "🔥 LETZTE WELLE 3 / 3 — KLASSEN-BOSS!",
-                primary: { name: "Chef-Rivale (Average GIBB Schüler)", type: "gibb_student", hp: 310, avatar: "assets/sprites/gibb_student_avatar.png" },
-                partner: null
-            }
-        ],
-        bossType: "gibb_student",
-        bossName: "Average GIBB Schüler",
-        bossAvatar: "assets/sprites/gibb_student_avatar.png",
-        bossSprite: "assets/sprites/gibb_student_sprite.png",
-        bossHP: 200,
-        bossLines: [
-            { text: "Ich will Fortnite spiele! Ich bi de King vo TikTok!", clip: "student_tiktok_fortnite" },
-            { text: "Ich bin der Cringe King von TikTok!", clip: "student_cringe_king" },
-            { text: "Erst mal Energy exen!", clip: "thenerean_raste_aus" },
-            { text: "An mir chunnsch nöd verbi!", clip: "thenerean_sport_late" }
-        ],
-        playerLines: [
-            { text: "Du hesch gmeint du chasch mi schlah?!", clip: "thenerean_chasch_mi_schlah" },
-            { text: "Niemert chunt an mir verbi!", clip: "thenerean_niemert_verbi" },
-            { text: "TARONUMAN!! AAAAAH!!", clip: "thenerean_taronuman_scream" },
-            { text: "Ultra Shout!", clip: "thenerean_ultra" }
-        ],
-        obstacleTypes: ["whistle", "basketball", "frisbee"],
-        collectibleTypes: ["coffee", "energy_drink"]
-    },
-    {
-        id: 4,
-        yearText: "2. LEHRJAHR (TEIL 2)",
-        name: "GIBB Turnhalle: Ziel-Parcours & Herr Adam",
-        mode: "target_run_boss",
-        modeBadge: "🎯 ZIELE + HERR ADAM",
-        featureTag: "🎯 TRIFF 6 PRÜFUNGS-ZIELE IM LAUF → SCHWÄCHT HERR ADAM IN DER HALLE!",
-        missionBadge: "🎯 ZIELE: 0 / 6",
-        targetGoalCount: 6,
-        bgType: "gym_turnhalle",
-        bgPath: "assets/backgrounds/bg_gym_turnhalle.jpg",
-        accentColor: "#ff6348",
-        ambientStyle: "gym",
-        targetDistance: 3000,
+        accentColor: "#00d2d3",
+        ambientStyle: "daylight",
+        targetDistance: 3600,
         music: "assets/music/Optical_Glide.mp3",
         hasMiniBoss: false,
         mechanics: {
             platforms: true,
             duckObstacles: true,
             lavaPits: true,
-            pitTheme: "lava",
             sprintPads: true,
-            platformStyle: "gym_box"
+            platformStyle: "concrete",
+            pitTheme: "chasm",
+            clearPlatformUnder: true
         },
-        arenaSwitch: {
-            enabled: true,
-            label: "🏀 KORBWURF-SCHALTER",
-            icon: "🏀",
-            dmg: 65,
-            stunFrames: 75,
-            cooldownFrames: 500,
-            effectText: "🏀 KORBWURF! HERR ADAM BETÄUBT!"
+        bossType: "gibb_student",
+        bossName: "Korridor-Ziel",
+        bossAvatar: "assets/sprites/gibb_student_avatar.png",
+        bossHP: 0,
+        bossLines: [],
+        playerLines: [
+            { text: "I have to fix the code tonight!", clip: "thenerean_fix_code_tonight" },
+            { text: "Ich ha s'geilschte GIBB-Setup!", clip: "thenerean_geilschte_setup" },
+            { text: "Niemert chunt an mir verbi!", clip: "thenerean_niemert_verbi" }
+        ],
+        obstacleTypes: ["warning_letter", "frisbee", "traffic_cone"],
+        collectibleTypes: ["coffee", "energy_drink", "law_book"]
+    },
+    {
+        id: 4,
+        chapter: 1,
+        yearText: "KAP. 1 • LEVEL 4",
+        name: "Sporthalle Korridor: 3-Wellen Rivalen-Ansturm",
+        mode: "wave_rush",
+        modeBadge: "🌊 3-WELLEN-BRAWL",
+        featureTag: "🎒 KEIN VORLAUF! ÜBERSTEHE 3 RIVALEN-WELLEN IM KORRIDOR!",
+        missionBadge: "🎒 WELLE 1 / 3",
+        hasBoss: true,
+        bgType: "gym_hallway",
+        bgPath: "assets/backgrounds/bg_gym_hallway.jpg",
+        accentColor: "#38bdf8",
+        ambientStyle: "daylight",
+        targetDistance: 0,
+        music: "assets/music/Thanuran_Takeover.mp3",
+        bossAggression: 1.05,
+        waves: [
+            {
+                title: "🌊 WELLE 1 / 3: GIBB SCHÜLER",
+                banner: "🎒 WELLE 1: 'Erst mal Energy exen!'",
+                primary: { name: "Average GIBB Schüler", type: "gibb_student", hp: 310, avatar: "assets/sprites/gibb_student_avatar.png" }
+            },
+            {
+                title: "🌊 WELLE 2 / 3: TIKTOK DUO!",
+                banner: "📱 WELLE 2: DOPPEL-RIVALEN IM GANG!",
+                primary: { name: "TikTok Cringe King", type: "gibb_student", hp: 290, avatar: "assets/sprites/gibb_student_avatar.png" },
+                partner: { name: "Fortnite Kolleg", type: "gibb_student", hp: 260, avatar: "assets/sprites/gibb_student_avatar.png" }
+            },
+            {
+                title: "🌊 WELLE 3 / 3: KLASSEN-BOSS!",
+                banner: "👑 FINALE WELLE: MODUL-STREBER!",
+                primary: { name: "Modul-Prüfer (GIBB Elite)", type: "gibb_student", hp: 410, avatar: "assets/sprites/gibb_student_avatar.png" }
+            }
+        ],
+        mechanics: {
+            platforms: true,
+            duckObstacles: false,
+            lavaPits: false,
+            sprintPads: false,
+            platformStyle: "concrete"
         },
-        arenaFloorHazards: true,
-        preBossEncounter: {
-            speaker: "Herr Adam",
-            avatar: "assets/sprites/adam_avatar.png",
-            text: "Silvankumar?! Du bisch abwesend... Moment — als Sportlehrer isch das Setup genehmigt!",
-            clip: "adam_abwesend_sketch",
-            playerResponse: "HERR ADAM, ICH STAH DOCH DA — VOLLTREFFER!",
-            playerClip: "thenerean_stah"
-        },
-        bossType: "adam",
-        bossName: "Herr Adam (Sportlehrer)",
-        bossAvatar: "assets/sprites/adam_avatar.png",
-        bossSprite: "assets/sprites/adam_sprite.png",
-        bossHP: 680,
+        bossType: "gibb_student",
+        bossName: "Average GIBB Schüler (Wellen)",
+        bossAvatar: "assets/sprites/gibb_student_avatar.png",
+        bossHP: 410,
         bossLines: [
-            { text: "Da hast du 20 Frisbees!", clip: "adam_20_frisbees" },
-            { text: "Silvankumar, ist der Thenerean da?", clip: "adam_silvankumar" },
-            { text: "Als Sportlehrer: Setup top, genehmigt!", clip: "adam_setup_genehmigt" },
-            { text: "Du hesch de Schuss verpasst — Strafe!", clip: "adam_strafe_verpasst" },
-            { text: "Abwesend?! Mach en Sketch!", clip: "adam_abwesend_sketch" },
-            { text: "Hilf mir!", clip: "adam_hilf_mir" }
+            { text: "Ich will Fortnite und TikTok spiele!", clip: "student_tiktok_fortnite" },
+            { text: "Ich bin der Cringe King von TikTok!", clip: "student_cringe_king" }
         ],
         playerLines: [
-            { text: "Herr Adam, ich stah doch da!", clip: "thenerean_stah" },
-            { text: "Sportlehrer, ich bi z'spät im Turnunterricht!", clip: "thenerean_sport_late" },
-            { text: "Banana Monika!", clip: "thenerean_banana_monika" },
-            { text: "Ich raste gerade komplett aus!", clip: "thenerean_raste_aus" },
-            { text: "ULTRA FRISBEE!", clip: "thenerean_ultra_frisbee" }
+            { text: "Ich wott doch nur mini Freunde!", clip: "thenerean_will_freunde" },
+            { text: "Das isch e absoluti Frechheit!", clip: "thenerean_frechheit" },
+            { text: "Du bisch selber en Bankomat!", clip: "thenerean_bankomat" }
         ],
-        obstacleTypes: ["frisbee", "basketball", "whistle"],
-        collectibleTypes: ["coffee", "energy_drink"]
+        obstacleTypes: ["frisbee", "warning_letter", "traffic_cone"],
+        collectibleTypes: ["energy_drink", "law_book", "coffee"]
     },
     {
         id: 5,
-        yearText: "3. LEHRJAHR (TEIL 1)",
-        name: "Serverraum: TukTuk-Flucht & Pflicht-Bosskampf",
-        mode: "tuktuk_chase_boss",
-        modeBadge: "🛺 FLUCHT + TUKTUK-BOSS",
-        featureTag: "🛺 ENTKOMME DEM TUKTUK BIS ZUM NOT-AUS — DANACH FINALER TUKTUK-KAMPF!",
-        missionBadge: "🛺 FLUCHT ZUM NOT-AUS",
-        chaserActive: true,
-        bgType: "server_room",
-        bgPath: "assets/backgrounds/bg_server_srilanka.jpg",
-        accentColor: "#00d2d3",
-        ambientStyle: "server",
-        targetDistance: 3000,
-        music: "assets/music/Die_Rache_der_Maschine.mp3",
-        hasMiniBoss: false,
+        chapter: 1,
+        yearText: "KAP. 1 • LEVEL 5",
+        name: "B201 Not-Ausstieg: Vertikal-Klettern!",
+        mode: "vertical_climb",
+        modeBadge: "🧗 TURM-KLETTERN",
+        featureTag: "🧗 SPRINGE PLATTFORM FÜR PLATTFORM NACH OBEN & ENTKOMME DER ABSENZEN-FLUT!",
+        missionBadge: "🧗 HÖHE ERKLIMMEN",
+        hasBoss: false,
+        climbGoalMeters: 120,
+        climbHazardName: "ABSENZEN-FLUT",
+        climbHazardColor: "#3742fa",
+        climbRiseSpeed: 0.72,
+        bgType: "classroom",
+        bgPath: "assets/backgrounds/bg_classroom.jpg",
+        accentColor: "#3742fa",
+        ambientStyle: "classroom",
+        targetDistance: 0,
+        music: "assets/music/Thanuran_The_Legend.mp3",
         mechanics: {
             platforms: true,
-            duckObstacles: true,
-            lavaPits: true,
-            pitTheme: "lava",
-            sprintPads: true,
-            platformStyle: "server_rack"
+            duckObstacles: false,
+            lavaPits: false,
+            sprintPads: false,
+            platformStyle: "desk"
         },
-        arenaSwitch: {
-            enabled: true,
-            label: "❄️ SERVER-KÜHLUNG",
-            icon: "❄️",
-            dmg: 80,
-            stunFrames: 90,
-            cooldownFrames: 480,
-            effectText: "❄️ KÄLTESCHOCK! GPU ÜBERKÜHLT!"
-        },
-        preBossEncounter: {
-            speaker: "TukTuk & Overheating GPU",
-            avatar: "assets/sprites/tuktuk_avatar.png",
-            text: "TÄSCHFRESSER! Du bisch mir entcho — ABER JETZT KÄMPFEN WIR IM SERVERRAUM!",
-            clip: "tuktuk_taeschfresser_gpu",
-            playerResponse: "Verdammte Maschine! Jetzt mach ich deine GPU kalt!",
-            playerClip: "thenerean_verdammt_maschine"
-        },
-        bossType: "tuktuk_gpu",
-        bossName: "TukTuk MK-I (Server-GPU)",
-        bossAvatar: "assets/sprites/tuktuk_avatar.png",
-        bossSprite: "assets/sprites/tuktuk_sprite.png",
-        bossHP: 700,
-        bossLines: [
-            { text: "TÄSCHFRESSER! GPU überhitzt!", clip: "tuktuk_taeschfresser_gpu" },
-            { text: "Isst d'Melone mit zwei Grafikkarten!", clip: "tuktuk_gpu_melone" },
-            { text: "Nein! Nicht schon wieder ein Grafikkarte Fehler!", clip: "thenerean_gpu" },
-            { text: "Verdammte Grafikkarte!", clip: "thenerean_grafikkarte" },
-            { text: "Direkt aus Sri Lanka!", clip: "thenerean_srilanka" }
-        ],
+        bossType: "monika_miniboss",
+        bossName: "Steigende Absenzen-Flut",
+        bossAvatar: "assets/sprites/monika_avatar.png",
+        bossHP: 0,
+        bossLines: [],
         playerLines: [
-            { text: "My Silicon Valley bugs are endless!", clip: "thenerean_silicon_bugs" },
-            { text: "Ich ha s'geilschte GIBB-Setup überhaupt!", clip: "thenerean_geilschte_setup" },
-            { text: "Verdammte Maschine!", clip: "thenerean_verdammt_maschine" },
-            { text: "DNS Request cha nöd gmacht werde!", clip: "thenerean_gesetz_dns" }
+            { text: "Min DHCP-Server spinnt im Treppenhaus!", clip: "thenerean_dhcp_server" },
+            { text: "Installier s'Buech grad uf mini Konsole!", clip: "thenerean_installier_buch" },
+            { text: "Ich stah doch da!", clip: "thenerean_stah" }
         ],
-        obstacleTypes: ["broken_cable", "server_stack", "clock"],
-        collectibleTypes: ["law_book", "coffee", "energy_drink"]
+        obstacleTypes: ["warning_letter"],
+        collectibleTypes: ["coffee", "energy_drink", "diploma_shard"]
     },
     {
         id: 6,
-        yearText: "3. LEHRJAHR (TEIL 2)",
-        name: "ABU-Zimmer B404: Or-Gesetz & Klassen-Kombo",
-        mode: "abu_duo_ambush",
-        modeBadge: "📘 ABU-WITZE + KOMBO",
-        featureTag: "📘 OR ART. 321! SAMMLE GESETZESTEXTE → MONIKA & GIBB SCHÜLER KOMBO-ANGRIFF!",
-        missionBadge: "📘 ABU B404",
-        bgType: "abu_room",
-        bgPath: "assets/backgrounds/bg_abu_room.jpg",
-        accentColor: "#2ed573",
-        ambientStyle: "classroom",
-        targetDistance: 2400,
-        music: "assets/music/The_Virus_Is_The_Law.mp3",
+        chapter: 1,
+        yearText: "KAP. 1 • LEVEL 6",
+        name: "GIBB Turnhalle: Zielschuss & Herr Adam",
+        mode: "target_run_boss",
+        modeBadge: "🎯 ZIELE + SPERRZONE",
+        featureTag: "🎯 TRIFF 6 ZIELE MIT [E] → BONUS-SCHADEN AUF HERR ADAM! NUTZE LIFT & STOPPUHR!",
+        missionBadge: "🎯 0 / 6 ZIELE",
+        hasBoss: true,
+        bgType: "gym_turnhalle",
+        bgPath: "assets/backgrounds/bg_gym_turnhalle.jpg",
+        accentColor: "#00d2d3",
+        ambientStyle: "gym",
+        targetDistance: 3250,
+        targetGoalCount: 6,
+        music: "assets/music/Sivassklicumar_Morning.mp3",
         hasMiniBoss: false,
+        arenaFloorHazards: true,
+        arenaLiftPlatform: true,
         mechanics: {
             platforms: true,
             duckObstacles: true,
             lavaPits: false,
             sprintPads: true,
-            platformStyle: "abu_desk",
+            platformStyle: "gym_box",
             clearPlatformUnder: true
         },
-        bossShieldEnabled: true,
         arenaSwitch: {
             enabled: true,
-            label: "📜 OR-GESETZ-SCHALTER",
-            icon: "📜",
-            dmg: 80,
+            label: "⏱️ STOPPUHR-SCHALTER",
+            icon: "⏱️",
+            dmg: 65,
             stunFrames: 85,
-            cooldownFrames: 480,
-            effectText: "📜 OR ART. 321! MONIKA & RIVALE BETÄUBT!"
+            cooldownFrames: 460,
+            effectText: "⏱️ TURN-SIRENE BETÄUBT HERR ADAM!"
         },
         preBossEncounter: {
-            speaker: "Monika & Klassen-Streber",
-            avatar: "assets/sprites/monika_avatar.png",
-            text: "Das isch jetzt würkli en ABU-Test! 2.54 Minuten z'spät — wir prüfen dich zu zweit!",
-            clip: "monika_abu_test",
-            playerResponse: "OR ART. 321: DNS Request cha nöd gmacht werde — ich will Gesetzestext!",
-            playerClip: "thenerean_gesetz_dns"
+            speaker: "Herr Adam",
+            avatar: "assets/sprites/adam_avatar.png",
+            text: "Silvankumar, ist der Thenerean da?! Jetzt gits 20 Frisbees und Hallen-Sperrzonen!",
+            clip: "adam_silvankumar",
+            playerResponse: "HERR ADAM, ICH STAH DOCH DA!! Din Frisbee-Plan gaht nach hinte los!",
+            playerClip: "thenerean_stah"
         },
-        bossType: "duo",
-        bossName: "Monika Schneider (ABU-Leitung)",
-        bossAvatar: "assets/sprites/monika_avatar.png",
-        bossSprite: "assets/sprites/monika_sprite.png",
-        bossHP: 640,
-        partnerType: "gibb_student",
-        partnerName: "Average GIBB Schüler (ABU-Streber)",
-        partnerAvatar: "assets/sprites/gibb_student_avatar.png",
-        partnerHP: 440,
+        bossType: "adam",
+        bossName: "Herr Adam (Sportlehrer)",
+        bossAvatar: "assets/sprites/adam_avatar.png",
+        bossHP: 680,
         bossLines: [
-            { text: "Das isch jetzt en ABU-Test!", clip: "monika_abu_test" },
-            { text: "Kei Zügnis — im ABU-Zimmer igsperrt!", clip: "monika_abu_eingesperrt" },
-            { text: "Mis Passwort staht im Buech!", clip: "monika_passwort_buech" },
-            { text: "Ich bin der Cringe King von TikTok!", clip: "student_cringe_king" },
-            { text: "Pünktlichkeit ist oberste Gebot!", clip: "monika_puenktlichkeit" }
+            { text: "Silvankumar, ist der Thenerean da?", clip: "adam_silvankumar" },
+            { text: "Da hast du 20 Frisbees!!", clip: "adam_20_frisbees" },
+            { text: "Du hesch de Schuss verpasst — Strafe defür!", clip: "adam_strafe_verpasst" },
+            { text: "Eigentlich hätti s'Sportlehrer-Setup genehmigt!", clip: "adam_setup_genehmigt" }
         ],
         playerLines: [
-            { text: "Z'spät? Da git's nüt z'dischputiere — ICH RASCHT US!", clip: "thenerean_zspaet_raschtaus" },
-            { text: "DNS Request cha nöd gmacht werde!", clip: "thenerean_gesetz_dns" },
-            { text: "Selber Bankomat!", clip: "thenerean_bankomat" },
-            { text: "Ich bi genau 2.54 später!", clip: "thenerean_254" }
+            { text: "Herr Adam, ich stah doch da!", clip: "thenerean_stah" },
+            { text: "Ich bin sportlich z'spät cho!", clip: "thenerean_sport_late" },
+            { text: "Jetzt isch Sirünän de Gemini King!", clip: "thenerean_gemini_king" }
         ],
-        obstacleTypes: ["warning_letter", "clock", "traffic_cone"],
-        collectibleTypes: ["law_book", "coffee", "energy_drink"]
+        obstacleTypes: ["frisbee", "basketball", "whistle"],
+        collectibleTypes: ["coffee", "energy_drink", "law_book"]
     },
     {
         id: 7,
-        yearText: "3. LEHRJAHR (TEIL 3)",
-        name: "GIBB Mensa & Kiosk: Bankomat-Raub & Duo",
-        mode: "bankomat_survival",
-        modeBadge: "🪙 BANKOMAT + DUO",
-        featureTag: "🪙 SCHNAPP BANKOMAT-JETONS (-HP BONUS) → HERR ADAM & KIOSK-RIVALE!",
-        missionBadge: "🪙 JETONS: 0 / 8",
-        targetGoalCount: 8,
-        bgType: "mensa_kiosk",
-        bgPath: "assets/backgrounds/bg_mensa_kiosk.jpg",
-        accentColor: "#ffa502",
-        ambientStyle: "corridor",
+        chapter: 1,
+        yearText: "KAP. 1 • LEVEL 7",
+        name: "ABU B404 Marathon: Langer Schul-Sprint (>60s)",
+        mode: "time_attack",
+        modeBadge: "⏱️ 85s MARATHON",
+        featureTag: "📘 >1 MINUTE PARCOURS! LAUF AN DEN TAFEL-WITZEN VORBEI IN 85s (+2.5s PRO KAFFEE)!",
+        missionBadge: "📘 ABU SPRINT",
+        timeLimitSec: 85,
+        hasBoss: false,
+        bgType: "abu_room",
+        bgPath: "assets/backgrounds/bg_abu_room.jpg",
+        accentColor: "#2ed573",
+        ambientStyle: "classroom",
+        targetDistance: 20500,
+        music: "assets/music/Thärünen_Silicucumbercumar.mp3",
+        hasMiniBoss: false,
+        mechanics: {
+            platforms: true,
+            duckObstacles: true,
+            lavaPits: true,
+            sprintPads: true,
+            platformStyle: "abu_desk",
+            pitTheme: "chasm",
+            clearPlatformUnder: true
+        },
+        bossType: "monika_miniboss",
+        bossName: "ABU-Glocke",
+        bossAvatar: "assets/sprites/monika_avatar.png",
+        bossHP: 0,
+        bossLines: [],
+        playerLines: [
+            { text: "Mir sind im ABU-Gfängnis iigsperrt!", clip: "thenerean_abu_gefaengnis" },
+            { text: "Wo bliibt eigentli de Bus?!", clip: "thenerean_wo_bleibt_bus" },
+            { text: "Das isch s'Heilige Gral vom Informatik EFZ!", clip: "thenerean_heilig_gral" }
+        ],
+        obstacleTypes: ["warning_letter", "clock", "frisbee", "traffic_cone"],
+        collectibleTypes: ["coffee", "energy_drink", "law_book"]
+    },
+    {
+        id: 8,
+        chapter: 1,
+        yearText: "KAP. 1 • LEVEL 8",
+        name: "ABU-Zimmer B404: Monika & GIBB Schüler Kombo",
+        mode: "abu_duo_ambush",
+        modeBadge: "🔥 BOSS-KOMBO #1",
+        featureTag: "📘 LIES DIE WITZE AN DER TAFEL & BEKÄMPFE MONIKA + GIBB SCHÜLER GLEICHZEITIG!",
+        missionBadge: "📘 KOMBO-DUO",
+        hasBoss: true,
+        bgType: "abu_room",
+        bgPath: "assets/backgrounds/bg_abu_room.jpg",
+        accentColor: "#ff9f1a",
+        ambientStyle: "classroom",
         targetDistance: 2700,
         music: "assets/music/Cold_Steel_Beams.mp3",
         hasMiniBoss: false,
         mechanics: {
             platforms: true,
             duckObstacles: true,
-            lavaPits: false,
+            lavaPits: true,
             sprintPads: true,
-            platformStyle: "mensa_tile"
+            platformStyle: "abu_desk",
+            pitTheme: "chasm",
+            clearPlatformUnder: true
         },
-        arenaFloorHazards: true,
         arenaSwitch: {
             enabled: true,
-            label: "🏧 BANKOMAT-JACKPOT",
-            icon: "🏧",
-            dmg: 85,
+            label: "🧽 TAFEL-SCHWAMM",
+            icon: "🧽",
+            dmg: 65,
             stunFrames: 85,
-            cooldownFrames: 500,
-            healPlayer: 18,
-            effectText: "🏧 SELBER BANKOMAT! -85 BOSS HP & +18 HP CASHBACK!"
+            cooldownFrames: 460,
+            effectText: "🧽 TAFEL-MEME VERWIRRT BEIDE BOSSE!"
         },
+        bossShieldEnabled: true,
+        bossAggression: 1.0,
+        preBossEncounter: {
+            speaker: "Monika Schneider & GIBB Schüler",
+            avatar: "assets/sprites/monika_avatar.png",
+            text: "Panama-Banana-Koma!! D'Türe isch abgschlosse — jetzt schriibsch den ABU-Test!",
+            clip: "monika_panama_banana_koma",
+            playerResponse: "ABU-Gfängnis?!Banana Monika, i mache trotzdm Note 6.0!",
+            playerClip: "thenerean_abu_gefaengnis"
+        },
+        bossType: "duo",
+        partnerType: "gibb_student",
+        bossName: "Monika (ABU-Prüferin)",
+        partnerName: "GIBB Schüler (Komplize)",
+        bossAvatar: "assets/sprites/monika_avatar.png",
+        partnerAvatar: "assets/sprites/gibb_student_avatar.png",
+        bossHP: 640,
+        partnerHP: 440,
+        bossLines: [
+            { text: "Panama-Banana-Koma im ABU-Zimmer!!", clip: "monika_panama_banana_koma" },
+            { text: "Min Frisbee hät unendlich Aura!", clip: "monika_frisbee_aura" },
+            { text: "Das isch jetzt würkli en ABU-Test!", clip: "monika_abu_test" },
+            { text: "Ich bin der Cringe King von TikTok!", clip: "student_cringe_king" }
+        ],
+        playerLines: [
+            { text: "ABU-Gfängnis — ich will wieder use!", clip: "thenerean_abu_gefaengnis" },
+            { text: "Banana Monika!", clip: "thenerean_banana_monika" },
+            { text: "Das isch e absoluti Frechheit!", clip: "thenerean_frechheit" }
+        ],
+        obstacleTypes: ["warning_letter", "broken_cable", "frisbee"],
+        collectibleTypes: ["law_book", "energy_drink", "coffee"]
+    },
+    {
+        id: 9,
+        chapter: 1,
+        yearText: "KAP. 1 • LEVEL 9",
+        name: "Mensa-Kiosk Vor-Lauf: 10 Ziele im Dauerfeuer (>60s)",
+        mode: "target_run_clear",
+        modeBadge: "🎯 10 ZIELE • >60s",
+        featureTag: "🍽️ KEIN BOSS! SCHIESSE 10 ZIELE IM LANGEN MENSA-LAUF AB!",
+        missionBadge: "🎯 MENSA ZIELE",
+        hasBoss: false,
+        targetGoalCount: 10,
+        bgType: "mensa_kiosk",
+        bgPath: "assets/backgrounds/bg_mensa_kiosk.jpg",
+        accentColor: "#f39c12",
+        ambientStyle: "daylight",
+        targetDistance: 19500,
+        music: "assets/music/Echoes_of_Tharunan.mp3",
+        hasMiniBoss: false,
+        mechanics: {
+            platforms: true,
+            duckObstacles: true,
+            lavaPits: true,
+            sprintPads: true,
+            platformStyle: "mensa_tile",
+            pitTheme: "chasm",
+            clearPlatformUnder: true
+        },
+        bossType: "gibb_student",
+        bossName: "Kiosk-Kasse",
+        bossAvatar: "assets/sprites/gibb_student_avatar.png",
+        bossHP: 0,
+        bossLines: [],
+        playerLines: [
+            { text: "Das isch de beschte Kaffee vom ganze Huus!", clip: "thenerean_bester_kaffee" },
+            { text: "Wo bliibt de Bus an d'GIBB?!", clip: "thenerean_wo_bleibt_bus" },
+            { text: "Her mit dene V-Bucks!", clip: "thenerean_tamil_vbucks" }
+        ],
+        obstacleTypes: ["traffic_cone", "warning_letter", "frisbee"],
+        collectibleTypes: ["coffee", "energy_drink", "law_book"]
+    },
+    {
+        id: 10,
+        chapter: 1,
+        yearText: "KAP. 1 • FINALE",
+        name: "Serverraum: TukTuk-Flucht & MK-I Bosskampf",
+        mode: "tuktuk_chase_boss",
+        modeBadge: "🛺 FLUCHT → BOSS",
+        featureTag: "🏁 KAPITEL 1 FINALE! FLIEH VORM RASENDEN TUKTUK → BESIEGE TUKTUK MK-I!",
+        missionBadge: "🛺 FLUCHT",
+        hasBoss: true,
+        bgType: "server_room",
+        bgPath: "assets/backgrounds/bg_server_srilanka.jpg",
+        accentColor: "#ff6348",
+        ambientStyle: "server",
+        targetDistance: 3450,
+        music: "assets/music/Die_Rache_der_Maschine.mp3",
+        hasMiniBoss: false,
+        mechanics: {
+            platforms: true,
+            duckObstacles: true,
+            lavaPits: true,
+            sprintPads: true,
+            platformStyle: "server_rack",
+            pitTheme: "chasm",
+            clearPlatformUnder: true
+        },
+        arenaSwitch: {
+            enabled: true,
+            label: "🔴 NOT-AUS KNOPF",
+            icon: "🔴",
+            dmg: 80,
+            stunFrames: 85,
+            cooldownFrames: 450,
+            effectText: "🔴 NOT-AUS STOPP-IMPULS SCHOCKT TUKTUK!"
+        },
+        bossShieldEnabled: true,
+        preBossEncounter: {
+            speaker: "GPU-TukTuk MK-I",
+            avatar: "assets/sprites/tuktuk_avatar.png",
+            text: "VROOOM!! TÄSCHFRESSER! Machet d'Melone überhaupt Sinn i dem Serverraum?!",
+            clip: "tuktuk_melone_sinn",
+            playerResponse: "Fahr doch selber Taxi!! Min DHCP-Server brennt gleich!",
+            playerClip: "thenerean_selber_taxi"
+        },
+        bossType: "tuktuk_gpu",
+        bossName: "TukTuk MK-I (GPU Edition)",
+        bossAvatar: "assets/sprites/tuktuk_avatar.png",
+        bossHP: 700,
+        bossLines: [
+            { text: "TÄSCHFRESSER! Machet d'Melone Sinn?!", clip: "tuktuk_melone_sinn" },
+            { text: "Isst d'Melone mit zwei Grafikkarten!!", clip: "tuktuk_gpu_melone" },
+            { text: "Verdammti Maschine!!", clip: "thenerean_verdammt_maschine" }
+        ],
+        playerLines: [
+            { text: "Fahr doch selber Taxi!!", clip: "thenerean_selber_taxi" },
+            { text: "Min DHCP-Server spinnt total!", clip: "thenerean_dhcp_server" },
+            { text: "Direkt aus Sri Lanka!", clip: "thenerean_srilanka" }
+        ],
+        obstacleTypes: ["server_stack", "broken_cable", "traffic_cone"],
+        collectibleTypes: ["energy_drink", "coffee", "diploma_shard"]
+    },
+
+    // =========================================================================
+    // KAPITEL 2 (LEVEL 11–20): MELONEN-RAKETE, KLOTEN & SRI LANKA
+    // =========================================================================
+    {
+        id: 11,
+        chapter: 2,
+        yearText: "KAP. 2 • LEVEL 11",
+        name: "Mega-Melonen-Rakete: Abflug nach Kloten! (>60s)",
+        mode: "rocket_flight",
+        modeBadge: "🚀 RAKETEN-FLUG",
+        featureTag: "🍈 STEUERE MIT [W]/[S] ODER PFEILEN, FEUERE MELONEN-LASER [E] & WEICHE FEUER-PIZZAS AUS!",
+        missionBadge: "🚀 KLOTEN ANFLUG",
+        hasBoss: false,
+        flightGoalDistance: 6400,
+        bgType: "sky_rocket",
+        bgPath: "assets/backgrounds/bg_sky_rocket.jpg",
+        accentColor: "#2ed573",
+        ambientStyle: "daylight",
+        targetDistance: 0,
+        music: "assets/music/Beyond_the_Frame.mp3",
+        bossType: "drone_tuktuk",
+        bossName: "Wolkendecke Kloten",
+        bossAvatar: "assets/sprites/tuktuk_avatar.png",
+        bossHP: 0,
+        bossLines: [],
+        playerLines: [
+            { text: "Ab id Mega-Melonen-Rakete!!", clip: "thenerean_mega_melone_rakete" },
+            { text: "Vollgas nach Kloten — TARONUMAN!!", clip: "thenerean_kloten_taronuman" },
+            { text: "Isst d'Melone mit zwei Grafikkarten!", clip: "tuktuk_gpu_melone" }
+        ],
+        obstacleTypes: ["fire_pizza"],
+        collectibleTypes: ["item_melon", "coffee", "energy_drink"]
+    },
+    {
+        id: 12,
+        chapter: 2,
+        yearText: "KAP. 2 • LEVEL 12",
+        name: "GIBB Mensa & Kiosk: Bankomat-Jeton-Rush",
+        mode: "bankomat_survival",
+        modeBadge: "🪙 JETON-ÜBERFALL",
+        featureTag: "🪙 SAMMLE ALLE 8 BANKOMAT-JETONS! JEDER JETON SCHWÄCHT DIE KIOSK-BOSSE!",
+        missionBadge: "🪙 0 / 8 JETONS",
+        hasBoss: true,
+        bgType: "mensa_kiosk",
+        bgPath: "assets/backgrounds/bg_mensa_kiosk.jpg",
+        accentColor: "#f39c12",
+        ambientStyle: "daylight",
+        targetDistance: 2700,
+        targetGoalCount: 8,
+        music: "assets/music/Echoes_of_Tharunan.mp3",
+        hasMiniBoss: false,
+        mechanics: {
+            platforms: true,
+            duckObstacles: true,
+            lavaPits: false,
+            sprintPads: true,
+            platformStyle: "mensa_tile",
+            clearPlatformUnder: true
+        },
+        arenaSwitch: {
+            enabled: true,
+            label: "🏧 CASHBACK-KNOPF",
+            icon: "🏧",
+            dmg: 55,
+            stunFrames: 65,
+            healPlayer: 18,
+            cooldownFrames: 420,
+            effectText: "🏧 CASHBACK! +18 HP & BOSSE GESCHOCKT!"
+        },
+        bossShieldEnabled: false,
         preBossEncounter: {
             speaker: "Herr Adam & Kiosk-Boss",
             avatar: "assets/sprites/adam_avatar.png",
-            text: "Du hesch de Schuss am Kiosk verpasst! Jetzt gits e Strafe — mir zahled s'Chicken Curry z'zweit heim!",
-            clip: "adam_strafe_verpasst",
-            playerResponse: "Ich bin der Thenerean und SELBER BANKOMAT! Her mit den V-Bucks & Jetons!",
-            playerClip: "thenerean_bankomat"
+            text: "Nimm diin Frisbee und fahr ab!! De Bankomat i de Mensa git gar kei V-Bucks meh!",
+            clip: "adam_nimm_frisbee_fahr",
+            playerResponse: "Selber Bankomat! Mini 8 Jetons zerleged eu beide!",
+            playerClip: "thenerean_selber_bankomat"
         },
         bossType: "duo",
-        bossName: "Herr Adam (Mensa-Chef)",
-        bossAvatar: "assets/sprites/adam_avatar.png",
-        bossSprite: "assets/sprites/adam_sprite.png",
-        bossHP: 740,
         partnerType: "gibb_student",
-        partnerName: "GIBB Kiosk-Boss (Energy-Dealer)",
+        bossName: "Herr Adam (Kiosk-Chef)",
+        partnerName: "Kiosk-Boss (GIBB Schüler)",
+        bossAvatar: "assets/sprites/adam_avatar.png",
         partnerAvatar: "assets/sprites/gibb_student_avatar.png",
+        bossHP: 740,
         partnerHP: 520,
         bossLines: [
-            { text: "Du hesch de Schuss verpasst — Strafe!", clip: "adam_strafe_verpasst" },
-            { text: "Gell, s'Chicken Curry isch guet!", clip: "monika_chicken_curry" },
-            { text: "Ich will Fortnite & TikTok!", clip: "student_tiktok_fortnite" },
-            { text: "Da hast du 20 Frisbees!", clip: "adam_20_frisbees" },
-            { text: "Silvankumar, ist der Thenerean da?", clip: "adam_silvankumar" }
+            { text: "Nimm diin Frisbee und fahr ab!!", clip: "adam_nimm_frisbee_fahr" },
+            { text: "Gell, s'Chicken Curry i de Mensa isch guet!", clip: "monika_chicken_curry" },
+            { text: "Ich will Fortnite & TikTok!", clip: "student_tiktok_fortnite" }
         ],
         playerLines: [
-            { text: "Tamil V-Bucks Cashback Power!!", clip: "thenerean_tamil_vbucks" },
-            { text: "Das isch e absoluti Frechheit!", clip: "thenerean_frechheit" },
-            { text: "Ich bin der Thenerean und selber Bankomat!", clip: "thenerean_bankomat" },
-            { text: "Lippenstift?!", clip: "thenerean_lippenstift" }
+            { text: "Selber Bankomat!", clip: "thenerean_selber_bankomat" },
+            { text: "Her mit dene V-Bucks!", clip: "thenerean_tamil_vbucks" },
+            { text: "Das isch de beschte Kaffee!", clip: "thenerean_bester_kaffee" }
         ],
-        obstacleTypes: ["frisbee", "basketball", "whistle"],
-        collectibleTypes: ["jeton", "coffee", "energy_drink"]
+        obstacleTypes: ["traffic_cone", "basketball", "whistle"],
+        collectibleTypes: ["coffee", "energy_drink", "law_book"]
     },
     {
-        id: 8,
-        yearText: "4. LEHRJAHR (TEIL 1)",
-        name: "Colombo Cyber-Highway: Dual-GPU TukTuk MK-II",
-        mode: "tuktuk_overclock_duel",
-        modeBadge: "🎮 DUAL-GPU MK-II",
-        featureTag: "🔥 SRI LANKA HIGHWAY → MONSTER-BOSS DUAL-GPU TUKTUK MK-II (DOUBLE-TURBO!)",
-        missionBadge: "🔥 DUAL-GPU MK-II",
-        bgType: "srilanka_highway",
-        bgPath: "assets/backgrounds/bg_srilanka_highway.jpg",
+        id: 13,
+        chapter: 2,
+        yearText: "KAP. 2 • LEVEL 13",
+        name: "Brennende Bäckerei Kloten: Flucht nach oben!",
+        mode: "vertical_climb",
+        modeBadge: "🔥 KLOTEN-TURM",
+        featureTag: "🔥 ALLES BRENNT IN KLOTEN! SPRINGE ÜBER DIE BACK-BLECHE DAVON!",
+        missionBadge: "🔥 DACH ERREICHEN",
+        hasBoss: false,
+        climbGoalMeters: 150,
+        climbHazardName: "KLOTEN-FEUER",
+        climbHazardColor: "#ff6348",
+        climbRiseSpeed: 0.85,
+        bgType: "kloten_fire",
+        bgPath: "assets/backgrounds/bg_kloten_fire.jpg",
         accentColor: "#ff6348",
         ambientStyle: "server",
-        targetDistance: 2850,
+        targetDistance: 0,
+        music: "assets/music/Override_the_Kill_Switch.mp3",
+        mechanics: {
+            platforms: true,
+            duckObstacles: false,
+            lavaPits: false,
+            sprintPads: false,
+            platformStyle: "highway_deck"
+        },
+        bossType: "tung_sahur",
+        bossName: "Kloten Feuerwalze",
+        bossAvatar: "assets/sprites/sahur_avatar.png",
+        bossHP: 0,
+        bossLines: [],
+        playerLines: [
+            { text: "HILFE!! Alles brennt i de Bäckerei Kloten!!", clip: "thenerean_alles_brennt" },
+            { text: "Kloten TARONUMAN!!", clip: "thenerean_kloten_taronuman" },
+            { text: "Niemert chunt an mir verbi!", clip: "thenerean_niemert_verbi" }
+        ],
+        obstacleTypes: ["traffic_cone"],
+        collectibleTypes: ["coffee", "energy_drink", "item_melon"]
+    },
+    {
+        id: 14,
+        chapter: 2,
+        yearText: "KAP. 2 • LEVEL 14",
+        name: "Sri Lanka Dschungel: Tung Tung Tung Sahur!",
+        mode: "direct_boss",
+        modeBadge: "🪵 SAHUR DEBUT",
+        featureTag: "🪵 NEUER BOSS! TUNG TUNG TUNG SAHUR SCHWINGT DEN BASEBALLSCHLÄGER — BLOCK [R]!",
+        missionBadge: "🪵 SAHUR ARENA",
+        hasBoss: true,
+        bgType: "srilanka_jungle",
+        bgPath: "assets/backgrounds/bg_srilanka_jungle.jpg",
+        accentColor: "#ffa502",
+        ambientStyle: "daylight",
+        targetDistance: 0,
+        music: "assets/music/Verithanam.mp3",
+        hasMiniBoss: false,
+        mechanics: {
+            platforms: true,
+            duckObstacles: false,
+            lavaPits: false,
+            sprintPads: false,
+            platformStyle: "abu_desk"
+        },
+        arenaSwitch: {
+            enabled: true,
+            label: "🥥 KOKOSNUSS-FALLE",
+            icon: "🥥",
+            dmg: 80,
+            stunFrames: 80,
+            cooldownFrames: 460,
+            effectText: "🥥 RIESEN-KOKOSNUSS TRIFFT TUNG SAHUR!"
+        },
+        bossShieldEnabled: true,
+        preBossEncounter: {
+            speaker: "Tung Tung Tung Sahur",
+            avatar: "assets/sprites/sahur_avatar.png",
+            text: "TUNG TUNG TUNG SAHUR!! *Bong Bong!* Wer weckt mich im Sri Lanka Dschungel?!",
+            clip: "sahur_baseball_swing",
+            playerResponse: "Du bisch komplett verrückt!! Aber min Schrei bricht diin Schläger!",
+            playerClip: "thenerean_komplett_verrueckt"
+        },
+        bossType: "tung_sahur",
+        bossName: "Tung Tung Tung Sahur",
+        bossAvatar: "assets/sprites/sahur_avatar.png",
+        bossHP: 820,
+        bossLines: [
+            { text: "TUNG TUNG SAHUR! *Baseball-Schwung!*", clip: "sahur_baseball_swing" },
+            { text: "HOLZSCHLÄGER SMASH!!", clip: "sahur_bat_smash" }
+        ],
+        playerLines: [
+            { text: "Ihr sind all komplett verrückt!", clip: "thenerean_komplett_verrueckt" },
+            { text: "Direkt aus Sri Lanka!", clip: "thenerean_srilanka" },
+            { text: "Cataclysmic Blast!", clip: "thenerean_cataclysmic_blast" }
+        ],
+        obstacleTypes: ["broken_cable", "basketball"],
+        collectibleTypes: ["item_melon", "energy_drink", "law_book"]
+    },
+    {
+        id: 15,
+        chapter: 2,
+        yearText: "KAP. 2 • LEVEL 15",
+        name: "Sri Lanka Dschungel-Express: 90s Marathon (>60s)",
+        mode: "time_attack",
+        modeBadge: "⏱️ 90s DSCHUNGEL",
+        featureTag: "🌴 >1 MINUTE DURCH DEN DSCHUNGEL! WEICHE LAVA & SCHRANKEN AUS IN 90s!",
+        missionBadge: "🌴 BUS ERWISCHEN",
+        timeLimitSec: 90,
+        hasBoss: false,
+        bgType: "srilanka_jungle",
+        bgPath: "assets/backgrounds/bg_srilanka_jungle.jpg",
+        accentColor: "#2ed573",
+        ambientStyle: "daylight",
+        targetDistance: 22000,
+        music: "assets/music/he_runs_the_game.mp3",
+        mechanics: {
+            platforms: true,
+            duckObstacles: true,
+            lavaPits: true,
+            sprintPads: true,
+            platformStyle: "abu_desk",
+            pitTheme: "lava",
+            clearPlatformUnder: true
+        },
+        bossType: "tung_sahur",
+        bossName: "Dschungel-Bus",
+        bossAvatar: "assets/sprites/sahur_avatar.png",
+        bossHP: 0,
+        bossLines: [],
+        playerLines: [
+            { text: "Vun d'Schwiiz bis nach Sri Lanka!", clip: "thenerean_schweiz_srilanka" },
+            { text: "Wo bliibt eigentli de Bus?!", clip: "thenerean_wo_bleibt_bus" },
+            { text: "Das isch s'geilschte Setup!", clip: "thenerean_geilschte_setup" }
+        ],
+        obstacleTypes: ["broken_cable", "warning_letter", "traffic_cone"],
+        collectibleTypes: ["coffee", "item_melon", "energy_drink"]
+    },
+    {
+        id: 16,
+        chapter: 2,
+        yearText: "KAP. 2 • LEVEL 16",
+        name: "Kloten Chaos-Arena: 3 Wellen Feuer & Holz",
+        mode: "wave_rush",
+        modeBadge: "🌊 3-WELLEN KLOTEN",
+        featureTag: "🔥 WELLE 1: SAHUR • WELLE 2: DOPPEL-SCHÜLER • WELLE 3: SAHUR ENRAGED!",
+        missionBadge: "🔥 WELLE 1 / 3",
+        hasBoss: true,
+        bgType: "kloten_fire",
+        bgPath: "assets/backgrounds/bg_kloten_fire.jpg",
+        accentColor: "#ff6348",
+        ambientStyle: "server",
+        targetDistance: 0,
+        music: "assets/music/The_Virus_Is_The_Law.mp3",
+        bossAggression: 1.1,
+        waves: [
+            {
+                title: "🌊 WELLE 1 / 3: HOLZWACHT KLOTEN",
+                banner: "🪵 WELLE 1: TUNG SAHUR WÄRMT SICH AUF!",
+                primary: { name: "Tung Sahur (Feuerwacht)", type: "tung_sahur", hp: 480, avatar: "assets/sprites/sahur_avatar.png" }
+            },
+            {
+                title: "🌊 WELLE 2 / 3: TIKTOK FEUERWEHR?",
+                banner: "⚡ WELLE 2: 2× GIBB SCHÜLER IM RAUCH!",
+                primary: { name: "Pyro-Schüler #1", type: "gibb_student", hp: 400, avatar: "assets/sprites/gibb_student_avatar.png" },
+                partner: { name: "Pyro-Schüler #2", type: "gibb_student", hp: 380, avatar: "assets/sprites/gibb_student_avatar.png" }
+            },
+            {
+                title: "🌊 WELLE 3 / 3: SAHUR OVERDRIVE!",
+                banner: "💥 FINALE WELLE: VOLLE SCHLÄGER-KRAFT!",
+                primary: { name: "Tung Tung Tung Sahur (Elite)", type: "tung_sahur", hp: 580, avatar: "assets/sprites/sahur_avatar.png" }
+            }
+        ],
+        mechanics: {
+            platforms: true,
+            duckObstacles: false,
+            lavaPits: false,
+            sprintPads: false,
+            platformStyle: "highway_deck"
+        },
+        bossType: "tung_sahur",
+        bossName: "Tung Sahur Welle",
+        bossAvatar: "assets/sprites/sahur_avatar.png",
+        bossHP: 580,
+        bossLines: [
+            { text: "TUNG TUNG SAHUR!!", clip: "sahur_baseball_swing" },
+            { text: "Ich bin der Cringe King von TikTok!", clip: "student_cringe_king" }
+        ],
+        playerLines: [
+            { text: "Alles brennt!!", clip: "thenerean_alles_brennt" },
+            { text: "Kloten TARONUMAN!", clip: "thenerean_kloten_taronuman" },
+            { text: "Ich mach dich fertig!", clip: "thenerean_mach_fertig" }
+        ],
+        obstacleTypes: ["fire_pizza", "broken_cable"],
+        collectibleTypes: ["energy_drink", "item_melon", "law_book"]
+    },
+    {
+        id: 17,
+        chapter: 2,
+        yearText: "KAP. 2 • LEVEL 17",
+        name: "Dschungel-Vulkan: 175m Baumwipfel-Flucht",
+        mode: "vertical_climb",
+        modeBadge: "🌋 VULKAN-KLETTERN",
+        featureTag: "🌋 KLETTERE 175m ÜBER DIE DSCHUNGEL-LAVA — NUTZE GRÜNE SPRUNG-PADS!",
+        missionBadge: "🌋 175m GIPFEL",
+        hasBoss: false,
+        climbGoalMeters: 175,
+        climbHazardName: "DSCHUNGEL-LAVA",
+        climbHazardColor: "#ffa502",
+        climbRiseSpeed: 0.94,
+        bgType: "srilanka_jungle",
+        bgPath: "assets/backgrounds/bg_srilanka_jungle.jpg",
+        accentColor: "#ffa502",
+        ambientStyle: "server",
+        targetDistance: 0,
+        music: "assets/music/Wo_die_Sterne_sich_beruehren.mp3",
+        mechanics: {
+            platforms: true,
+            duckObstacles: false,
+            lavaPits: false,
+            sprintPads: false,
+            platformStyle: "abu_desk"
+        },
+        bossType: "tung_sahur",
+        bossName: "Dschungel-Lava",
+        bossAvatar: "assets/sprites/sahur_avatar.png",
+        bossHP: 0,
+        bossLines: [],
+        playerLines: [
+            { text: "Vun d'Schwiiz direkt nach Sri Lanka!", clip: "thenerean_schweiz_srilanka" },
+            { text: "Das isch komplett verrückt!", clip: "thenerean_komplett_verrueckt" },
+            { text: "TARONUMAN!!", clip: "thenerean_taronuman_scream" }
+        ],
+        obstacleTypes: ["broken_cable"],
+        collectibleTypes: ["coffee", "item_melon", "energy_drink"]
+    },
+    {
+        id: 18,
+        chapter: 2,
+        yearText: "KAP. 2 • LEVEL 18",
+        name: "Kloten Ofen-Finale: Tung Sahur & GIBB Schüler",
+        mode: "abu_duo_ambush",
+        modeBadge: "🔥 DUO-HINTERHALT",
+        featureTag: "🪵 SPRINTER-LAUF IN DIE BACKSTUBE → DUO: TUNG SAHUR + GIBB SCHÜLER!",
+        missionBadge: "🔥 KLOTEN DUO",
+        hasBoss: true,
+        bgType: "kloten_fire",
+        bgPath: "assets/backgrounds/bg_kloten_fire.jpg",
+        accentColor: "#ff6348",
+        ambientStyle: "server",
+        targetDistance: 2750,
+        music: "assets/music/Concrete_Pipe_Strike.mp3",
+        hasMiniBoss: false,
+        mechanics: {
+            platforms: true,
+            duckObstacles: true,
+            lavaPits: true,
+            sprintPads: true,
+            platformStyle: "highway_deck",
+            pitTheme: "lava",
+            clearPlatformUnder: true
+        },
+        arenaSwitch: {
+            enabled: true,
+            label: "🧯 LÖSCH-SPRINKLER",
+            icon: "🧯",
+            dmg: 75,
+            stunFrames: 85,
+            cooldownFrames: 460,
+            effectText: "🧯 LÖSCHSCHAUM BETÄUBT BEIDE ANGSTGEGNER!"
+        },
+        bossShieldEnabled: true,
+        bossAggression: 1.08,
+        preBossEncounter: {
+            speaker: "Tung Tung Tung Sahur & GIBB Schüler",
+            avatar: "assets/sprites/sahur_avatar.png",
+            text: "BAT SMASH!! Mir lönd dich nömm use us Kloten — kei Energy me für dich!",
+            clip: "sahur_bat_smash",
+            playerResponse: "Alles brennt, aber ich will doch nur mini Freunde!!",
+            playerClip: "thenerean_will_freunde"
+        },
+        bossType: "duo",
+        partnerType: "gibb_student",
+        bossName: "Tung Sahur (Backstube)",
+        partnerName: "GIBB Schüler (Pyromane)",
+        bossAvatar: "assets/sprites/sahur_avatar.png",
+        partnerAvatar: "assets/sprites/gibb_student_avatar.png",
+        bossHP: 720,
+        partnerHP: 520,
+        bossLines: [
+            { text: "BAT SMASH!! *BONK!*", clip: "sahur_bat_smash" },
+            { text: "TUNG TUNG SAHUR!", clip: "sahur_baseball_swing" },
+            { text: "Ich bin der Cringe King von TikTok!", clip: "student_cringe_king" }
+        ],
+        playerLines: [
+            { text: "Alles brennt!!", clip: "thenerean_alles_brennt" },
+            { text: "Ich will doch nur Freunde!", clip: "thenerean_will_freunde" }
+        ],
+        obstacleTypes: ["fire_pizza", "broken_cable", "warning_letter"],
+        collectibleTypes: ["item_melon", "energy_drink", "law_book"]
+    },
+    {
+        id: 19,
+        chapter: 2,
+        yearText: "KAP. 2 • LEVEL 19",
+        name: "Colombo Luftbrücke: Melonen-Rakete Turbo (>60s)",
+        mode: "rocket_flight",
+        modeBadge: "🍈 RAKETEN-TURBO",
+        featureTag: "🚀 >1 MINUTE FLUG ÜBER COLOMBO! SAMMLE MELONEN FÜR TURBO & HEILUNG!",
+        missionBadge: "🚀 HIGHWAY ANFLUG",
+        hasBoss: false,
+        flightGoalDistance: 6800,
+        bgType: "sky_rocket",
+        bgPath: "assets/backgrounds/bg_sky_rocket.jpg",
+        accentColor: "#00d2d3",
+        ambientStyle: "daylight",
+        targetDistance: 0,
+        music: "assets/music/Rewrite_The_Sky.mp3",
+        bossType: "drone_tuktuk",
+        bossName: "Colombo Wolkenband",
+        bossAvatar: "assets/sprites/drone_tuktuk_avatar.png",
+        bossHP: 0,
+        bossLines: [],
+        playerLines: [
+            { text: "To the Moon mit dr Melonen-Rakete!!", clip: "thenerean_to_the_moon" },
+            { text: "Mega Melonen Rakete volle Schub!", clip: "thenerean_mega_melone_rakete" },
+            { text: "Vun d'Schwiiz nach Sri Lanka!", clip: "thenerean_schweiz_srilanka" }
+        ],
+        obstacleTypes: ["fire_pizza"],
+        collectibleTypes: ["item_melon", "energy_drink", "diploma_shard"]
+    },
+    {
+        id: 20,
+        chapter: 2,
+        yearText: "KAP. 2 • FINALE",
+        name: "Colombo Cyber-Highway: Dual-GPU TukTuk MK-II",
+        mode: "tuktuk_overclock_duel",
+        modeBadge: "🔥 DUAL-GPU MK-II",
+        featureTag: "🏁 KAPITEL 2 FINALE! BESIEGE DAS DUAL-GPU TUKTUK MK-II (DOUBLE-REBOUND & FEUER)!",
+        missionBadge: "🎮 DUAL-GPU MK-II",
+        hasBoss: true,
+        bgType: "srilanka_highway",
+        bgPath: "assets/backgrounds/bg_srilanka_highway.jpg",
+        accentColor: "#00d2d3",
+        ambientStyle: "server",
+        targetDistance: 3250,
         music: "assets/music/Motherboard_Bleeding.mp3",
         hasMiniBoss: false,
         mechanics: {
             platforms: true,
             duckObstacles: true,
             lavaPits: true,
-            pitTheme: "lava",
             sprintPads: true,
-            platformStyle: "highway_deck"
+            platformStyle: "highway_deck",
+            pitTheme: "lava",
+            clearPlatformUnder: true
         },
-        bossShieldEnabled: true,
         arenaSwitch: {
             enabled: true,
-            label: "🧊 FLÜSSIGSTICKSTOFF",
+            label: "🧊 STICKSTOFF-KÜHLUNG",
             icon: "🧊",
-            dmg: 95,
-            stunFrames: 100,
-            cooldownFrames: 490,
-            effectText: "🧊 STICKSTOFF-KÜHLUNG! DUAL-GPU GEFROREN!"
+            dmg: 85,
+            stunFrames: 90,
+            cooldownFrames: 440,
+            effectText: "🧊 FLÜSSIG-STICKSTOFF FRIERT BEIDE GPUs EIN!"
         },
+        bossShieldEnabled: true,
+        bossAggression: 1.08,
         preBossEncounter: {
             speaker: "Dual-GPU TukTuk MK-II",
             avatar: "assets/sprites/tuktuk_dual_avatar.png",
-            text: "TÄSCHFRESSER!! DIREKT AUS SRI LANKA MIT ZWEI RTX GRAFIKKARTEN — DOUBLE-TURBO!",
+            text: "TÄSCHFRESSER!! Zwei übertakteti RTX Grafikkarten! Machet d'Melone endlich Sinn?!",
             clip: "tuktuk_taeschfresser_gpu",
-            playerResponse: "Jetzt isch Thenerean de Gemini King! Dini Silicon Valley Bugs stoppe mi nöd!",
-            playerClip: "thenerean_gemini_king"
+            playerResponse: "Fahr doch selber Taxi!! Vun d'Schwiiz bis nach Sri Lanka — ich stopp dich!",
+            playerClip: "thenerean_schweiz_srilanka"
         },
         bossType: "tuktuk_dual_gpu",
-        bossName: "Dual-GPU TukTuk MK-II (Overclocked)",
+        bossName: "Dual-GPU TukTuk MK-II",
         bossAvatar: "assets/sprites/tuktuk_dual_avatar.png",
-        bossSprite: "assets/sprites/characters/tuktuk_dual_idle.png",
         bossHP: 980,
-        bossAggression: 0.98,
         bossLines: [
+            { text: "TÄSCHFRESSER!! ZWEI GRAFIKKARTEN!", clip: "tuktuk_taeschfresser_gpu" },
             { text: "Isst d'Melone mit zwei Grafikkarten!", clip: "tuktuk_gpu_melone" },
-            { text: "TÄSCHFRESSER! RTX Übertaktet!", clip: "tuktuk_taeschfresser_gpu" },
-            { text: "MWAHAHAHA!", clip: "boss_evil_laugh" },
-            { text: "Nein! Nicht schon wieder ein Grafikkarte Fehler!", clip: "thenerean_gpu" },
-            { text: "Direkt aus Sri Lanka!", clip: "thenerean_srilanka" }
+            { text: "Machet d'Melone überhaupt Sinn?!", clip: "tuktuk_melone_sinn" }
         ],
         playerLines: [
-            { text: "My Silicon Valley bugs are endless!", clip: "thenerean_silicon_bugs" },
-            { text: "TARONUMAN!! AAAAAH!!", clip: "thenerean_taronuman_scream" },
-            { text: "Jetzt isch Sirünän de Gemini King!", clip: "thenerean_gemini_king" },
-            { text: "Ich raste gerade komplett aus!", clip: "thenerean_raste_aus" }
+            { text: "Fahr doch selber Taxi!", clip: "thenerean_selber_taxi" },
+            { text: "Vun d'Schwiiz bis nach Sri Lanka!", clip: "thenerean_schweiz_srilanka" },
+            { text: "Verdammti Grafikkarte!", clip: "thenerean_grafikkarte" }
         ],
         obstacleTypes: ["broken_cable", "server_stack", "traffic_cone"],
-        collectibleTypes: ["energy_drink", "law_book", "coffee"]
+        collectibleTypes: ["coffee", "energy_drink", "diploma_shard"]
     },
+
+    // =========================================================================
+    // KAPITEL 3 (LEVEL 21–30): ORBIT, ALPENFESTUNG & EFZ 6.0
+    // =========================================================================
     {
-        id: 9,
-        yearText: "4. LEHRJAHR (TEIL 2)",
-        name: "Server-Bunker: Monika & Dual-GPU Super-Kombo",
-        mode: "gauntlet_trio_combo",
-        modeBadge: "⚡ SUPER-KOMBO 1580HP",
-        featureTag: "💥 DIREKT IM BUNKER! MONIKA + DUAL-GPU TUKTUK MK-II + NOTSTROM-SCHALTER!",
-        missionBadge: "⚡ BUNKER-ALPTRAUM",
-        bgType: "cyber_bunker",
-        bgPath: "assets/backgrounds/bg_cyber_bunker.jpg",
+        id: 21,
+        chapter: 3,
+        yearText: "KAP. 3 • LEVEL 21",
+        name: "Stratosphäre: To The Moon mit der Rakete! (>60s)",
+        mode: "rocket_flight",
+        modeBadge: "🛸 ORBIT-FLUG",
+        featureTag: "🛸 >1 MINUTE IM ALL! BALLERE MINI-DROHNEN WEG & ERREICHE DEN ORBIT!",
+        missionBadge: "🛸 TO THE MOON",
+        hasBoss: false,
+        flightGoalDistance: 7200,
+        bgType: "orbit_space",
+        bgPath: "assets/backgrounds/bg_orbit_space.jpg",
         accentColor: "#00d2d3",
         ambientStyle: "server",
         targetDistance: 0,
-        music: "assets/music/Override_the_Kill_Switch.mp3",
+        music: "assets/music/Rewrite_The_Sky_RMX.mp3",
+        bossType: "drone_tuktuk",
+        bossName: "Orbital-Feld",
+        bossAvatar: "assets/sprites/drone_tuktuk_avatar.png",
+        bossHP: 0,
+        bossLines: [],
+        playerLines: [
+            { text: "TO THE MOON!! Kein Schwerkraft haltet mich uf!", clip: "thenerean_to_the_moon" },
+            { text: "CATACLYSMIC BLAST!!", clip: "thenerean_cataclysmic_blast" },
+            { text: "Ab id Mega-Melonen-Rakete!", clip: "thenerean_mega_melone_rakete" }
+        ],
+        obstacleTypes: ["fire_pizza"],
+        collectibleTypes: ["item_melon", "energy_drink", "diploma_shard"]
+    },
+    {
+        id: 22,
+        chapter: 3,
+        yearText: "KAP. 3 • LEVEL 22",
+        name: "Cyber Server-Bunker: Monika & Dual-GPU Super-Kombo",
+        mode: "gauntlet_trio_combo",
+        modeBadge: "💥 SUPER-KOMBO",
+        featureTag: "💣 DIREKT-BUNKER! MONIKA (780 HP) + DUAL-GPU MK-II (800 HP) GLEICHZEITIG!",
+        missionBadge: "💥 BUNKER KOMBO",
+        hasBoss: true,
+        bgType: "cyber_bunker",
+        bgPath: "assets/backgrounds/bg_cyber_bunker.jpg",
+        accentColor: "#ff4757",
+        ambientStyle: "server",
+        targetDistance: 0,
+        music: "assets/music/Die_Rache_der_Maschine.mp3",
         hasMiniBoss: false,
+        arenaFloorHazards: true,
+        arenaLiftPlatform: true,
         mechanics: {
             platforms: true,
             duckObstacles: false,
@@ -527,72 +1125,67 @@ const LEVELS_CONFIG = [
             sprintPads: false,
             platformStyle: "server_rack"
         },
-        arenaLiftPlatform: true,
-        arenaFloorHazards: true,
-        bossShieldEnabled: true,
         arenaSwitch: {
             enabled: true,
-            label: "⚡ NOTSTROM-SCHALTER",
+            label: "⚡ FIREWALL-EMP",
             icon: "⚡",
-            dmg: 90,
+            dmg: 80,
             stunFrames: 85,
-            cooldownFrames: 500,
-            effectText: "⚡ EMP-STROMSTOSS! MONIKA & DUAL-GPU BETÄUBT!"
+            cooldownFrames: 450,
+            effectText: "⚡ EMP TRIFFT MONIKA UND DAS DUAL-GPU TUKTUK!"
         },
+        bossShieldEnabled: true,
+        duoShieldEnabled: false,
+        bossAggression: 1.05,
         preBossEncounter: {
-            speaker: "Monika Schneider & Dual-GPU TukTuk MK-II",
+            speaker: "Monika Schneider & Dual-GPU MK-II",
             avatar: "assets/sprites/tuktuk_dual_avatar.png",
-            text: "Dini Lehrziit gaht i d'Brüch — hüt hani mir s'Dual-GPU TukTuk us Sri Lanka bstellt!",
-            clip: "monika_altstadt_lehre",
-            playerResponse: "BANANA MONIKA?! IM SERVER-BUNKER ICH STAH BIS ZUM SCHLUSS!",
-            playerClip: "thenerean_banana_monika"
+            text: "Panama-Banana-Koma!! D'Firewall brennt und zwoi RTX GPUs jaged dich!",
+            clip: "monika_panama_banana_koma",
+            playerResponse: "Alles isch Schuld vo Monika!! Ich fix de Code hüt Nacht noch!",
+            playerClip: "thenerean_alles_schuld_monika"
         },
         bossType: "duo",
-        bossName: "Monika Schneider (Bunker-Kommandant)",
-        bossAvatar: "assets/sprites/monika_avatar.png",
-        bossSprite: "assets/sprites/monika_sprite.png",
-        bossHP: 780,
         partnerType: "tuktuk_dual_gpu",
-        partnerName: "Dual-GPU TukTuk MK-II",
+        bossName: "Monika (Cyber-Chefin)",
+        partnerName: "Dual-GPU MK-II",
+        bossAvatar: "assets/sprites/monika_avatar.png",
         partnerAvatar: "assets/sprites/tuktuk_dual_avatar.png",
+        bossHP: 780,
         partnerHP: 800,
-        bossAggression: 0.94,
         bossLines: [
-            { text: "Dini Lehr gaht i d'Altstadt abe!", clip: "monika_altstadt_lehre" },
-            { text: "Zwei Grafikkarten! Overclock!", clip: "tuktuk_gpu_melone" },
-            { text: "MWAHAHAHA!", clip: "boss_evil_laugh" },
-            { text: "Igsparrt im Server-Bunker!", clip: "monika_abu_eingesperrt" },
-            { text: "Verdammte Grafikkarte!", clip: "thenerean_grafikkarte" }
+            { text: "Panama-Banana-Koma!", clip: "monika_panama_banana_koma" },
+            { text: "TÄSCHFRESSER!! Dual-GPU!", clip: "tuktuk_taeschfresser_gpu" },
+            { text: "Mis Passwort staht im Gsetzbuech!", clip: "monika_passwort_buech" }
         ],
         playerLines: [
-            { text: "Ich stah bis zum Schluss!", clip: "thenerean_stah_bis_schluss" },
-            { text: "My Silicon Valley bugs!", clip: "thenerean_silicon_bugs" },
-            { text: "Gemini King übernimmt!", clip: "thenerean_gemini_king" },
-            { text: "Verdammte Maschine!", clip: "thenerean_verdammt_maschine" }
+            { text: "Alles isch Schuld vo dr Monika!", clip: "thenerean_alles_schuld_monika" },
+            { text: "Min DHCP-Server spinnt!", clip: "thenerean_dhcp_server" },
+            { text: "I have to fix the code tonight!", clip: "thenerean_fix_code_tonight" }
         ],
-        obstacleTypes: ["broken_cable", "warning_letter", "server_stack"],
-        collectibleTypes: ["energy_drink", "law_book", "coffee"]
+        obstacleTypes: ["server_stack", "broken_cable"],
+        collectibleTypes: ["energy_drink", "law_book", "diploma_shard"]
     },
     {
-        id: 10,
-        yearText: "4. LEHRJAHR (GROSSES EFZ FINALE)",
-        name: "EFZ Prüfungs-Auditorium: Die Ultimative Prüfung",
-        mode: "final_efz_gauntlet",
-        modeBadge: "👑 GROSSES EFZ-FINALE",
-        featureTag: "👑 2-PHASEN FINALE: AUFSICHT → MONIKA + ADAM (2230 HP, DUAL-SCHILD, 3× SPERRFRIST)!",
-        missionBadge: "👑 EFZ PRÜFUNGS-FINALE",
-        bgType: "exam_auditorium",
-        bgPath: "assets/backgrounds/bg_exam_auditorium.jpg",
-        accentColor: "#ffd32a",
+        id: 23,
+        chapter: 3,
+        yearText: "KAP. 3 • LEVEL 23",
+        name: "Alpenfestung Schacht: 195m Atlantis-Turm",
+        mode: "vertical_climb",
+        modeBadge: "🏰 TURM 195m",
+        featureTag: "🏰 KLETTERE DEN FESTUNGS-SCHACHT HOCH & SENKE DEN SCHATZ VON ATLANTIS!",
+        missionBadge: "🏰 195m GIPFEL",
+        hasBoss: false,
+        climbGoalMeters: 195,
+        climbHazardName: "BURGWACHT-LAVA",
+        climbHazardColor: "#ff4757",
+        climbRiseSpeed: 1.02,
+        bgType: "castle_alps",
+        bgPath: "assets/backgrounds/bg_castle_alps.jpg",
+        accentColor: "#ff4757",
         ambientStyle: "finale",
         targetDistance: 0,
-        music: "assets/music/Rewrite_The_Sky_RMX.mp3",
-        hasMiniBoss: false,
-        hasVanguard: true,
-        vanguardName: "Chef-Aufsicht (GIBB Prüfungs-Gatekeeper)",
-        vanguardType: "gibb_student",
-        vanguardAvatar: "assets/sprites/gibb_student_avatar.png",
-        vanguardHP: 420,
+        music: "assets/music/Crimson_Shell.mp3",
         mechanics: {
             platforms: true,
             duckObstacles: false,
@@ -600,56 +1193,369 @@ const LEVELS_CONFIG = [
             sprintPads: false,
             platformStyle: "auditorium_bridge"
         },
-        arenaLiftPlatform: true,
+        bossType: "tuktuk_dual_gpu",
+        bossName: "Burgwacht-Lava",
+        bossAvatar: "assets/sprites/tuktuk_dual_avatar.png",
+        bossHP: 0,
+        bossLines: [],
+        playerLines: [
+            { text: "Ich find de Schatz vo Atlantis!", clip: "thenerean_schatz_atlantis" },
+            { text: "Niemert chunt an mir verbi!", clip: "thenerean_niemert_verbi" }
+        ],
+        obstacleTypes: ["server_stack"],
+        collectibleTypes: ["diploma_shard", "energy_drink", "coffee"]
+    },
+    {
+        id: 24,
+        chapter: 3,
+        yearText: "KAP. 3 • LEVEL 24",
+        name: "Orbital-Gefecht: Cyber Drone TukTuk MK-III!",
+        mode: "rocket_flight",
+        modeBadge: "🚁 LUFT-BOSS MK-III",
+        featureTag: "🚁 FLIEGE DURCH DEN ORBIT → BESIEGE CYBER DRONE TUKTUK MK-III IM LUFTKAMPF!",
+        missionBadge: "🚁 ORBIT DUEL",
+        hasBoss: true,
+        flightGoalDistance: 3600,
+        bgType: "orbit_space",
+        bgPath: "assets/backgrounds/bg_orbit_space.jpg",
+        accentColor: "#a55eea",
+        ambientStyle: "server",
+        targetDistance: 0,
+        music: "assets/music/Rewrite_The_Sky_RMX.mp3",
+        bossAggression: 1.05,
+        preBossEncounter: {
+            speaker: "Cyber Drone TukTuk MK-III",
+            avatar: "assets/sprites/drone_tuktuk_avatar.png",
+            text: "MELONEN-SCAN IM ORBIT!! Drei Turbinen, null Gnade — machet d'Melone im All Sinn?!",
+            clip: "tuktuk_melone_sinn",
+            playerResponse: "Fahr doch selber Taxi!! CATACLYSMIC MELON BLAST!!",
+            playerClip: "thenerean_cataclysmic_blast"
+        },
+        bossType: "drone_tuktuk",
+        bossName: "Cyber Drone TukTuk MK-III",
+        bossAvatar: "assets/sprites/drone_tuktuk_avatar.png",
+        bossHP: 1050,
+        bossLines: [
+            { text: "Machet d'Melone im Orbit Sinn?!", clip: "tuktuk_melone_sinn" },
+            { text: "TÄSCHFRESSER DRONE MK-III!", clip: "tuktuk_taeschfresser_gpu" }
+        ],
+        playerLines: [
+            { text: "CATACLYSMIC BLAST!!", clip: "thenerean_cataclysmic_blast" },
+            { text: "To the Moon!!", clip: "thenerean_to_the_moon" },
+            { text: "Fahr doch selber Taxi!", clip: "thenerean_selber_taxi" }
+        ],
+        obstacleTypes: ["fire_pizza"],
+        collectibleTypes: ["item_melon", "energy_drink", "diploma_shard"]
+    },
+    {
+        id: 25,
+        chapter: 3,
+        yearText: "KAP. 3 • LEVEL 25",
+        name: "Alpenfestung Blitz-Marathon: 95s Vollgas (>60s)",
+        mode: "time_attack",
+        modeBadge: "⏱️ 95s ALPEN-RUSH",
+        featureTag: "🏔️ >1 MINUTE DURCH DIE ALPENFESTUNG! SPRINGE ÜBER LAVA & DUCKE UNTER SCHRANKEN!",
+        missionBadge: "🏔️ FESTUNG TOR",
+        timeLimitSec: 95,
+        hasBoss: false,
+        bgType: "castle_alps",
+        bgPath: "assets/backgrounds/bg_castle_alps.jpg",
+        accentColor: "#ffd32a",
+        ambientStyle: "finale",
+        targetDistance: 23500,
+        music: "assets/music/overwrite_the_sky.mp3",
+        mechanics: {
+            platforms: true,
+            duckObstacles: true,
+            lavaPits: true,
+            sprintPads: true,
+            platformStyle: "auditorium_bridge",
+            pitTheme: "lava",
+            clearPlatformUnder: true
+        },
+        bossType: "adam",
+        bossName: "Festung-Glocke",
+        bossAvatar: "assets/sprites/adam_avatar.png",
+        bossHP: 0,
+        bossLines: [],
+        playerLines: [
+            { text: "Ich find de Schatz vo Atlantis!", clip: "thenerean_schatz_atlantis" },
+            { text: "Ich will doch nur mini Freunde!", clip: "thenerean_will_freunde" },
+            { text: "Ich mach euch all fertig!", clip: "thenerean_mach_fertig" }
+        ],
+        obstacleTypes: ["broken_cable", "warning_letter", "frisbee", "traffic_cone"],
+        collectibleTypes: ["coffee", "energy_drink", "diploma_shard"]
+    },
+    {
+        id: 26,
+        chapter: 3,
+        yearText: "KAP. 3 • LEVEL 26",
+        name: "Alpenfestung Elite-Ansturm: 3 Legendäre Wellen",
+        mode: "wave_rush",
+        modeBadge: "🌊 ELITE-WELLEN",
+        featureTag: "⚔️ WELLE 1: SAHUR • WELLE 2: ADAM + SCHÜLER • WELLE 3: DUAL-GPU MK-II + SCHÜLER!",
+        missionBadge: "⚔️ ELITE 1 / 3",
+        hasBoss: true,
+        bgType: "castle_alps",
+        bgPath: "assets/backgrounds/bg_castle_alps.jpg",
+        accentColor: "#ff9f1a",
+        ambientStyle: "finale",
+        targetDistance: 0,
+        music: "assets/music/Chasin_Dreams_Tharunan_s_Theme_.mp3",
+        bossAggression: 1.12,
+        waves: [
+            {
+                title: "🌊 WELLE 1 / 3: FESTUNGS-SAHUR",
+                banner: "🪵 WELLE 1: SAHUR VERTEIDIGT DIE BURGBRÜCKE!",
+                primary: { name: "Tung Sahur (Burgwacht)", type: "tung_sahur", hp: 560, avatar: "assets/sprites/sahur_avatar.png" }
+            },
+            {
+                title: "🌊 WELLE 2 / 3: SPORT-ALLIANZ!",
+                banner: "🥏 WELLE 2: HERR ADAM + GIBB ELITE!",
+                primary: { name: "Herr Adam (Alpen-Coach)", type: "adam_miniboss", hp: 560, avatar: "assets/sprites/adam_avatar.png" },
+                partner: { name: "GIBB Streber-Ass", type: "gibb_student", hp: 480, avatar: "assets/sprites/gibb_student_avatar.png" }
+            },
+            {
+                title: "🌊 WELLE 3 / 3: HARDWARE-KATASTROPHE!",
+                banner: "🔥 FINALE WELLE: DUAL-GPU MK-II + GIBB SCHÜLER!",
+                primary: { name: "Dual-GPU MK-II (Festung)", type: "tuktuk_dual_gpu", hp: 640, avatar: "assets/sprites/tuktuk_dual_avatar.png" },
+                partner: { name: "TikTok Overclock King", type: "gibb_student", hp: 500, avatar: "assets/sprites/gibb_student_avatar.png" }
+            }
+        ],
+        mechanics: {
+            platforms: true,
+            duckObstacles: false,
+            lavaPits: false,
+            sprintPads: false,
+            platformStyle: "auditorium_bridge"
+        },
+        bossType: "tung_sahur",
+        bossName: "Alpenfestung Elite",
+        bossAvatar: "assets/sprites/tuktuk_dual_avatar.png",
+        bossHP: 640,
+        bossLines: [
+            { text: "TÄSCHFRESSER! ZWEI GRAFIKKARTEN!", clip: "tuktuk_taeschfresser_gpu" },
+            { text: "Da hast du 20 Frisbees!", clip: "adam_20_frisbees" },
+            { text: "HOLZSCHLÄGER SMASH!", clip: "sahur_bat_smash" }
+        ],
+        playerLines: [
+            { text: "Ich mach dich fertig!", clip: "thenerean_mach_fertig" },
+            { text: "Alles brennt!", clip: "thenerean_alles_brennt" },
+            { text: "Das isch komplett verrückt!", clip: "thenerean_komplett_verrueckt" }
+        ],
+        obstacleTypes: ["frisbee", "broken_cable"],
+        collectibleTypes: ["energy_drink", "law_book", "diploma_shard"]
+    },
+    {
+        id: 27,
+        chapter: 3,
+        yearText: "KAP. 3 • LEVEL 27",
+        name: "Orbital-Lift: 220m Plasma-Core Aufstieg!",
+        mode: "vertical_climb",
+        modeBadge: "⚡ PLASMA-TURM",
+        featureTag: "⚡ KLETTERE 220m IM ORBIT NACH OBEN VOR DEM GLÜHENDEN PLASMA-CORE!",
+        missionBadge: "⚡ 220m ORBIT",
+        hasBoss: false,
+        climbGoalMeters: 220,
+        climbHazardName: "PLASMA-CORE",
+        climbHazardColor: "#00d2d3",
+        climbRiseSpeed: 1.08,
+        bgType: "orbit_space",
+        bgPath: "assets/backgrounds/bg_orbit_space.jpg",
+        accentColor: "#00d2d3",
+        ambientStyle: "server",
+        targetDistance: 0,
+        music: "assets/music/Rewrite_The_Sky.mp3",
+        mechanics: {
+            platforms: true,
+            duckObstacles: false,
+            lavaPits: false,
+            sprintPads: false,
+            platformStyle: "server_rack"
+        },
+        bossType: "drone_tuktuk",
+        bossName: "Plasma-Core",
+        bossAvatar: "assets/sprites/drone_tuktuk_avatar.png",
+        bossHP: 0,
+        bossLines: [],
+        playerLines: [
+            { text: "CATACLYSMIC BLAST!", clip: "thenerean_cataclysmic_blast" },
+            { text: "Zurück uf d'Erde für s'EFZ!", clip: "thenerean_zurueck_erde" }
+        ],
+        obstacleTypes: ["fire_pizza"],
+        collectibleTypes: ["energy_drink", "item_melon", "diploma_shard"]
+    },
+    {
+        id: 28,
+        chapter: 3,
+        yearText: "KAP. 3 • LEVEL 28",
+        name: "Gipfel-Konfrontation: Herr Adam & Tung Sahur!",
+        mode: "duo_finale_platforms",
+        modeBadge: "👑 DUO-ARENA",
+        featureTag: "⚔️ HERR ADAM (940 HP) + TUNG SAHUR (880 HP) — NUTZE LIFT & ATLANTIS-SCHALTER!",
+        missionBadge: "👑 GIPFEL DUO",
+        hasBoss: true,
+        bgType: "castle_alps",
+        bgPath: "assets/backgrounds/bg_castle_alps.jpg",
+        accentColor: "#ffd32a",
+        ambientStyle: "finale",
+        targetDistance: 0,
+        music: "assets/music/Sirünän_Reign.mp3",
+        hasMiniBoss: false,
         arenaFloorHazards: true,
-        bossShieldEnabled: true,
-        duoShieldEnabled: true,
-        phase2Threshold: 0.54,
-        bossAggression: 0.88,
+        arenaLiftPlatform: true,
+        mechanics: {
+            platforms: true,
+            duckObstacles: false,
+            lavaPits: false,
+            sprintPads: false,
+            platformStyle: "auditorium_bridge"
+        },
         arenaSwitch: {
             enabled: true,
-            label: "🏆 EFZ-DIPLOM-SCHALTER",
-            icon: "🏆",
-            dmg: 95,
-            stunFrames: 90,
-            cooldownFrames: 520,
-            effectText: "🏆 EFZ-DIPLOM-SCHOCK! BEIDE PRÜFER BETÄUBT!"
+            label: "🔱 ATLANTIS-DREIZACK",
+            icon: "🔱",
+            dmg: 85,
+            stunFrames: 85,
+            healPlayer: 12,
+            cooldownFrames: 450,
+            effectText: "🔱 SCHATZ VO ATLANTIS SCHLÄGT BEIDE NIEDER!"
         },
+        bossShieldEnabled: true,
+        duoShieldEnabled: true,
+        bossAggression: 1.12,
         preBossEncounter: {
-            speaker: "Monika Schneider & Herr Adam",
+            speaker: "Herr Adam & Tung Tung Tung Sahur",
+            avatar: "assets/sprites/adam_avatar.png",
+            text: "Nimm diin Frisbee und fahr ab — Tung Sahur und ich halted d'Alpenfestung bis zum EFZ!",
+            clip: "adam_nimm_frisbee_fahr",
+            playerResponse: "Ich mach euch beide fertig! Niemert chunt an mir verbi!",
+            playerClip: "thenerean_mach_fertig"
+        },
+        bossType: "duo",
+        partnerType: "tung_sahur",
+        bossName: "Herr Adam (Alpen-Prüfer)",
+        partnerName: "Tung Sahur (Gipfel-Wächter)",
+        bossAvatar: "assets/sprites/adam_avatar.png",
+        partnerAvatar: "assets/sprites/sahur_avatar.png",
+        bossHP: 940,
+        partnerHP: 880,
+        bossLines: [
+            { text: "Nimm diin Frisbee und fahr ab!", clip: "adam_nimm_frisbee_fahr" },
+            { text: "BAT SMASH!!", clip: "sahur_bat_smash" },
+            { text: "Da hast du 20 Frisbees!!", clip: "adam_20_frisbees" }
+        ],
+        playerLines: [
+            { text: "Ich mach dich fertig!", clip: "thenerean_mach_fertig" },
+            { text: "Ich find de Schatz vo Atlantis!", clip: "thenerean_schatz_atlantis" }
+        ],
+        obstacleTypes: ["frisbee", "basketball"],
+        collectibleTypes: ["diploma_shard", "energy_drink", "law_book"]
+    },
+    {
+        id: 29,
+        chapter: 3,
+        yearText: "KAP. 3 • LEVEL 29",
+        name: "Rückflug zur Erde: Kurs aufs EFZ-Auditorium! (>60s)",
+        mode: "rocket_flight",
+        modeBadge: "🌍 RÜCKFLUG • >60s",
+        featureTag: "🌍 >1 MINUTE WIEDEREINTRITT! FLIEGE ZURÜCK ZUR GIBB BERN FÜR DAS FINALE!",
+        missionBadge: "🌍 KURS BERN",
+        hasBoss: false,
+        flightGoalDistance: 7400,
+        bgType: "sky_rocket",
+        bgPath: "assets/backgrounds/bg_sky_rocket.jpg",
+        accentColor: "#2ed573",
+        ambientStyle: "daylight",
+        targetDistance: 0,
+        music: "assets/music/Beyond_the_Frame.mp3",
+        bossType: "drone_tuktuk",
+        bossName: "Wiedereintritt Bern",
+        bossAvatar: "assets/sprites/drone_tuktuk_avatar.png",
+        bossHP: 0,
+        bossLines: [],
+        playerLines: [
+            { text: "ZURÜCK UF D'ERDE!! D'EFZ-Prüefig wartet!", clip: "thenerean_zurueck_erde" },
+            { text: "Das isch dr Heiligi Gral vom Informatik-EFZ!", clip: "thenerean_heilig_gral" },
+            { text: "Ab id Mega-Melonen-Rakete!", clip: "thenerean_mega_melone_rakete" }
+        ],
+        obstacleTypes: ["fire_pizza"],
+        collectibleTypes: ["item_melon", "energy_drink", "coffee"]
+    },
+    {
+        id: 30,
+        chapter: 3,
+        yearText: "EFZ-FINALE 6.0",
+        name: "EFZ Auditorium: Aufsicht + Monika & Herr Adam",
+        mode: "final_efz_gauntlet",
+        modeBadge: "🏆 EFZ-FINALE",
+        featureTag: "🏆 STAGE 1: PRÜFUNGS-AUFSICHT → STAGE 2: MONIKA (1150 HP) + HERR ADAM (1080 HP)!",
+        missionBadge: "🏆 STAGE 1 / 2",
+        hasBoss: true,
+        bgType: "exam_auditorium",
+        bgPath: "assets/backgrounds/bg_exam_auditorium.jpg",
+        accentColor: "#ffd32a",
+        ambientStyle: "finale",
+        targetDistance: 0,
+        music: "assets/music/Crimson_Shell.mp3",
+        hasMiniBoss: false,
+        hasVanguard: true,
+        vanguardType: "gibb_student",
+        vanguardName: "Chef-Aufsicht (Gatekeeper)",
+        vanguardAvatar: "assets/sprites/gibb_student_avatar.png",
+        vanguardHP: 420,
+        arenaFloorHazards: true,
+        arenaLiftPlatform: true,
+        mechanics: {
+            platforms: true,
+            duckObstacles: false,
+            lavaPits: false,
+            sprintPads: false,
+            platformStyle: "auditorium_bridge"
+        },
+        arenaSwitch: {
+            enabled: true,
+            label: "⚡ NOTFALL-RESET",
+            icon: "⚡",
+            dmg: 80,
+            stunFrames: 85,
+            healPlayer: 12,
+            cooldownFrames: 460,
+            effectText: "⚡ PRÜFUNGS-RESET! BEIDE SCHILDE BRECHEN + HEILUNG!"
+        },
+        bossShieldEnabled: true,
+        duoShieldEnabled: true,
+        bossAggression: 1.15,
+        preBossEncounter: {
+            speaker: "Monika & Herr Adam (Prüfungs-Kommission)",
             avatar: "assets/sprites/monika_avatar.png",
-            text: "Grüezi Herr Adam, wie läufts?! — Selberbank! Si müend das a dr EFZ-Endprüefig korrigiere!",
-            clip: "monika_adam_korrigiere",
-            playerResponse: "ICH HOL MIR DEN HEILIGEN GRAL — DAS EFZ DIPLOM MIT NOTE 6.0!!",
+            text: "GIBB Finale 6.0! Dini Lehrziit gaht i d'Altstadt abe — jetzt kämpfsch gege üs BEIDI mit Prüefigs-Schild!",
+            clip: "monika_altstadt_lehre",
+            playerResponse: "HERR ADAM, ICH STAH DOCH DA!! S'Heilige Gral EFZ-Diplom gehört MIR — Note 6.0!",
             playerClip: "thenerean_heilig_gral"
         },
         bossType: "duo",
-        bossName: "Monika Schneider (Ober-Prüferin)",
-        bossAvatar: "assets/sprites/monika_avatar.png",
-        bossSprite: "assets/sprites/monika_sprite.png",
-        bossHP: 1150,
         partnerType: "adam",
-        partnerName: "Herr Adam (Sport-Prüfer)",
+        bossName: "Monika Schneider (Prüfungs-Chefin)",
+        partnerName: "Herr Adam (Sport-Experte)",
+        bossAvatar: "assets/sprites/monika_avatar.png",
         partnerAvatar: "assets/sprites/adam_avatar.png",
+        bossHP: 1150,
         partnerHP: 1080,
         bossLines: [
-            { text: "Selberbank! Si müend das korrigiere!", clip: "monika_adam_korrigiere" },
-            { text: "Du hesch de Schuss verpasst — Strafe!", clip: "adam_strafe_verpasst" },
-            { text: "Abwesend?! Herr Adam prüeft!", clip: "adam_abwesend_sketch" },
-            { text: "Pünktlichkeit ist oberste Gebot!", clip: "monika_puenktlichkeit" },
-            { text: "Da hast du 20 Frisbees!", clip: "adam_20_frisbees" },
-            { text: "Du bisch z'spät, da git's nüt z'dischputiere!", clip: "monika_zspaet" }
+            { text: "Dini Lehrziit gaht i d'Altstadt abe!", clip: "monika_altstadt_lehre" },
+            { text: "Min Frisbee hät Aura!!", clip: "monika_frisbee_aura" },
+            { text: "Selberbank! Sie müssen das korrigieren!", clip: "monika_adam_korrigiere" },
+            { text: "Da hast du 20 Frisbees!!", clip: "adam_20_frisbees" },
+            { text: "Hilf mir!!", clip: "adam_hilf_mir" }
         ],
         playerLines: [
-            { text: "DER HEILIGE GRAL DES EFZ!!", clip: "thenerean_heilig_gral" },
-            { text: "TARONUMAN!! AAAAAH!!", clip: "thenerean_taronuman_scream" },
-            { text: "HERR ADAM, ICH STAH DOCH DA!", clip: "thenerean_stah" },
-            { text: "Ich bi genau 2.54 später!", clip: "thenerean_254" },
-            { text: "ULTRA SHOUT!", clip: "thenerean_ultra" }
+            { text: "Das isch dr Heiligi Gral vom Informatik EFZ!", clip: "thenerean_heilig_gral" },
+            { text: "Alles isch Schuld vo Monika!", clip: "thenerean_alles_schuld_monika" },
+            { text: "Jetzt isch Sirünän de Gemini King!", clip: "thenerean_gemini_king" },
+            { text: "Niemert chunt an mir verbi!", clip: "thenerean_niemert_verbi" }
         ],
-        obstacleTypes: ["frisbee", "warning_letter", "basketball", "broken_cable"],
-        collectibleTypes: ["law_book", "coffee", "diploma_shard"]
+        obstacleTypes: ["warning_letter", "frisbee", "basketball", "whistle"],
+        collectibleTypes: ["coffee", "diploma_shard", "energy_drink", "law_book"]
     }
 ];
-
-window.LEVELS_CONFIG = LEVELS_CONFIG;

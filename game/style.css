@@ -452,7 +452,7 @@ html, body {
 
 .hud-status-pills {
     position: absolute;
-    top: 94px;
+    top: 104px;
     left: 18px;
     display: flex;
     gap: 8px;
@@ -625,15 +625,15 @@ html, body {
 /* ===================================================================== */
 #meme-popup {
     position: absolute;
-    top: 112px;
+    top: 150px;
     left: 50%;
     transform: translateX(-50%);
     background: linear-gradient(135deg, #e8293b 0%, #c2182b 100%);
     color: #fff;
-    padding: 9px 26px;
+    padding: 7px 22px;
     border-radius: 32px;
     border: 3px solid #ffd32a;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 900;
     letter-spacing: 0.7px;
     box-shadow: 0 10px 30px rgba(232, 41, 59, 0.65);
@@ -652,7 +652,7 @@ html, body {
 }
 
 #boss-hud-banner:not(.hidden) ~ #meme-popup {
-    top: 196px;
+    top: 204px;
 }
 
 #demo-combo-hud:not(.hidden) ~ #meme-popup {
@@ -1854,22 +1854,23 @@ kbd {
     transform: translateY(-2px);
 }
 
-/* Level Select Grid with Thumbnails */
+/* Level Select Grid with Thumbnails & Green Completion Checkmarks */
 .level-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 9px;
     margin-top: 8px;
 }
 
 .level-btn-card {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 12px;
-    background: rgba(8, 11, 22, 0.72);
-    border: 1.5px solid rgba(255, 255, 255, 0.12);
-    border-radius: 14px;
-    padding: 9px 11px;
+    gap: 11px;
+    background: rgba(8, 11, 22, 0.78);
+    border: 1.5px solid rgba(255, 255, 255, 0.14);
+    border-radius: 13px;
+    padding: 8px 42px 8px 10px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -1877,51 +1878,132 @@ kbd {
 .level-btn-card:hover {
     border-color: #ffd32a;
     transform: translateY(-2px);
-    background: rgba(255, 211, 42, 0.1);
+    background: rgba(255, 211, 42, 0.09);
+}
+
+.level-btn-card.level-cleared {
+    border-color: rgba(46, 213, 115, 0.72);
+    background: linear-gradient(135deg, rgba(46, 213, 115, 0.10), rgba(8, 13, 24, 0.85));
+    box-shadow: 0 3px 14px rgba(46, 213, 115, 0.12);
+}
+
+.level-btn-card.level-cleared:hover {
+    border-color: #2ed573;
+    background: linear-gradient(135deg, rgba(46, 213, 115, 0.16), rgba(10, 18, 30, 0.90));
+}
+
+.lvl-thumb-wrap {
+    position: relative;
+    width: 96px;
+    height: 58px;
+    flex-shrink: 0;
 }
 
 .lvl-thumb {
-    width: 104px;
-    height: 62px;
+    width: 100%;
+    height: 100%;
     border-radius: 8px;
     object-fit: cover;
     border: 1.5px solid rgba(255, 255, 255, 0.2);
-    flex-shrink: 0;
+    display: block;
+}
+
+.lvl-step-num {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    font-size: 10px;
+    font-weight: 900;
+    color: #ffffff;
+    background: rgba(8, 12, 22, 0.86);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 5px;
+    padding: 1px 5px;
+    line-height: 1.1;
 }
 
 .lvl-info {
     flex: 1;
+    min-width: 0;
+}
+
+.lvl-top-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
 }
 
 .lvl-num {
     font-size: 10px;
     font-weight: 900;
     color: #ffd32a;
-    letter-spacing: 0.7px;
+    letter-spacing: 0.6px;
 }
 
 .lvl-title {
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 800;
-    margin: 2px 0 4px 0;
+    margin: 2px 0 2px 0;
     color: #fff;
+    line-height: 1.2;
+}
+
+.lvl-check-corner {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: rgba(8, 12, 22, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 900;
+    color: transparent;
+    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.lvl-check-corner.checked {
+    background: linear-gradient(135deg, #2ed573, #1dd1a1);
+    border-color: #ffffff;
+    color: #062111;
+    box-shadow: 0 0 12px rgba(46, 213, 115, 0.55);
+}
+
+.lvl-trailer-pill {
+    display: inline-block;
+    background: rgba(46, 213, 115, 0.16);
+    color: #2ed573;
+    border: 1px solid rgba(46, 213, 115, 0.52);
+    border-radius: 5px;
+    padding: 1px 6px;
+    font-size: 9.5px;
+    font-weight: 900;
 }
 
 .lvl-feature-tag {
-    display: inline-block;
-    background: rgba(56, 189, 248, 0.16);
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: rgba(56, 189, 248, 0.14);
     color: #38bdf8;
-    border: 1px solid rgba(56, 189, 248, 0.45);
+    border: 1px solid rgba(56, 189, 248, 0.4);
     border-radius: 6px;
-    padding: 2px 8px;
-    font-size: 10.5px;
+    padding: 2px 7px;
+    font-size: 10px;
     font-weight: 800;
-    margin: 2px 0 4px 0;
+    margin: 2px 0 3px 0;
 }
 
 .level-btn-card p {
-    font-size: 12px;
+    font-size: 11.5px;
     color: #a4b0be;
+    line-height: 1.25;
 }
 
 .campaign-summary {
@@ -2323,14 +2405,14 @@ body.touch-active #control-hint-pill {
     .vol-label { font-size: 9.5px; min-width: 24px; }
 
     #boss-hud-banner { top: 92px; padding: 5px 12px; }
-    .mission-pill { top: 68px; padding: 4px 12px; font-size: 11px; }
+    .mission-pill { top: 66px; padding: 4px 12px; font-size: 11px; }
     .mission-pill.boss-side { top: 64px; right: 10px; padding: 3px 10px; font-size: 10px; }
     .hud-status-pills { top: 64px; left: 10px; }
     .hud-pill { font-size: 10.5px; padding: 3px 9px; }
     .boss-hud-inner img { width: 34px; height: 34px; }
     #demo-combo-hud { top: 86px; padding: 4px 16px; font-size: 11.5px; gap: 12px; }
-    #meme-popup { top: 86px; font-size: 13px; padding: 5px 16px; border-width: 2px; }
-    #boss-hud-banner:not(.hidden) ~ #meme-popup { top: 154px; }
+    #meme-popup { top: 98px; font-size: 12.5px; padding: 5px 16px; border-width: 2px; }
+    #boss-hud-banner:not(.hidden) ~ #meme-popup { top: 158px; }
     #demo-combo-hud:not(.hidden) ~ #meme-popup { top: 122px; }
 
     #ability-dock { gap: 6px; left: 8px; bottom: 8px; }
@@ -3013,7 +3095,7 @@ body.touch-active #control-hint-pill {
 /* ===================================================================== */
 .mission-pill {
     position: absolute;
-    top: 108px;
+    top: 102px;
     left: 50%;
     transform: translateX(-50%);
     background: linear-gradient(135deg, rgba(16, 22, 42, 0.94), rgba(10, 14, 28, 0.96));
@@ -3767,4 +3849,618 @@ body.touch-active #control-hint-pill {
 
 @media (max-width: 560px) {
     .sound-tier-grid { grid-template-columns: 1fr; }
+}
+
+/* ===================================================================== */
+/* v10: ANGRY-BIRDS 3-KAPITEL HUB, CHAPTER TABS & 6-CHARAKTER TABS FIX   */
+/* ===================================================================== */
+@media (min-width: 681px) {
+    .chars-tabs {
+        flex-wrap: nowrap;
+        gap: 5px;
+    }
+    .chars-tab {
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 6px 6px;
+        font-size: 10px;
+        gap: 5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .chars-tab img {
+        width: 28px;
+        height: 28px;
+        flex-shrink: 0;
+    }
+}
+
+.prestart-footer {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 9px;
+}
+#btn-prestart-direct {
+    margin-right: auto;
+}
+#prestart-target-pill {
+    color: #ffd32a;
+    margin-top: 5px;
+    font-size: 13.5px;
+}
+
+/* Modest Level Progress Reset Button & Inline Confirmation Pill */
+.reset-progress-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn.btn-reset-subtle {
+    padding: 6px 11px;
+    font-size: 11px;
+    font-weight: 800;
+    border-radius: 9px;
+    background: rgba(255, 71, 87, 0.12);
+    color: #ff9aa2;
+    border: 1px solid rgba(255, 71, 87, 0.36);
+    box-shadow: none;
+}
+
+.btn.btn-reset-subtle:hover {
+    background: rgba(255, 71, 87, 0.26);
+    border-color: rgba(255, 71, 87, 0.78);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.reset-confirm-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 9px;
+    border-radius: 10px;
+    background: rgba(34, 9, 16, 0.94);
+    border: 1.5px solid #ff4757;
+    font-size: 11px;
+    font-weight: 800;
+    color: #ffd32a;
+    box-shadow: 0 4px 14px rgba(255, 71, 87, 0.32);
+}
+
+.btn.btn-xs {
+    padding: 3px 9px;
+    font-size: 11px;
+    border-radius: 7px;
+}
+
+/* Showcase Sizing for Chapters & Level Select (Desktop Full-Screen Utilization) */
+.chapter-modal-card,
+.chapters-showcase-card {
+    max-width: none;
+    width: min(96vw, 1840px);
+    max-height: 94vh;
+    overflow-y: auto;
+    padding: clamp(16px, 2.2vh, 28px) clamp(20px, 2.6vw, 38px);
+    border: 2.5px solid #ffd32a;
+    border-radius: 24px;
+}
+
+.chapters-showcase-card .modal-header-bar {
+    flex-shrink: 0;
+    margin-bottom: clamp(10px, 1.4vh, 16px);
+}
+
+.chapters-showcase-card .modal-header-bar h2,
+.levels-showcase-card .modal-header-bar h2 {
+    font-size: clamp(20px, 2.2vw, 32px);
+    margin: 2px 0 0;
+}
+
+.chapter-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(14px, 1.8vw, 26px);
+    margin-top: 6px;
+}
+
+.chapter-card {
+    display: flex;
+    flex-direction: column;
+    background: rgba(11, 16, 30, 0.94);
+    border: 2.5px solid rgba(255, 255, 255, 0.16);
+    border-radius: 22px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 7px 0 #070a13, 0 12px 28px rgba(0, 0, 0, 0.52);
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.chapter-card.chap-completed {
+    border-color: rgba(46, 213, 115, 0.78);
+    box-shadow: 0 7px 0 #070a13, 0 0 20px rgba(46, 213, 115, 0.22);
+}
+
+.chapter-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--chap-accent, #ffd32a);
+    box-shadow: 0 9px 0 #070a13, 0 0 28px rgba(255, 211, 42, 0.28);
+}
+
+.chapter-thumb-wrap {
+    position: relative;
+    height: clamp(168px, 27vh, 360px);
+    overflow: hidden;
+    background: #0a0f1c;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.12);
+    flex-shrink: 0;
+}
+
+.chapter-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.35s ease;
+}
+
+.chapter-card:hover .chapter-thumb {
+    transform: scale(1.05);
+}
+
+.chapter-thumb-shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(8, 12, 22, 0.55) 0%, rgba(8, 12, 22, 0.15) 45%, rgba(8, 12, 22, 0.88) 100%);
+    pointer-events: none;
+}
+
+.chapter-num-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    font-size: clamp(10px, 0.85vw, 12px);
+    font-weight: 900;
+    letter-spacing: 0.8px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: rgba(8, 12, 22, 0.88);
+    color: var(--chap-accent, #ffd32a);
+    border: 1.5px solid var(--chap-accent, #ffd32a);
+}
+
+.chapter-clear-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: clamp(10.5px, 0.88vw, 12.5px);
+    font-weight: 900;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: rgba(8, 12, 22, 0.90);
+    color: #e2e8f0;
+    border: 1.5px solid rgba(255, 255, 255, 0.24);
+}
+
+.chapter-clear-badge.partial {
+    color: #2ed573;
+    border-color: rgba(46, 213, 115, 0.72);
+    background: rgba(8, 22, 16, 0.92);
+}
+
+.chapter-clear-badge.done {
+    color: #062111;
+    background: linear-gradient(135deg, #2ed573, #1dd1a1);
+    border-color: #ffffff;
+    box-shadow: 0 0 12px rgba(46, 213, 115, 0.55);
+}
+
+.chapter-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(9px, 1.3vh, 16px);
+    padding: clamp(14px, 1.8vh, 24px) clamp(16px, 1.7vw, 24px);
+}
+
+.chapter-title {
+    font-size: clamp(17px, 1.55vw, 25px);
+    font-weight: 900;
+    color: #ffffff;
+    line-height: 1.18;
+    margin: 0;
+}
+
+.chapter-desc {
+    font-size: clamp(12px, 1.02vw, 15px);
+    color: #b4c0d4;
+    line-height: 1.42;
+    margin: 0;
+}
+
+.chapter-boss-chip {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: clamp(7px, 1vh, 12px) clamp(9px, 1vw, 14px);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.chapter-boss-chip img {
+    width: clamp(32px, 2.5vw, 44px);
+    height: clamp(32px, 2.5vw, 44px);
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1.5px solid var(--chap-accent, #ffd32a);
+    flex-shrink: 0;
+}
+
+.chapter-boss-chip span {
+    font-size: clamp(11.5px, 0.92vw, 14px);
+    font-weight: 800;
+    color: #ffd32a;
+    line-height: 1.28;
+}
+
+.chapter-progress-track {
+    width: 100%;
+    height: clamp(8px, 1vh, 12px);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.chapter-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--chap-accent, #2ed573), #ffd32a);
+    transition: width 0.3s ease;
+}
+
+.chapter-card-actions {
+    margin-top: auto;
+    display: flex;
+    gap: 8px;
+    padding-top: 4px;
+}
+
+.chapter-card-actions .btn-chap-levels {
+    flex: 1;
+    padding: clamp(10px, 1.3vh, 15px) 14px;
+    font-size: clamp(12px, 1vw, 15px);
+    border-radius: 12px;
+}
+
+.chapters-bottom-footer {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: clamp(10px, 1.5vh, 18px);
+    padding-top: clamp(10px, 1.3vh, 16px);
+    border-top: 1.5px solid rgba(255, 255, 255, 0.12);
+}
+
+.chapters-footer-hint {
+    font-size: clamp(12px, 0.98vw, 14.5px);
+    font-weight: 700;
+    color: #b4c0d4;
+}
+
+#btn-chapters-intro-start {
+    flex-shrink: 0;
+    padding: clamp(11px, 1.3vh, 15px) clamp(18px, 2vw, 28px);
+    font-size: clamp(13px, 1.08vw, 16px);
+}
+
+/* Level Select Showcase Modal (Desktop Full-Screen Utilization) */
+#screen-level-select .modal-card,
+.levels-showcase-card {
+    max-width: none;
+    width: min(96vw, 1840px);
+    max-height: 94vh;
+    overflow-y: auto;
+    padding: clamp(15px, 2vh, 26px) clamp(18px, 2.4vw, 34px);
+    border: 2.5px solid rgba(0, 210, 211, 0.55);
+    border-radius: 24px;
+}
+
+.levels-showcase-card .modal-header-bar {
+    flex-shrink: 0;
+    margin-bottom: clamp(8px, 1.2vh, 14px);
+}
+
+.levels-showcase-card .lvl-chapter-tabs,
+.levels-showcase-card .chapter-overview-banner {
+    flex-shrink: 0;
+}
+
+@media (min-width: 821px) and (min-height: 620px) {
+    .chapters-showcase-card {
+        height: min(93vh, 1000px);
+        max-height: 95vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .chapters-showcase-card .chapter-cards-grid {
+        flex: 1 1 auto;
+        min-height: 0;
+        align-items: stretch;
+        margin-top: 0;
+    }
+
+    .chapters-showcase-card .chapter-card {
+        height: 100%;
+        min-height: 0;
+    }
+
+    .chapters-showcase-card .chapter-thumb-wrap {
+        flex: 1 1 44%;
+        height: auto;
+        min-height: clamp(160px, 25vh, 380px);
+    }
+
+    .levels-showcase-card {
+        height: min(93vh, 1000px);
+        max-height: 95vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .levels-showcase-card .level-grid {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-right: 4px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-auto-rows: minmax(clamp(96px, 11.8vh, 140px), 1fr);
+        align-content: stretch;
+        gap: clamp(10px, 1.15vw, 16px);
+    }
+
+    .levels-showcase-card .level-btn-card {
+        padding: clamp(10px, 1.2vh, 16px) 52px clamp(10px, 1.2vh, 16px) clamp(12px, 1.1vw, 18px);
+        gap: clamp(12px, 1.2vw, 18px);
+        border-radius: 16px;
+    }
+
+    .levels-showcase-card .lvl-thumb-wrap {
+        width: clamp(114px, 9.6vw, 174px);
+        height: clamp(68px, 8.6vh, 104px);
+    }
+
+    .levels-showcase-card .lvl-num {
+        font-size: clamp(10.5px, 0.85vw, 12px);
+    }
+
+    .levels-showcase-card .lvl-title {
+        font-size: clamp(14px, 1.08vw, 18px);
+        margin: 3px 0 4px;
+    }
+
+    .levels-showcase-card .level-btn-card p {
+        font-size: clamp(11.5px, 0.92vw, 14px);
+    }
+
+    .levels-showcase-card .lvl-check-corner {
+        top: 14px;
+        right: 14px;
+        width: clamp(26px, 1.9vw, 34px);
+        height: clamp(26px, 1.9vw, 34px);
+        font-size: clamp(14px, 1.05vw, 18px);
+    }
+}
+
+.chapter-overview-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    background: linear-gradient(135deg, rgba(16, 22, 40, 0.94), rgba(10, 14, 26, 0.96));
+    border: 2px solid var(--chap-accent, #ffd32a);
+    border-radius: 14px;
+    padding: 10px 14px;
+    margin: 2px 0 10px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.38);
+}
+
+.chap-ov-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.chap-ov-top {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 3px;
+}
+
+.chap-ov-badge {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.7px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--chap-accent, #ffd32a);
+    border: 1px solid var(--chap-accent, #ffd32a);
+}
+
+.chap-ov-clear-pill {
+    font-size: 10.5px;
+    font-weight: 900;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: rgba(46, 213, 115, 0.14);
+    color: #2ed573;
+    border: 1px solid rgba(46, 213, 115, 0.5);
+}
+
+.chap-ov-clear-pill.done {
+    background: linear-gradient(135deg, #2ed573, #1dd1a1);
+    color: #062111;
+    border-color: #ffffff;
+}
+
+.chap-ov-title {
+    margin: 0 0 2px 0;
+    font-size: 15.5px;
+    font-weight: 900;
+    color: #ffffff;
+}
+
+.chap-ov-desc {
+    margin: 0;
+    font-size: 11.5px;
+    color: #9ba8bd;
+    line-height: 1.3;
+}
+
+.chap-ov-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.win-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.lvl-chapter-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 2px 0 12px;
+}
+
+.lvl-chap-tab {
+    flex: 1 1 0;
+    min-width: 145px;
+    padding: 8px 10px;
+    border-radius: 11px;
+    border: 2px solid rgba(255, 255, 255, 0.16);
+    background: rgba(13, 18, 34, 0.85);
+    color: #cbd5e1;
+    font-family: inherit;
+    font-weight: 900;
+    font-size: 12px;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #070a13;
+    transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.lvl-chap-tab:hover {
+    border-color: #ffd32a;
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.lvl-chap-tab.active {
+    background: linear-gradient(135deg, #ffd32a, #ff9f1a);
+    color: #0b0e18;
+    border-color: #ffffff;
+    box-shadow: 0 3px 0 #7a4b00, 0 0 16px rgba(255, 211, 42, 0.35);
+}
+
+.lvl-mode-pill {
+    display: inline-block;
+    background: rgba(255, 211, 42, 0.16);
+    color: #ffd32a;
+    border: 1px solid rgba(255, 211, 42, 0.45);
+    border-radius: 6px;
+    padding: 1px 6px;
+    font-size: 9.5px;
+    font-weight: 900;
+}
+
+@media (max-height: 619px) and (min-width: 681px) {
+    .chapter-modal-card,
+    .chapters-showcase-card,
+    .levels-showcase-card {
+        padding: 13px 18px;
+        height: auto;
+        max-height: 94vh;
+        overflow-y: auto;
+    }
+    .chapter-thumb-wrap { height: 112px; }
+    .chapter-body { padding: 10px 12px 11px; gap: 6px; }
+    .chapter-title { font-size: 14.5px; }
+    .chapter-desc { font-size: 11px; }
+    .chapter-card-actions .btn-chap-levels { padding: 7px 9px; font-size: 11px; }
+    .chapters-bottom-footer { margin-top: 10px; padding-top: 10px; }
+    .chapters-footer-hint { font-size: 11.5px; }
+    #btn-chapters-intro-start { padding: 9px 16px; font-size: 12.5px; }
+}
+
+@media (max-height: 490px) {
+    .chapter-modal-card,
+    .chapters-showcase-card,
+    .levels-showcase-card {
+        padding: 10px 14px;
+        border-radius: 14px;
+    }
+    .chapters-showcase-card .modal-header-bar,
+    .levels-showcase-card .modal-header-bar { align-items: flex-start; gap: 8px; }
+    .lvl-header-right { flex-wrap: nowrap; flex-shrink: 0; gap: 6px; }
+    .lvl-header-right .btn,
+    .lvl-header-right .btn.btn-sm { padding: 5px 9px; font-size: 10px; white-space: nowrap; }
+    .lvl-header-right .btn.btn-reset-subtle { padding: 4px 8px; font-size: 9.5px; }
+    .chapter-cards-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+    .chapter-thumb-wrap { height: 78px; }
+    .chapter-num-badge, .chapter-clear-badge { font-size: 8.5px; padding: 2px 6px; top: 6px; }
+    .chapter-num-badge { left: 6px; }
+    .chapter-clear-badge { right: 6px; }
+    .chapter-body { padding: 8px 10px; gap: 5px; }
+    .chapter-title { font-size: 12.5px; }
+    .chapter-desc { display: none; }
+    .chapter-boss-chip { padding: 4px 6px; gap: 5px; }
+    .chapter-boss-chip img { width: 22px; height: 22px; }
+    .chapter-boss-chip span { font-size: 9.5px; }
+    .chapter-card-actions .btn-chap-levels { padding: 5px 7px; font-size: 10px; }
+    .chapters-bottom-footer { margin-top: 8px; padding-top: 8px; justify-content: flex-end; }
+    .chapters-footer-hint { display: none; }
+    #btn-chapters-intro-start { padding: 7px 14px; font-size: 11px; width: 100%; }
+    .lvl-chap-tab { min-width: 90px; padding: 5px 7px; font-size: 10px; }
+    .chapter-overview-banner { flex-direction: column; align-items: stretch; padding: 8px 10px; gap: 6px; }
+    .chap-ov-desc { display: none; }
+}
+
+@media (max-width: 820px) and (min-height: 491px) {
+    .chapter-cards-grid {
+        grid-template-columns: 1fr;
+        gap: 11px;
+    }
+    .chapter-thumb-wrap {
+        height: 124px;
+    }
+    .chapters-bottom-footer {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    #btn-chapters-intro-start {
+        width: 100%;
+    }
+    .chapter-overview-banner {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }

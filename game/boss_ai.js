@@ -45,7 +45,13 @@ const BOSS_ATTACKS = {
     energy_can: { telegraph: 16 },
     laptop_arc: { telegraph: 28, warn: "LAPTOPS FLIEGEN! 💻" },
     bag_high:   { telegraph: 34, warn: "FORTNITE ENERGY OBEN! ⬇ DUCKEN!", clip: 'student_tiktok_fortnite' },
-    desk_slide: { telegraph: 34, warn: "CRINGE-WELLE! ⬆ SPRINGEN!", clip: 'student_cringe_king' }
+    desk_slide: { telegraph: 34, warn: "CRINGE-WELLE! ⬆ SPRINGEN!", clip: 'student_cringe_king' },
+    sahur_bat:       { telegraph: 30, warn: "HOLZSCHLÄGER-SCHWUNG! 🛡️ BLOCK!", clip: 'sahur_baseball_swing' },
+    sahur_dash:      { telegraph: 38, warn: "SAHUR RAST AN! ⬆ SPRING!", clip: 'sahur_bat_smash' },
+    sahur_shockwave: { telegraph: 34, warn: "TUNG-TUNG SCHOCKWELLE! ⬆ SPRING!", clip: 'sahur_bat_smash' },
+    drone_pizza:     { telegraph: 24, warn: "FEUER-PIZZA SALVE! 🔥", clip: 'tuktuk_taeschfresser_gpu', altClips: ['tuktuk_melone_sinn'] },
+    drone_laser:     { telegraph: 32, warn: "ORBIT-LASER! ↕ AUSWEICHEN!", clip: 'tuktuk_melone_sinn', altClips: ['thenerean_cataclysmic_blast'] },
+    drone_swoop:     { telegraph: 38, warn: "DRONE-ANFLUG! 🛡️ BLOCK ODER AUSWEICHEN!", clip: 'tuktuk_taeschfresser_gpu' }
 };
 
 // Attack lists per boss type. Duplicates act as weights.
@@ -58,14 +64,18 @@ const BOSS_PATTERNS = {
     duo_partner:     { p1: ['frisbee', 'lane'],              p2: ['lane', 'basketball', 'whistle'],     cooldown: [105, 144] },
     tuktuk_gpu:      { p1: ['cable', 'cable', 'charge'],     p2: ['cable', 'charge', 'fire'],           cooldown: [86, 120] },
     tuktuk_dual_gpu: { p1: ['dual_cable', 'overclock_charge', 'fire'], p2: ['dual_cable', 'overclock_charge', 'fire', 'cable'], cooldown: [78, 110] },
-    gibb_student:    { p1: ['energy_can', 'bag_high', 'laptop_arc'], p2: ['energy_can', 'bag_high', 'laptop_arc', 'desk_slide'], cooldown: [78, 110] }
+    gibb_student:    { p1: ['energy_can', 'bag_high', 'laptop_arc'], p2: ['energy_can', 'bag_high', 'laptop_arc', 'desk_slide'], cooldown: [78, 110] },
+    tung_sahur:      { p1: ['sahur_bat', 'sahur_shockwave', 'sahur_dash'], p2: ['sahur_bat', 'sahur_shockwave', 'sahur_dash', 'laptop_arc'], cooldown: [76, 108] },
+    drone_tuktuk:    { p1: ['drone_pizza', 'drone_laser', 'drone_swoop'], p2: ['drone_pizza', 'drone_laser', 'drone_swoop', 'dual_cable'], cooldown: [74, 106] }
 };
 
 const BOSS_PHASE2_LINES = {
     monika: { text: "Ganz ruhig bleiben?! JETZT NÖD MEH!", clip: 'monika_ganz_ruhig', enrageClip: 'boss_evil_laugh' },
     adam:   { text: "Du hesch de Schuss verpasst — JETZT GITS E STRAFE!", clip: 'adam_strafe_verpasst', enrageClip: 'adam_hilf_mir' },
     tuktuk: { text: "TÄSCHFRESSER! ZWEI GRAFIKKARTE AM LIMIT!", clip: 'tuktuk_taeschfresser_gpu', enrageClip: 'thenerean_verdammt_maschine' },
-    gibb_student: { text: "Ich bin der Cringe King von TikTok! ⚡", clip: 'student_cringe_king', enrageClip: 'student_tiktok_fortnite' }
+    gibb_student: { text: "Ich bin der Cringe King von TikTok! ⚡", clip: 'student_cringe_king', enrageClip: 'student_tiktok_fortnite' },
+    tung_sahur: { text: "TUNG TUNG SAHUR!! JETZT GIBT'S SCHLÄGER-SMASH!", clip: 'sahur_bat_smash', enrageClip: 'sahur_baseball_swing' },
+    drone_tuktuk: { text: "DRONE MK-III OVERCLOCK!! MACHET D'MELONE JETZT SINN?!", clip: 'tuktuk_taeschfresser_gpu', enrageClip: 'tuktuk_melone_sinn' }
 };
 
 const BossAI = {
@@ -92,6 +102,8 @@ const BossAI = {
     },
 
     getBossFamily(b) {
+        if (b.type === 'tung_sahur') return 'tung_sahur';
+        if (b.type === 'drone_tuktuk') return 'drone_tuktuk';
         if (b.type === 'gibb_student') return 'gibb_student';
         if (b.type === 'tuktuk_gpu' || b.type === 'tuktuk_dual_gpu') return 'tuktuk';
         if (b.type === 'adam' || b.type === 'adam_miniboss') return 'adam';
@@ -558,6 +570,113 @@ const BossAI = {
                 window.soundManager.playThrow();
                 break;
             }
+
+            case 'sahur_bat': {
+                const fireBatSwing = () => {
+                    if (b.hp <= 0) return;
+                    b.attackAnimTimer = 18;
+                    this.projectiles.push({
+                        x: originX, y: b.y + b.h * 0.28,
+                        vx: 10.6 * pSpd * dir, vy: (this.player.y - b.y) * 0.015,
+                        w: 58, h: 48,
+                        isPlayer: false, type: 'sahur_shockwave', damage: sDmg(11),
+                        rotation: 0, noSpin: true, trailColor: '#ff9f1a'
+                    });
+                    window.soundManager.playBatSmash();
+                    this.screenShake = 8;
+                    this.spawnBurst(originX, b.y + b.h * 0.35, 10, '#ffa502', 5.5, 16);
+                };
+                fireBatSwing();
+                if (p2) b.ai.pending.push({ delay: 22, fire: fireBatSwing });
+                break;
+            }
+
+            case 'sahur_dash': {
+                b.ai.charge = {
+                    dir: dir,
+                    speed: (p2 ? 15.6 : 13.0) * (diff.speedMult || 1),
+                    hitDone: false,
+                    reboundsLeft: 0,
+                    isSahurDash: true
+                };
+                b.facing = dir;
+                window.soundManager.playBatSmash();
+                this.screenShake = 11;
+                break;
+            }
+
+            case 'sahur_shockwave': {
+                const fireSahurWave = () => {
+                    if (b.hp <= 0) return;
+                    b.attackAnimTimer = 18;
+                    this.projectiles.push({
+                        x: originX, y: gy - 50,
+                        vx: 8.6 * pSpd * dir, vy: 0,
+                        w: 80, h: 50,
+                        isPlayer: false, type: 'sahur_shockwave', damage: sDmg(11),
+                        rotation: 0, noSpin: true, trailColor: '#ffa502'
+                    });
+                    this.spawnBurst(originX, gy - 22, 12, '#ffa502', 5.5, 16);
+                    window.soundManager.playBatSmash();
+                };
+                fireSahurWave();
+                if (p2) b.ai.pending.push({ delay: 32, fire: fireSahurWave });
+                break;
+            }
+
+            case 'drone_pizza': {
+                const spd = (p2 ? 9.6 : 8.2) * pSpd;
+                const aimX = (this.player.x + this.player.w * 0.5) - originX;
+                const aimY = (this.player.y + this.player.h * 0.5) - (b.y + b.h * 0.45);
+                const baseAng = Math.atan2(aimY, aimX);
+                const offsets = p2 ? [-0.26, 0, 0.26] : [-0.18, 0.18];
+                for (const off of offsets) {
+                    const ang = baseAng + off;
+                    this.projectiles.push({
+                        x: originX, y: b.y + b.h * 0.42,
+                        vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
+                        w: 44, h: 44,
+                        isPlayer: false, type: 'fire_pizza', damage: sDmg(10),
+                        rotation: 0, trailColor: '#ff6348'
+                    });
+                }
+                window.soundManager.playThrow();
+                this.spawnBurst(originX, b.y + b.h * 0.45, 10, '#ff6348', 5, 16);
+                break;
+            }
+
+            case 'drone_laser': {
+                const fireDroneLaser = () => {
+                    if (b.hp <= 0) return;
+                    b.attackAnimTimer = 16;
+                    this.projectiles.push({
+                        x: originX, y: b.y + b.h * 0.42,
+                        vx: 12.2 * pSpd * dir, vy: 0,
+                        w: 96, h: 24,
+                        isPlayer: false, type: 'drone_laser', damage: sDmg(11),
+                        rotation: 0, noSpin: true, trailColor: '#00d2d3'
+                    });
+                    window.soundManager.playRocketLaser();
+                    this.spawnBurst(originX, b.y + b.h * 0.45, 10, '#00d2d3', 5, 14);
+                };
+                fireDroneLaser();
+                if (p2) b.ai.pending.push({ delay: 24, fire: fireDroneLaser });
+                break;
+            }
+
+            case 'drone_swoop': {
+                b.ai.charge = {
+                    dir: dir,
+                    speed: (p2 ? 15.2 : 12.6) * (diff.speedMult || 1),
+                    hitDone: false,
+                    reboundsLeft: 0,
+                    isAerial: true
+                };
+                b.facing = dir;
+                window.soundManager.playRocketLaser();
+                this.screenShake = 11;
+                break;
+            }
         }
     },
 
@@ -566,18 +685,29 @@ const BossAI = {
         b.x += c.dir * c.speed;
         b.facing = c.dir;
 
-        if (Math.random() > 0.3) this.spawnRunDust(b.x + (c.dir < 0 ? b.w : 0), this.player.groundY);
-        if (Math.random() > 0.5) {
-            this.particles.push({
-                x: b.x + b.w * 0.5, y: b.y + 20,
-                vx: -c.dir * (2 + Math.random() * 2), vy: -2 - Math.random() * 2,
-                life: 22, maxLife: 22, color: '#ff6348', size: 6 + Math.random() * 5
-            });
+        if (c.isAerial) {
+            b.y = Math.max(76, Math.min(canvas.height - b.h - 54, b.y + (this.player.y - b.y) * 0.06));
+            if (Math.random() > 0.35) {
+                this.particles.push({
+                    x: b.x + (c.dir < 0 ? b.w : 0), y: b.y + b.h * 0.5,
+                    vx: -c.dir * (2.5 + Math.random() * 2), vy: (Math.random() - 0.5) * 2,
+                    life: 20, maxLife: 20, color: '#00d2d3', size: 6 + Math.random() * 4
+                });
+            }
+        } else {
+            if (Math.random() > 0.3) this.spawnRunDust(b.x + (c.dir < 0 ? b.w : 0), this.player.groundY);
+            if (Math.random() > 0.5) {
+                this.particles.push({
+                    x: b.x + b.w * 0.5, y: b.y + 20,
+                    vx: -c.dir * (2 + Math.random() * 2), vy: -2 - Math.random() * 2,
+                    life: 22, maxLife: 22, color: c.isSahurDash ? '#ffa502' : '#ff6348', size: 6 + Math.random() * 5
+                });
+            }
         }
 
-        // Only the lower part of the TukTuk hurts, so it can be jumped over
-        const hitY = b.y + b.h * 0.55;
-        const hitH = b.h * 0.45;
+        // Only the lower part of the ground charge hurts so it can be jumped over; aerial swoops use full hull
+        const hitY = c.isAerial ? (b.y + 8) : (b.y + b.h * 0.50);
+        const hitH = c.isAerial ? Math.max(24, b.h - 16) : (b.h * 0.50);
         const p = this.player;
         if (!c.hitDone && this.checkCollision(b.x + 12, hitY, b.w - 24, hitH, p.x + 10, p.y + 10, p.w - 20, p.h - 14)) {
             c.hitDone = true;
@@ -586,7 +716,10 @@ const BossAI = {
                 b.ai.charge = null;
                 b.x -= c.dir * 30;
                 this.stunBoss(b, BOSS_TUNING.chargeBlockStunFrames);
-                this.onPerfectBlockReward(p.x + p.w * 0.5, p.y + p.h * 0.45, "PERFEKT! TUKTUK GSTOPPT! ⚡");
+                const stopMsg = c.isAerial
+                    ? "PERFEKT! DRONE GSTOPPT! ⚡"
+                    : (c.isSahurDash ? "PERFEKT! SAHUR GSTOPPT! ⚡" : "PERFEKT! TUKTUK GSTOPPT! ⚡");
+                this.onPerfectBlockReward(p.x + p.w * 0.5, p.y + p.h * 0.45, stopMsg);
                 return;
             }
             if (p.isBlocking) {
@@ -594,7 +727,8 @@ const BossAI = {
             } else {
                 const diffC = this.getActiveDifficulty ? this.getActiveDifficulty() : { dmgMult: 1 };
                 const chargeDmg = Math.max(8, Math.round((c.isOverclock ? 18 : 15) * (diffC.dmgMult || 1)));
-                if (this.onPlayerHit(chargeDmg, 'tuktuk_charge')) {
+                const hitReason = c.isAerial ? 'drone_laser' : (c.isSahurDash ? 'sahur_bat' : 'tuktuk_charge');
+                if (this.onPlayerHit(chargeDmg, hitReason)) {
                     p.pushVx = c.dir * 14;
                 }
             }
@@ -847,6 +981,11 @@ const BossAI = {
     // ---------------------------------------------------------------------
     // Returns true if the projectile should be removed.
     applyProjectileGravity(proj) {
+        if (this.level && this.level.mode === 'rocket_flight') {
+            if (!proj.g) return false;
+            proj.vy += proj.g;
+            return proj.y > canvas.height + 60;
+        }
         if (!proj.g) return false;
         proj.vy += proj.g;
         const gy = this.player.groundY;
@@ -887,6 +1026,64 @@ const BossAI = {
             return true;
         }
 
+        if (proj.type === 'sahur_shockwave') {
+            ctx.save();
+            const grad = ctx.createLinearGradient(proj.x, 0, proj.x + proj.w, 0);
+            grad.addColorStop(0, 'rgba(255, 165, 2, 0.18)');
+            grad.addColorStop(0.5, color || 'rgba(255, 165, 2, 0.92)');
+            grad.addColorStop(1, 'rgba(255, 99, 72, 0.25)');
+            ctx.fillStyle = grad;
+            ctx.strokeStyle = color || '#ffd32a';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.roundRect(proj.x, proj.y, proj.w, proj.h, 12);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#080b12';
+            ctx.font = '900 13px Outfit, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('BONK!', cx, cy);
+            ctx.restore();
+            return true;
+        }
+
+        if (proj.type === 'drone_laser') {
+            ctx.save();
+            const beamCol = color || '#00d2d3';
+            ctx.shadowColor = beamCol;
+            ctx.shadowBlur = 16;
+            ctx.fillStyle = beamCol;
+            ctx.beginPath();
+            ctx.roundRect(proj.x, proj.y, proj.w, proj.h, 12);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.roundRect(proj.x + 6, proj.y + proj.h * 0.28, proj.w - 12, proj.h * 0.44, 6);
+            ctx.fill();
+            ctx.restore();
+            return true;
+        }
+
+        if (proj.type === 'melon_laser') {
+            ctx.save();
+            ctx.shadowColor = '#2ed573';
+            ctx.shadowBlur = 14;
+            const grad = ctx.createLinearGradient(proj.x, 0, proj.x + proj.w, 0);
+            grad.addColorStop(0, '#2ed573');
+            grad.addColorStop(1, '#ff4757');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.roundRect(proj.x, proj.y, proj.w, proj.h, 8);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.roundRect(proj.x + 8, proj.y + proj.h * 0.3, proj.w - 14, proj.h * 0.4, 4);
+            ctx.fill();
+            ctx.restore();
+            return true;
+        }
+
         if (proj.type === 'shout_blast' || proj.type === 'whistle_wave') {
             ctx.save();
             const base = color || (proj.type === 'shout_blast' ? '#ffd32a' : '#00d2d3');
@@ -921,6 +1118,8 @@ const BossAI = {
             case 'law_book': return images.item_gesetz;
             case 'energy_can': return images.energy_can;
             case 'laptop': return images.projectile_laptop;
+            case 'fire_pizza': return images.fire_pizza;
+            case 'melon_laser': return images.item_melon;
             default: return proj.isPlayer ? images.item_gesetz : images.red_card;
         }
     },
@@ -994,8 +1193,13 @@ const BossAI = {
             case 'whistle': zone = { y: gy - ph * 0.98, h: ph * 0.36, label: '⬇ DUCK' }; break;
             case 'charge':           zone = { y: gy - b.h * 0.45, h: b.h * 0.45, label: '⬆ SPRING' }; break;
             case 'overclock_charge': zone = { y: gy - b.h * 0.45, h: b.h * 0.45, label: '⚡ DOUBLE-SPRING!' }; break;
-            case 'bag_high':   zone = { y: gy - ph * 0.96, h: ph * 0.34, label: '⬇ DUCK' }; break;
-            case 'desk_slide': zone = { y: gy - 44, h: 44, label: '⬆ SPRING' }; break;
+            case 'bag_high':        zone = { y: gy - ph * 0.96, h: ph * 0.34, label: '⬇ DUCK' }; break;
+            case 'desk_slide':      zone = { y: gy - 44, h: 44, label: '⬆ SPRING' }; break;
+            case 'sahur_shockwave': zone = { y: gy - 50, h: 50, label: '⬆ SPRING' }; break;
+            case 'sahur_dash':      zone = { y: gy - b.h * 0.50, h: b.h * 0.50, label: '⬆ SPRING / 🛡' }; break;
+            case 'sahur_bat':       zone = { y: b.y + b.h * 0.22, h: 52, label: '🛡 BLOCK' }; break;
+            case 'drone_laser':     zone = { y: b.y + b.h * 0.36, h: 34, label: '↕ LASER!' }; break;
+            case 'drone_swoop':     zone = { y: b.y + 8, h: Math.max(32, b.h - 16), label: '⚡ ANFLUG!' }; break;
             case 'lane':
                 zone = tg.lane === 'high'
                     ? { y: gy - ph * 0.85, h: 28, label: '⬇ DUCK' }

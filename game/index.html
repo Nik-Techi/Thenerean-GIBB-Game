@@ -414,7 +414,7 @@
             <div class="lobby-showcase">
                 <!-- TOP: Großer animierter Titel -->
                 <header class="lobby-hero-header">
-                    <div class="game-badge comic-badge">🇨🇭 GIBB BERUFSSCHULE BERN • EFZ KAMPAGNE • 10 LEHRJAHRE</div>
+                    <div class="game-badge comic-badge">🇨🇭 GIBB BERUFSSCHULE BERN • EFZ KAMPAGNE • 3 KAPITEL • 30 LEHRJAHRE</div>
                     <h1 class="lobby-big-title">THENEREAN <span>SELVABANKUMAR</span></h1>
                     <p class="lobby-tagline">ABU-Witze, Mensa-Bankomat, Dual-GPU TukTuk &amp; das grosse <strong>EFZ-Finale 6.0!</strong></p>
                 </header>
@@ -494,14 +494,14 @@
             </div>
         </div>
 
-        <!-- Pre-Start Setup Modal (Schwierigkeit & 3-Stufen Sound-Chaos) -->
+        <!-- Game-Start Setup Modal (Schwierigkeit & 3-Stufen Sound-Chaos erst beim Start) -->
         <div id="screen-prestart" class="screen-overlay hidden">
             <div class="menu-card modal-card glass-panel prestart-card">
                 <div class="modal-header-bar">
                     <div>
-                        <span class="game-badge comic-badge">⚙️ EINSATZ-VORBEREITUNG</span>
-                        <h2>LEHRE KONFIGURIEREN</h2>
-                        <p class="campaign-summary">Bestimme Boss-HP &amp; Aggressivität sowie die Anzahl gleichzeitiger Sounds im Spiel.</p>
+                        <span class="game-badge comic-badge">⚔️ VORBEREITUNG BEIM SPIELSTART</span>
+                        <h2>SCHWIERIGKEIT &amp; SOUND WÄHLEN</h2>
+                        <p id="prestart-target-pill" class="campaign-summary">Ziel: Intro &amp; Kapitel 1 — Level 1</p>
                     </div>
                     <button id="btn-close-prestart" class="btn btn-secondary">ZURÜCK</button>
                 </div>
@@ -575,27 +575,82 @@
                 </div>
 
                 <div class="prestart-footer">
-                    <button id="btn-prestart-direct" class="btn btn-secondary">⚡ DIREKT IN LEVEL 1</button>
-                    <button id="btn-prestart-launch" class="btn btn-primary btn-lg">🎬 LEHRE &amp; RANDOM-INTRO STARTEN ▶</button>
+                    <button id="btn-prestart-direct" class="btn btn-secondary">⚡ DIREKT OHNE TRAILER</button>
+                    <button id="btn-prestart-launch" class="btn btn-primary btn-lg">🎮 SPIEL JETZT STARTEN ▶</button>
                 </div>
             </div>
         </div>
 
-        <!-- Level Select Modal -->
-        <div id="screen-level-select" class="screen-overlay hidden">
-            <div class="menu-card modal-card glass-panel">
+        <!-- Angry-Birds Chapter Select Modal (Fullscreen Showcase: 3 grosse Kapitel-Kacheln) -->
+        <div id="screen-chapters" class="screen-overlay hidden">
+            <div class="menu-card modal-card glass-panel chapter-modal-card chapters-showcase-card">
                 <div class="modal-header-bar">
                     <div>
-                        <span class="game-badge">GIBB KAMPAGNE</span>
-                        <h2>WÄHLE DEIN LEHRJAHR AN DER GIBB</h2>
-                        <p id="campaign-summary" class="campaign-summary">Fortschritt: 0 / 10 Lehrjahre abgeschlossen</p>
+                        <span class="game-badge comic-badge">🗺️ KAMPAGNEN-KAPITEL • 3 × 10 LEVELS</span>
+                        <h2>WÄHLE DEIN KAPITEL</h2>
+                        <p id="chapters-summary" class="campaign-summary">Fortschritt: 0 / 30 Lehrjahre abgeschlossen</p>
                     </div>
                     <div class="lvl-header-right">
-                        <div class="lvl-quick-settings">
-                            <button id="btn-lvl-diff-cycle" class="btn btn-secondary btn-sm" title="Schwierigkeit direkt wechseln">🔵 NORMAL</button>
-                            <button id="btn-lvl-sound-cycle" class="btn btn-secondary btn-sm" title="Sound-Stufe (1 / 2 / 3) wechseln">🔉 STUFE 2</button>
+                        <div class="reset-progress-group">
+                            <button type="button" id="btn-chapters-reset" class="btn btn-reset-subtle" title="Alle grünen Haken &amp; Levelstände zurücksetzen">↺ RESET</button>
+                            <div id="chapters-reset-confirm" class="reset-confirm-pill hidden">
+                                <span>Levelstände löschen?</span>
+                                <button type="button" id="btn-chapters-reset-yes" class="btn btn-danger btn-xs">✔ Ja</button>
+                                <button type="button" id="btn-chapters-reset-no" class="btn btn-secondary btn-xs">✕</button>
+                            </div>
                         </div>
+                        <button id="btn-open-all-levels" class="btn btn-secondary btn-sm">📚 ALLE 30 LEVELS</button>
+                        <button id="btn-close-chapters" class="btn btn-secondary">ZURÜCK</button>
+                    </div>
+                </div>
+                <div id="chapter-cards-grid" class="chapter-cards-grid"></div>
+                <div class="chapters-bottom-footer">
+                    <span class="chapters-footer-hint">💡 Klicke auf ein Kapitel-Feld für die 10-Level-Übersicht — oder starte direkt mit Intro:</span>
+                    <button type="button" id="btn-chapters-intro-start" class="btn btn-primary btn-lg">🎬 INTRO &amp; KAPITEL 1 STARTEN ▶</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Level Select Modal (Fullscreen Showcase: Grosse Level-Kacheln) -->
+        <div id="screen-level-select" class="screen-overlay hidden">
+            <div class="menu-card modal-card glass-panel levels-showcase-card">
+                <div class="modal-header-bar">
+                    <div>
+                        <span class="game-badge">GIBB KAMPAGNE • 30 LEVELS</span>
+                        <h2>WÄHLE DEIN LEHRJAHR AN DER GIBB</h2>
+                        <p id="campaign-summary" class="campaign-summary">Fortschritt: 0 / 30 Lehrjahre abgeschlossen</p>
+                    </div>
+                    <div class="lvl-header-right">
+                        <div class="reset-progress-group">
+                            <button type="button" id="btn-levels-reset" class="btn btn-reset-subtle" title="Alle grünen Haken &amp; Levelstände zurücksetzen">↺ RESET</button>
+                            <div id="levels-reset-confirm" class="reset-confirm-pill hidden">
+                                <span>Levelstände löschen?</span>
+                                <button type="button" id="btn-levels-reset-yes" class="btn btn-danger btn-xs">✔ Ja</button>
+                                <button type="button" id="btn-levels-reset-no" class="btn btn-secondary btn-xs">✕</button>
+                            </div>
+                        </div>
+                        <button id="btn-back-to-chapters" class="btn btn-demo btn-sm" title="Zur Kapitel-Auswahl">🗺️ KAPITEL</button>
                         <button id="btn-close-lvl" class="btn btn-secondary">ZURÜCK</button>
+                    </div>
+                </div>
+                <div class="lvl-chapter-tabs" id="lvl-chapter-tabs" role="tablist">
+                    <button type="button" class="lvl-chap-tab active" data-chap="1">📖 KAPITEL 1 (1–10)</button>
+                    <button type="button" class="lvl-chap-tab" data-chap="2">🚀 KAPITEL 2 (11–20)</button>
+                    <button type="button" class="lvl-chap-tab" data-chap="3">🛸 KAPITEL 3 (21–30)</button>
+                    <button type="button" class="lvl-chap-tab" data-chap="all">🌟 ALLE 30 LEVELS</button>
+                </div>
+                <div id="chapter-overview-banner" class="chapter-overview-banner hidden">
+                    <div class="chap-ov-info">
+                        <div class="chap-ov-top">
+                            <span id="chap-ov-badge" class="chap-ov-badge">KAPITEL 1 • LEVEL 1–10</span>
+                            <span id="chap-ov-clear-pill" class="chap-ov-clear-pill">0 / 10 ✓</span>
+                        </div>
+                        <h3 id="chap-ov-title" class="chap-ov-title">Bern, GIBB &amp; TukTuk-Ausbruch</h3>
+                        <p id="chap-ov-desc" class="chap-ov-desc"></p>
+                    </div>
+                    <div class="chap-ov-actions">
+                        <button type="button" id="btn-chapter-play-start" class="btn btn-primary">🎬 KAPITEL 1 STARTEN (TRAILER + LEVEL 1) ▶</button>
+                        <button type="button" id="btn-chapter-resume" class="btn btn-demo hidden">▶ WEITER BEI LEVEL 2</button>
                     </div>
                 </div>
                 <div class="level-grid"></div>
@@ -628,6 +683,9 @@
                     </button>
                     <button class="chars-tab" data-char="gibb_student">
                         <img src="assets/sprites/gibb_student_avatar.png" alt="">GIBB SCHÜLER
+                    </button>
+                    <button class="chars-tab" data-char="tung_sahur">
+                        <img src="assets/sprites/sahur_avatar.png" alt="">TUNG SAHUR
                     </button>
                 </div>
 
@@ -672,7 +730,10 @@
                         <strong id="win-combo" class="win-stat-val">0×</strong>
                     </div>
                 </div>
-                <button id="btn-next-lvl" class="btn btn-primary btn-lg">NÄCHSTES LEHRJAHR ANTRETEN ▶</button>
+                <div class="win-actions">
+                    <button id="btn-next-lvl" class="btn btn-primary btn-lg">NÄCHSTES LEHRJAHR ANTRETEN ▶</button>
+                    <button id="btn-win-chapters" class="btn btn-secondary">📚 KAPITEL &amp; LEVELS</button>
+                </div>
             </div>
         </div>
 
