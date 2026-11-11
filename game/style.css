@@ -4662,3 +4662,33 @@ body.touch-active #control-hint-pill {
 .dossier-row.record p { color: #ffe58a; font-weight: 700; }
 .chars-tabs.chars-tabs-v9 { flex-wrap: wrap; }
 .chars-tabs.chars-tabs-v9 .chars-tab { flex: 1 1 22%; }
+
+/* V9: guided training panel */
+.tutorial-panel {
+    position: absolute;
+    top: 150px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 22px;
+    max-width: min(760px, 92vw);
+    border-radius: 16px;
+    background: rgba(12, 16, 28, 0.92);
+    border: 2px solid #ffa502;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    text-align: center;
+    pointer-events: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.tutorial-panel.flash, .tutorial-panel.done { border-color: #2ed573; box-shadow: 0 0 28px rgba(46, 213, 115, 0.55); }
+.tut-step { font-size: 11px; font-weight: 900; letter-spacing: 1.4px; color: #ffa502; }
+.tutorial-panel.done .tut-step { color: #2ed573; }
+.tut-text { font-size: 16px; font-weight: 800; color: #fff; line-height: 1.5; }
+.tut-pips { display: flex; gap: 5px; }
+.tut-pips i { width: 22px; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.16); }
+.tut-pips i.ok { background: #2ed573; }
+.tut-pips i.cur { background: #ffa502; }

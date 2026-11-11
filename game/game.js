@@ -7249,8 +7249,7 @@ class Game {
             ctx.restore();
         }
 
-        const sprite = images[poseKey] || images.thenerean_idle || images.thenerean_hero;
-        this.drawCharacterSprite(sprite, footX, footY, p.h, p.facing, p.hitFlash, sx, sy, tilt);
+        this.drawPlayerSpriteFx(poseKey, footX, footY, sx, sy, tilt);
 
         if (p.isBlocking) {
             this.drawShieldAura(footX, footY, p.h, p.facing);

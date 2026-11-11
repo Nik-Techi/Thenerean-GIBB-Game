@@ -784,7 +784,7 @@ const BossAI = {
             const feetOnFire = feetOnGround && p.x + p.w - 16 > h.x && p.x + 16 < h.x + h.w;
             if (feetOnFire) {
                 const diffH = this.getActiveDifficulty ? this.getActiveDifficulty() : { dmgMult: 1 };
-                this.onPlayerHit(Math.max(4, Math.round(6 * (diffH.dmgMult || 1))), isElectric ? 'floor_zone' : 'fire');
+                this.onPlayerHit(Math.max(4, Math.round((h.dmg || 6) * (diffH.dmgMult || 1))), isElectric ? 'floor_zone' : 'fire');
             }
             if (h.life <= 0) this.hazards.splice(i, 1);
         }
