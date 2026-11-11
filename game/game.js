@@ -564,6 +564,8 @@ class Game {
         this.syncSetupControlsUI();
         this.saveSyncPromise = this.localSaveEnabled ? this.syncSaveFromServer() : Promise.resolve(this.saveData);
 
+        this.initExpansion();
+
         this.lastFrameTime = performance.now();
         requestAnimationFrame((t) => this.loop(t));
     }
@@ -1025,7 +1027,7 @@ class Game {
             } else if (this.state === GAME_STATE.DEMO) {
                 if (e.code === 'Space') this.playerJump();
                 if (!e.repeat && lower === 'e') this.playerAttackLawBook();
-                if (lower === 'q' || e.code === 'ShiftLeft') this.playerAttackMegaShout();
+                if (lower === 'q') this.playerAttackMegaShout();
                 if (lower === 'f') this.playerAttackFrisbeeVolley();
                 if (lower === 'r') this.playerBlock();
                 if (lower === 's' || lower === 'x') this.triggerSprintBurst(75);
@@ -1034,14 +1036,14 @@ class Game {
                 const isClimb = this.level && this.level.mode === 'vertical_climb';
                 if (isRocket) {
                     if (!e.repeat && (lower === 'e' || e.code === 'Space')) this.playerAttackLawBook();
-                    if (lower === 'q' || e.code === 'ShiftLeft') this.playerAttackMegaShout();
+                    if (lower === 'q') this.playerAttackMegaShout();
                     if (lower === 'f') this.playerAttackFrisbeeVolley();
                     if (lower === 'r') this.playerBlock();
                     if (lower === 'x') this.triggerSprintBurst(75);
                 } else {
                     if (e.code === 'Space' || (isClimb && (lower === 'w' || lower === 'arrowup'))) this.playerJump();
                     if (!e.repeat && lower === 'e') this.playerAttackLawBook();
-                    if (lower === 'q' || e.code === 'ShiftLeft') this.playerAttackMegaShout();
+                    if (lower === 'q') this.playerAttackMegaShout();
                     if (lower === 'f') this.playerAttackFrisbeeVolley();
                     if (lower === 'r') this.playerBlock();
                     if (lower === 's' || lower === 'x') this.triggerSprintBurst(75);
@@ -1951,6 +1953,7 @@ class Game {
             const disk = json && json.data;
             if (!disk || typeof disk !== 'object') return this.saveData;
 
+            this.adoptDiskMeta(disk.meta);
             const mergedLevels = this.mergeSaveLevels(disk.levels, this.saveData && this.saveData.levels);
             const prefs = disk.prefs && typeof disk.prefs === 'object' ? disk.prefs : {};
             if (prefs.difficulty && DIFFICULTY_PRESETS[prefs.difficulty]) {
@@ -2665,6 +2668,7 @@ class Game {
         } else {
             this.player.vx = 0;
         }
+        this.applyDashMove();
 
         if (this.player.isDucking && this.player.isGrounded) {
             this.player.vx *= 0.80;
@@ -3474,7 +3478,7 @@ class Game {
         window.soundManager.stopAllClips();
 
         this.currentLevelIndex = index;
-        this.level = LEVELS_CONFIG[index];
+        this.level = index === 'endless' ? this.buildEndlessLevel() : LEVELS_CONFIG[index];
 
         this.resizeCanvas();
         const groundPos = this.player.groundY;
@@ -4275,13 +4279,13 @@ class Game {
 
     // ATTACK 2 (Q / Shift): "ICH STAH DOCH DA!" Mega Shockwave
     playerAttackMegaShout() {
-        if (this.player.megaEnergy < 40 && this.state !== GAME_STATE.DEMO) {
+        if (this.player.megaEnergy < this.mods.megaCost && this.state !== GAME_STATE.DEMO) {
             this.addFloatingText("Energie lädt auf!", this.player.x + 20, this.player.y - 14, '#ff4757', 17);
             return;
         }
 
         if (this.state !== GAME_STATE.DEMO) {
-            this.player.megaEnergy -= 40;
+            this.player.megaEnergy -= this.mods.megaCost;
         }
         this.updateBars();
 
@@ -4313,7 +4317,7 @@ class Game {
             h: 72,
             type: 'mega_beam',
             isPlayer: true,
-            damage: Math.round(70 * dmgMult),
+            damage: Math.round(70 * dmgMult * this.mods.megaDmgMult),
             rotation: 0,
             trailColor: '#ffd32a'
         });
@@ -4360,7 +4364,7 @@ class Game {
 
         const dir = this.player.facing || 1;
         const dmgMult = this.player.powerTimer > 0 ? 1.5 : 1.0;
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < this.mods.frisbeeCount; i++) {
             const tid = setTimeout(() => {
                 if (this.isPaused) return;
                 if (this.state !== GAME_STATE.RUNNING && this.state !== GAME_STATE.BOSS_FIGHT && this.state !== GAME_STATE.DEMO) return;
@@ -4472,6 +4476,8 @@ class Game {
             this.player.jumpBuffered = false;
             this.spawnRunDust(this.player.x + this.player.w * 0.4, this.player.groundY);
             window.soundManager.playJump();
+        } else if (this.tryAirJump()) {
+            return;
         } else {
             // Mobile / climb jump buffer: if tapped right before landing, jump instantly on touchdown
             if ((this.level && this.level.mode === 'vertical_climb') || this.player.y >= this.player.groundY - this.player.h - 60) {
@@ -4938,7 +4944,7 @@ class Game {
 
         if (isActiveStage) {
             const powered = this.player.powerTimer > 0;
-            const regenRate = powered ? 0.32 : 0.16;
+            const regenRate = (powered ? 0.32 : 0.16) * this.mods.energyRegenMult;
             if (this.player.megaEnergy < this.player.maxMegaEnergy) {
                 this.player.megaEnergy = Math.min(this.player.maxMegaEnergy, this.player.megaEnergy + regenRate);
             }
@@ -5152,6 +5158,7 @@ class Game {
         } else {
             this.player.vx = 0;
         }
+        this.applyDashMove();
 
         const prevBottom = this.player.y + this.player.h;
         this.player.x = Math.max(24, Math.min(canvas.width - this.player.w - 24, this.player.x + this.player.vx));
@@ -5291,6 +5298,7 @@ class Game {
         p.vx *= 0.85;
         p.facing = 1;
 
+        this.applyRocketDash();
         const maxX = canvas.width * (this.state === GAME_STATE.BOSS_FIGHT ? 0.56 : 0.74);
         p.x = Math.max(28, Math.min(maxX, p.x + p.vx));
         p.y = Math.max(74, Math.min(canvas.height - p.h - 54, p.y + p.vy));
@@ -5516,6 +5524,7 @@ class Game {
         } else {
             this.player.vx = 0;
         }
+        this.applyDashMove();
 
         if (this.player.isDucking && this.player.isGrounded) {
             this.player.vx *= 0.80;
@@ -5901,6 +5910,7 @@ class Game {
         } else {
             this.player.vx = 0;
         }
+        this.applyDashMove();
 
         if (this.player.isDucking && this.player.isGrounded) {
             this.player.vx *= 0.80;
@@ -6119,6 +6129,10 @@ class Game {
         this.updateBossHazards();
 
         if (this.boss && this.boss.hp <= 0 && (!this.duoPartner || this.duoPartner.hp <= 0)) {
+            if (this.level && this.level.endless) {
+                this.onEndlessWaveCleared();
+                return;
+            }
             if (this.level && this.level.mode === 'wave_rush' && this.level.waves && (this.currentWaveIndex + 1) < this.level.waves.length) {
                 this.startWave(this.currentWaveIndex + 1);
                 return;
@@ -6320,6 +6334,10 @@ class Game {
                 }
 
                 if (this.checkCollision(p.x, p.y, p.w, p.h, this.player.x + 10, pHitY, this.player.w - 20, pHitH)) {
+                    if (this.player.dashTimer > 0) {
+                        this.onPerfectDodge(p);
+                        continue;
+                    }
                     if (this.player.isBlocking) {
                         if (this.isPerfectBlockTiming()) {
                             this.reflectProjectile(p);
@@ -6476,7 +6494,7 @@ class Game {
         this.ui.energyValText.textContent = `${Math.round(energyPct)}%`;
         this.ui.scoreVal.textContent = this.player.score.toFixed(1);
 
-        const megaReady = this.player.megaEnergy >= 40 || this.state === GAME_STATE.DEMO;
+        const megaReady = this.player.megaEnergy >= this.mods.megaCost || this.state === GAME_STATE.DEMO;
         if (this.ui.hudEnergyFill) {
             this.ui.hudEnergyFill.style.width = `${energyPct}%`;
         }
@@ -8130,10 +8148,18 @@ class Game {
             this.state === GAME_STATE.DEMO
         );
 
-        if (isActiveAction) {
+        if (isActiveAction && this.hitStop > 0) {
+            this.hitStop--;
+            this.fixedAccumulator = 0;
+        } else if (isActiveAction) {
             // Snap tiny 60Hz jitter cleanly to 1/60s while normalizing 120Hz/144Hz monitors to 60Hz physics
             const normalizedDt = (safeDt > 0.0145 && safeDt < 0.0195) ? FIXED_STEP : safeDt;
-            this.fixedAccumulator = Math.min(this.fixedAccumulator + normalizedDt, FIXED_STEP * 5);
+            let scaledDt = normalizedDt;
+            if (this.slowMo > 0) {
+                this.slowMo--;
+                scaledDt *= 0.32;
+            }
+            this.fixedAccumulator = Math.min(this.fixedAccumulator + scaledDt, FIXED_STEP * 5);
             let substeps = 0;
             while (this.fixedAccumulator >= FIXED_STEP && substeps < 5) {
                 this.update(FIXED_STEP);

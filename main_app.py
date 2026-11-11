@@ -83,6 +83,10 @@ def _normalize_save_dict(raw):
         if isinstance(raw_prefs.get("menuMusic"), str) and raw_prefs["menuMusic"].startswith("assets/music/"):
             prefs["menuMusic"] = raw_prefs["menuMusic"]
         data["prefs"] = prefs
+    # V9: coins, shop upgrades, achievements & lifetime stats (validated client-side)
+    raw_meta = raw.get("meta")
+    if isinstance(raw_meta, dict) and isinstance(raw_meta.get("stats"), dict):
+        data["meta"] = raw_meta
     return data
 
 
@@ -111,6 +115,16 @@ def _merge_save_dicts(existing, incoming):
 
     for pk, pv in inc["prefs"].items():
         merged["prefs"][pk] = pv
+
+    def _earned(d):
+        try:
+            return float(d["meta"]["stats"].get("coinsEarned", 0))
+        except (KeyError, TypeError, ValueError):
+            return -1.0
+
+    best = inc if _earned(inc) >= _earned(base) else base
+    if "meta" in best:
+        merged["meta"] = best["meta"]
 
     return merged
 
