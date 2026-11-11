@@ -4470,10 +4470,12 @@ class Game {
     }
 
     playerJump() {
-        if (this.player.isGrounded) {
+        if (this.player.isGrounded || this.player.coyote > 0) {
             this.player.vy = this.player.jumpPower;
             this.player.isGrounded = false;
             this.player.jumpBuffered = false;
+            this.player.coyote = 0;
+            this.player.jumpCut = true;
             this.spawnRunDust(this.player.x + this.player.w * 0.4, this.player.groundY);
             window.soundManager.playJump();
         } else if (this.tryAirJump()) {
@@ -5011,7 +5013,7 @@ class Game {
     }
 
     onLavaFall(pit) {
-        const dmg = this.runHazardDamage() + 4;
+        const dmg = this.runHazardDamage();
         this.screenShake = 16;
         window.soundManager.playLavaSplash();
         this.spawnBurst(this.player.x + this.player.w * 0.5, this.player.groundY + 10, 26, '#ff6348', 8, 24);

@@ -53,6 +53,7 @@ const ACHIEVEMENTS = [
     { id: 'combo20',    icon: '🔥', name: 'Kombo-Lehrling',        desc: 'Erreiche eine 20er-Kombo',                      reward: 50,  test: (s) => s.bestCombo >= 20 },
     { id: 'combo50',    icon: '🌋', name: 'Kombo-Meister',         desc: 'Erreiche eine 50er-Kombo',                      reward: 120, test: (s) => s.bestCombo >= 50 },
     { id: 'dodge10',    icon: '💨', name: 'Nicht mit mir!',        desc: 'Weiche 10 Projektilen per Dash perfekt aus',    reward: 40,  test: (s) => s.dodges >= 10 },
+    { id: 'pogo25',     icon: '🦘', name: 'Pogo-Profi',            desc: 'Lande 25 Pogo-Sprünge (↓ in der Luft auf ein Hindernis)', reward: 50,  test: (s) => s.pogos >= 25 },
     { id: 'block15',    icon: '🛡️', name: 'Niemert chunt verbi',   desc: 'Lande 15 Perfekt-Blocks',                       reward: 50,  test: (s) => s.perfectBlocks >= 15 },
     { id: 'nohit',      icon: '🧘', name: 'Die Ruhe selbst',       desc: 'Gewinne ein Boss-Level ohne einen Treffer',     reward: 90, test: (s) => s.noHitBossWins >= 1 },
     { id: 'crit100',    icon: '💥', name: 'Paragraphen-Reiter',    desc: 'Lande 100 kritische Treffer',                   reward: 50,  test: (s) => s.crits >= 100 },
@@ -68,13 +69,13 @@ const ACHIEVEMENTS = [
 const DEFAULT_STATS = {
     wins: 0, kills: 0, crits: 0, dodges: 0, perfectBlocks: 0, bestCombo: 0, coinsEarned: 0,
     purchases: 0, endlessBest: 0, noHitBossWins: 0, grade6: 0, hardWins: 0, deaths: 0, dashes: 0,
-    endlessRuns: 0, damageDealt: 0
+    endlessRuns: 0, damageDealt: 0, pogos: 0
 };
 
 const DEFAULT_MODS = {
     dmgMult: 1, maxHp: 150, energyRegenMult: 1, frisbeeCdMult: 1, blockCdMult: 1, lawCdMult: 1,
     megaCost: 40, megaDmgMult: 1, critChance: 0.05, coinMult: 1, lifesteal: 0, frisbeeCount: 20,
-    multiShot: 0, dashCd: 54, maxAirJumps: 1, dashDamage: 0
+    multiShot: 0, dashCd: 40, maxAirJumps: 1, dashDamage: 0
 };
 
 const ENDLESS_ARENAS = ['gym_turnhalle', 'abu_room', 'mensa_kiosk', 'kloten_fire', 'cyber_bunker', 'castle_alps', 'exam_auditorium'];
@@ -195,7 +196,7 @@ const Expansion = {
             lifesteal: p('vamp'),
             frisbeeCount: 20 + 10 * p('frisbee'),
             multiShot: p('multi'),
-            dashCd: Math.max(16, Math.round(54 * (1 - 0.10 * u('dash')) * Math.pow(0.70, p('dash')))),
+            dashCd: Math.max(16, Math.round(40 * (1 - 0.10 * u('dash')) * Math.pow(0.70, p('dash')))),
             maxAirJumps: 1 + u('triple') + p('jump'),
             dashDamage: 45 * (u('dashstrike') + p('strike'))
         };
@@ -348,7 +349,11 @@ const Expansion = {
             k.innerHTML = '<kbd>SHIFT</kbd> Dash';
             keysBar.insertBefore(k, keysBar.children[2] || null);
             const first = keysBar.querySelector('.key-item:nth-child(2)');
-            if (first) first.innerHTML = '<kbd>SPACE</kbd> Sprung (2×)';
+            if (first) first.innerHTML = '<kbd>SPACE</kbd> Sprung (halten = höher, 2×)';
+            const pogo = document.createElement('div');
+            pogo.className = 'key-item';
+            pogo.innerHTML = '<kbd>↓</kbd> in der Luft: Pogo';
+            keysBar.insertBefore(pogo, keysBar.children[3] || null);
         }
 
         // Touch: dash button
@@ -460,7 +465,14 @@ const Expansion = {
                 this.tryDash();
             }
         }, true);
-        window.addEventListener('keyup', () => { this.jumpPressFresh = true; }, true);
+        window.addEventListener('keyup', (e) => {
+            this.jumpPressFresh = true;
+            const k = e.key.toLowerCase();
+            if (e.code === 'Space' || k === 'w' || k === 'arrowup') this.cutJump();
+        }, true);
+        if (this.ui.touchBtnJump) {
+            ['pointerup', 'pointercancel', 'touchend'].forEach((ev) => this.ui.touchBtnJump.addEventListener(ev, () => this.cutJump()));
+        }
     },
 
     // ---------------------------------------------------------------------
@@ -516,7 +528,7 @@ const Expansion = {
             const rows = [
                 ['Level-Siege', s.wins], ['Gegner besiegt', s.kills], ['Schaden ausgeteilt', Math.round(s.damageDealt)],
                 ['Kritische Treffer', s.crits], ['Beste Kombo', s.bestCombo + '×'], ['Dashes', s.dashes],
-                ['Perfekte Ausweicher', s.dodges], ['Perfekt-Blocks', s.perfectBlocks], ['Niederlagen', s.deaths],
+                ['Perfekte Ausweicher', s.dodges], ['Pogo-Sprünge', s.pogos], ['Perfekt-Blocks', s.perfectBlocks], ['Niederlagen', s.deaths],
                 ['Nachsitzen: Rekord', s.endlessBest + ' Wellen'], ['Nachsitzen: Versuche', s.endlessRuns],
                 ['Lohn insgesamt', s.coinsEarned + ' CHF'], ['Levels abgeschlossen', this.countCleared(1, 30) + ' / 30']
             ];
@@ -549,6 +561,11 @@ const Expansion = {
         if (!active || this.isPaused || this.isPlayerStunned()) return;
         if (p.dashTimer > 0) return;
         if (p.dashCooldown > 0 && this.state !== GAME_STATE.DEMO) return;
+        const isRocketMode = this.level && this.level.mode === 'rocket_flight';
+        if (!isRocketMode && !p.isGrounded) {
+            if (p.airDashUsed) return;
+            p.airDashUsed = true;
+        }
 
         const left = this.keys['a'] || this.keys['arrowleft'];
         const right = this.keys['d'] || this.keys['arrowright'];
@@ -575,6 +592,15 @@ const Expansion = {
         this.shockwaves.push({ x: p.x + p.w * 0.5, y: p.y + p.h * 0.5, radius: 8, maxRadius: 70, color: '#00d2d3', alpha: 0.6 });
     },
 
+    // Variable jump height: letting go of jump early cuts the rise short
+    cutJump() {
+        const p = this.player;
+        if (p.jumpCut && p.vy < -5 && !(this.level && this.level.mode === 'rocket_flight')) {
+            p.vy *= 0.45;
+        }
+        p.jumpCut = false;
+    },
+
     applyDashMove() {
         const p = this.player;
         if (p.dashTimer > 0) {
@@ -599,6 +625,7 @@ const Expansion = {
         p.airJumps--;
         p.vy = p.jumpPower * 0.92;
         p.jumpBuffered = false;
+        p.jumpCut = true;
         window.soundManager.playJump();
         const cx = p.x + p.w * 0.5;
         const cy = p.y + p.h;
@@ -668,7 +695,10 @@ const Expansion = {
         const active = this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO;
         if (!active) return;
 
-        if (p.isGrounded) p.airJumps = this.mods.maxAirJumps;
+        if (p.isGrounded) {
+            p.airJumps = this.mods.maxAirJumps;
+            p.airDashUsed = false;
+        }
         if (p.dashCooldown > 0) p.dashCooldown--;
 
         if (p.dashTimer > 0) {

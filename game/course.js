@@ -62,8 +62,56 @@ const Course = {
     runHazardDamage() {
         const ch = (this.level && this.level.chapter) || 1;
         const diff = this.getActiveDifficulty();
-        const base = (12 + 4 * ch) * (diff.dmgMult || 1) * (this.touchControlsEnabled ? 0.75 : 1);
+        const base = (14 + 5 * ch) * (diff.dmgMult || 1) * (this.touchControlsEnabled ? 0.75 : 1);
         return Math.max(6, Math.round(base));
+    },
+
+    // Pogo: hold DOWN while falling onto an obstacle or enemy to bounce off it.
+    tryPogo() {
+        const p = this.player;
+        if (p.isGrounded) p.coyote = 7;
+        else if (p.coyote > 0) p.coyote--;
+        if (p.pogoCd > 0) p.pogoCd--;
+        const st = this.state;
+        if (st !== GAME_STATE.RUNNING && st !== GAME_STATE.BOSS_FIGHT && st !== GAME_STATE.DEMO) return;
+        const mode = this.level && this.level.mode;
+        if (mode === 'rocket_flight' || mode === 'vertical_climb') return;
+        if (p.isGrounded || !p.isDucking || p.vy <= 1 || p.pogoCd > 0) return;
+
+        const bottom = p.y + p.h;
+        const next = bottom + p.vy;
+        const l = p.x + 10;
+        const r = p.x + p.w - 10;
+        const lands = (tx, ty, tw) => r > tx && l < tx + tw && bottom <= ty + 18 && next >= ty - 2;
+        let top = null;
+        let enemy = null;
+        if (st === GAME_STATE.RUNNING) {
+            for (const o of this.obstacles) {
+                if (lands(o.x - this.worldDistance, o.y, o.w)) { top = o.y; break; }
+            }
+        } else {
+            for (const e of [this.boss, this.duoPartner]) {
+                if (e && e.hp > 0 && lands(e.x, e.y, e.w)) { top = e.y; enemy = e; break; }
+            }
+        }
+        if (top === null) return;
+
+        p.y = top - p.h - 2;
+        p.vy = -13.8;
+        p.jumpCut = false;
+        p.airJumps = this.mods.maxAirJumps;
+        p.airDashUsed = false;
+        p.dashCooldown = Math.min(p.dashCooldown, 6);
+        p.pogoCd = 8;
+        p.invulnerableTime = Math.max(p.invulnerableTime, 10);
+        this.meta.stats.pogos++;
+        window.soundManager.playJump();
+        const cx = p.x + p.w * 0.5;
+        this.shockwaves.push({ x: cx, y: top, radius: 8, maxRadius: 80, color: '#2ed573', alpha: 0.8 });
+        this.spawnBurst(cx, top, 12, '#2ed573', 5, 16);
+        this.registerCombo(1, '⬇ POGO!');
+        if (enemy) this.damageEnemy(enemy, Math.round(30 * this.mods.dmgMult), '#2ed573');
+        if (this.meta.stats.pogos === 25) this.checkAchievements();
     },
 
     isRunCourse() {
@@ -83,120 +131,115 @@ const Course = {
     // ---------------------------------------------------------------------
     // RUN LEVELS: harder obstacle course
     // ---------------------------------------------------------------------
-    hardenRunCourse() {
+    // Builds the whole run course from hand-tuned patterns. Jump physics at run speed:
+    // one jump covers ~300px and peaks at ~170px, a dash adds ~190px.
+    buildRunCourse() {
         const lvl = this.level;
-        if (!lvl || lvl.endless || !(lvl.targetDistance > 0)) return;
         const gy = this.player.groundY;
+        const ph = this.player.h;
         const ch = lvl.chapter || 1;
         const total = lvl.targetDistance;
         const mech = lvl.mechanics || {};
-        const highs = this.obstacles.filter((o) => o.high);
-        const plain = this.obstacles.filter((o) => !o.high);
-        const mbDist = lvl.hasMiniBoss ? Math.round(total * (lvl.miniBossTriggerRatio || 0.5)) : -99999;
+        const pStyle = mech.platformStyle || 'concrete';
+        const theme = mech.pitTheme || 'lava';
+        const id = lvl.id;
+        const types = lvl.obstacleTypes && lvl.obstacleTypes.length ? lvl.obstacleTypes : ['traffic_cone'];
+        const pool = (lvl.collectibleTypes || ['coffee']).filter((t) => t !== 'jeton');
+        const itemPool = pool.length ? pool : ['coffee'];
+        const rnd = (a, b) => a + Math.random() * (b - a);
+        const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+        const mbDist = lvl.hasMiniBoss ? Math.round(total * (lvl.miniBossTriggerRatio || 0.5)) : -1;
 
-        const nearHigh = (x, before = 400, after = 230) => highs.some((h) => x > h.x - before && x < h.x + h.w + after);
-        const underPlatform = (x0, x1) => this.platforms.some((p) => !p.isArena && x1 > p.x - 40 && x0 < p.x + p.w + 40);
-        const nearPit = (x0, x1) => this.lavaPits.some((p) => x1 > p.x - 240 && x0 < p.x + p.w + 240);
-        const nearPad = (x0, x1) => this.boostPads.some((b) => x1 > b.x - 80 && x0 < b.x + b.w + 80);
-        const otherObstacle = (self, x0, x1) => this.obstacles.some((q) => q !== self && !q.removed && q.x + q.w > x0 && q.x < x1);
-        const addCoin = (x, y) => this.runCoins.push({ x, y, taken: false, phase: Math.random() * Math.PI * 2 });
+        const obs = (x, extra = {}) => {
+            const type = extra.type || pick(types);
+            const size = type === 'frisbee' ? 56 : 52;
+            const o = { x, y: gy - size, w: size, h: type === 'frisbee' ? 38 : size, type, high: false, cleared: false, phase: rnd(0, 6.28), ...extra };
+            this.obstacles.push(o);
+            return o;
+        };
+        const tall = (x) => obs(x, { type: 'server_stack', w: 62, h: 150, y: gy - 150, tall: true });
+        const hop = (x) => obs(x, { type: 'basketball', w: 50, h: 50, y: gy - 50, baseY: gy - 50, move: 'hop', amp: 125, spd: 2.1 + ch * 0.2 });
+        const patrol = (x) => { const o = obs(x); Object.assign(o, { move: 'patrol', baseX: o.x, amp: 55, spd: 1.5 + ch * 0.25 }); };
+        const duck = (x) => this.obstacles.push({
+            x, y: gy - Math.round(ph * 0.92), w: 84, h: Math.round(ph * 0.30),
+            type: id >= 5 ? 'broken_cable' : (id >= 3 ? 'frisbee' : 'warning_letter'),
+            high: true, cleared: false, phase: rnd(0, 6.28)
+        });
+        const item = (x, h, type) => this.collectibles.push({ x, y: gy - h, w: 42, h: 42, type: type || pick(itemPool), collected: false, phase: rnd(0, 6.28) });
+        const coin = (x, h) => this.runCoins.push({ x, y: gy - h, taken: false, phase: rnd(0, 6.28) });
+        const plat = (x, off, w, move) => this.platforms.push({
+            x, baseX: x, y: gy - off, offsetY: off, baseOffsetY: off, w, h: 22, style: pStyle,
+            moveAxis: move ? move.axis : null, moveAmp: move ? move.amp : 0, moveSpeed: move ? move.speed : 0, phase: rnd(0, 6.28)
+        });
+        const pit = (x, w) => this.lavaPits.push({ x, w, theme });
+        const coinArc = (x, w, n) => { for (let i = 0; i < n; i++) { const t = (i + 0.5) / n; coin(x + w * t - 13, 120 + Math.sin(t * Math.PI) * 70); } };
 
-        const chance = Math.min(0.92, 0.5 + lvl.id * 0.03);
-        const allowTall = lvl.mode !== 'bankomat_survival';
-        const allowPit = !!mech.lavaPits && lvl.id >= 6;
+        const hasDuck = !!mech.duckObstacles;
+        const hasLava = !!mech.lavaPits;
+        const hasPlat = !!mech.platforms;
+        const noTall = lvl.mode === 'bankomat_survival';
         const pitW = 280 + ch * 40;
-        let sincePit = 2;
+        const pogoW = 520 + ch * 40;
 
-        for (const o of plain) {
-            sincePit++;
-            const x0 = o.x;
-            const x1 = o.x + o.w;
-            if (x0 < 900 || x1 > total - 420) continue;
-            if (Math.abs(x0 - mbDist) < 620) continue;
-            if (underPlatform(x0, x1) || nearHigh(x0)) continue;
-            if (Math.random() > chance) continue;
-
-            // Open pit without a bridge: needs sprint, double jump or dash
-            const pitX = Math.round(x0 + o.w * 0.5 - pitW * 0.5);
-            if (allowPit && sincePit >= 5 && !nearPit(pitX, pitX + pitW) && !nearPad(pitX - 120, pitX + pitW + 120) &&
-                !otherObstacle(o, pitX - 230, pitX + pitW + 230) && !underPlatform(pitX - 60, pitX + pitW + 60) &&
-                !highs.some((h) => h.x + h.w > pitX - 380 && h.x < pitX + pitW + 380)) {
-                o.removed = true;
-                this.lavaPits.push({ x: pitX, w: pitW, theme: mech.pitTheme || 'lava' });
-                for (let i = 0; i < 4; i++) {
-                    const t = (i + 0.5) / 4;
-                    addCoin(pitX + pitW * t - 13, gy - 120 - Math.sin(t * Math.PI) * 70);
+        const patterns = [
+            { key: 'hurdle', len: 300, w: ch === 1 ? 1 : 0.5, ok: true, place: (x) => { obs(x + 40); if (Math.random() < 0.35) item(x + 135, 150); } },
+            { key: 'double', len: 470, w: 1, ok: true, place: (x) => { obs(x + 40); obs(x + 205); coin(x + 130, 175); } },
+            { key: 'triple', len: 650, w: 1, ok: id >= 11, place: (x) => { obs(x + 40); obs(x + 215); obs(x + 390); coin(x + 135, 175); coin(x + 310, 175); } },
+            { key: 'tall', len: 340, w: 1, ok: id >= 2 && !noTall, place: (x) => { tall(x + 60); coin(x + 66, 245); coin(x + 98, 255); } },
+            { key: 'hop', len: 330, w: 1, ok: id >= 3, place: (x) => { hop(x + 60); } },
+            { key: 'patrol', len: 400, w: 1, ok: true, place: (x) => { patrol(x + 110); if (Math.random() < 0.3) item(x + 300, 150); } },
+            { key: 'duck', len: 420, w: 1, ok: hasDuck, place: (x) => { duck(x + 140); if (Math.random() < 0.4) item(x + 161, 66); } },
+            { key: 'duckJump', len: 700, w: 1, ok: hasDuck && id >= 6, place: (x) => { duck(x + 140); obs(x + 424); coin(x + 440, 170); } },
+            { key: 'jumpDuck', len: 680, w: 1, ok: hasDuck && id >= 8, place: (x) => { obs(x + 40); duck(x + 392); } },
+            { key: 'pit', len: pitW + 300, w: 1.2, ok: hasLava && id >= 6, place: (x) => { pit(x + 60, pitW); coinArc(x + 60, pitW, 4); } },
+            { key: 'bridge', len: 740, w: 1, ok: hasLava && hasPlat, place: (x) => { pit(x + 60, 440); plat(x + 210, 88, 140); item(x + 259, 146); } },
+            { key: 'movingBridge', len: 860, w: 1, ok: hasLava && hasPlat && id >= 7, place: (x) => { pit(x + 60, 560); plat(x + 270, 96, 140, { axis: 'x', amp: 70, speed: 1.9 }); item(x + 319, 154, 'energy_drink'); } },
+            { key: 'pogo', len: pogoW + 320, w: 1.2, ok: hasLava && id >= 7, place: (x) => {
+                pit(x + 60, pogoW);
+                const floatTypes = types.filter((t) => t !== 'frisbee');
+                for (let i = 1; i <= 3; i++) {
+                    const fx = Math.round(x + 60 + (pogoW * i) / 4 - 28);
+                    this.obstacles.push({ x: fx, y: gy - 76, baseY: gy - 76, w: 56, h: 48, type: floatTypes.length ? floatTypes[i % floatTypes.length] : 'traffic_cone', high: false, cleared: false, float: true, move: 'float', phase: i * 1.7 });
+                    coin(fx + 15, 168);
                 }
-                sincePit = 0;
+            } },
+            { key: 'sprintGap', len: 950, w: 1, ok: hasLava && !!mech.sprintPads, place: (x) => { this.boostPads.push({ x: x + 20, w: 96, label: '⚡ SPRINT' }); pit(x + 240, 440); coinArc(x + 240, 440, 5); } },
+            { key: 'stairs', len: 780, w: 1, ok: hasPlat && id >= 3, place: (x) => {
+                plat(x + 80, 88, 130); plat(x + 285, 150, 130); plat(x + 490, 205, 130);
+                obs(x + 300); if (!noTall) tall(x + 520); else obs(x + 520);
+                coin(x + 520, 262); coin(x + 550, 262); coin(x + 580, 262); item(x + 329, 208);
+            } },
+            { key: 'highLow', len: 480, w: 1, ok: hasPlat, place: (x) => {
+                plat(x + 60, 96, 200, id >= 5 ? { axis: 'y', amp: 18, speed: 2.0 } : null);
+                item(x + 94, 152, 'coffee'); coin(x + 190, 150);
+                if (!mech.clearPlatformUnder) obs(x + 134);
+            } }
+        ].filter((p) => p.ok);
+
+        const gapPad = this.chaser || lvl.mode === 'tuktuk_chase_boss' ? 130 : (ch === 1 ? 80 : (ch === 2 ? 50 : 30));
+        const end = total - 320;
+        let x = 700;
+        let last = '';
+        let guard = 0;
+        while (x < end && guard++ < 400) {
+            if (mbDist > 0 && x > mbDist - 200 && x < mbDist + 560) { x = mbDist + 560; continue; }
+            const limit = mbDist > 0 && x < mbDist ? mbDist - 200 : end;
+            const fits = patterns.filter((p) => p.key !== last && x + p.len <= limit);
+            if (!fits.length) {
+                if (limit === end) break;
+                x = mbDist + 560;
                 continue;
             }
-
-            const r = Math.random();
-            if (r < 0.28 && allowTall) {
-                // Tall wall: only a double jump clears it
-                o.type = 'server_stack';
-                o.w = 62;
-                o.h = 150;
-                o.y = gy - o.h;
-                o.tall = true;
-                addCoin(o.x + 4, gy - 238);
-                addCoin(o.x + 34, gy - 250);
-            } else if (r < 0.55) {
-                o.move = 'patrol';
-                o.baseX = o.x;
-                o.amp = 55;
-                o.spd = 1.5 + ch * 0.25;
-            } else if (r < 0.75) {
-                // Hopping ball: jump over it when low, or duck/run under it when high
-                o.type = 'basketball';
-                o.w = 50;
-                o.h = 50;
-                o.move = 'hop';
-                o.baseY = gy - 50;
-                o.y = o.baseY;
-                o.amp = 125;
-                o.spd = 2.1 + ch * 0.2;
-            } else if (!otherObstacle(o, x1 + 40, x1 + 400) && !nearHigh(x0 + 160) && !nearPit(x0, x1 + 220) && !underPlatform(x0 + 150, x1 + 220)) {
-                // Double hurdle: stay in the air across both
-                const types = lvl.obstacleTypes && lvl.obstacleTypes.length ? lvl.obstacleTypes : ['traffic_cone'];
-                const type = types[Math.floor(Math.random() * types.length)];
-                const size = type === 'frisbee' ? 56 : 52;
-                this.obstacles.push({
-                    x: x0 + 160, y: gy - size, w: size, h: type === 'frisbee' ? 38 : size,
-                    type, high: false, cleared: false, phase: Math.random() * Math.PI * 2
-                });
-                addCoin(x0 + 95, gy - 175);
-            }
+            let roll = Math.random() * fits.reduce((s, p) => s + p.w, 0);
+            let chosen = fits[0];
+            for (const p of fits) { roll -= p.w; if (roll <= 0) { chosen = p; break; } }
+            chosen.place(Math.round(x));
+            last = chosen.key;
+            x += chosen.len + gapPad + rnd(0, 50);
         }
-        this.obstacles = this.obstacles.filter((o) => !o.removed);
 
-        // Fill the long empty stretches so there is always something to react to
-        const spacing = this.chaser || lvl.mode === 'tuktuk_chase_boss' ? 260 : (ch === 1 ? 215 : (ch === 2 ? 190 : 170));
-        const blocked = [[-1e9, 900], [total - 300, 1e9], [mbDist - 620, mbDist + 620]];
-        for (const o of this.obstacles) {
-            const extra = o.move === 'patrol' ? o.amp : 0;
-            if (o.high) blocked.push([o.x - 270, o.x + o.w + 150]);
-            else blocked.push([o.x - spacing - extra, o.x + o.w + spacing + extra]);
-        }
-        for (const p of this.lavaPits) blocked.push([p.x - 230, p.x + p.w + 230]);
-        for (const p of this.platforms) if (!p.isArena) blocked.push([p.x - 90, p.x + p.w + 90]);
-        for (const b of this.boostPads) blocked.push([b.x - 70, b.x + b.w + 250]);
-        for (const c of this.collectibles) if (c.type === 'jeton') blocked.push([c.x - 170, c.x + c.w + 120]);
-        const fillTypes = lvl.obstacleTypes && lvl.obstacleTypes.length ? lvl.obstacleTypes : ['traffic_cone'];
-        for (let x = 900; x < total - 300; x += 30) {
-            if (blocked.some(([a, b]) => x + 52 > a && x < b)) continue;
-            const r = Math.random();
-            const type = fillTypes[Math.floor(Math.random() * fillTypes.length)];
-            const size = type === 'frisbee' ? 56 : 52;
-            const o = { x, y: gy - size, w: size, h: type === 'frisbee' ? 38 : size, type, high: false, cleared: false, phase: Math.random() * Math.PI * 2 };
-            if (r < 0.22 && allowTall && lvl.id >= 3) {
-                Object.assign(o, { type: 'server_stack', w: 62, h: 150, y: gy - 150, tall: true });
-                addCoin(o.x + 18, gy - 245);
-            } else if (r < 0.45 && lvl.id >= 3) {
-                Object.assign(o, { type: 'basketball', w: 50, h: 50, y: gy - 50, baseY: gy - 50, move: 'hop', amp: 125, spd: 2.1 + ch * 0.2 });
-            }
-            this.obstacles.push(o);
-            blocked.push([x - spacing, x + o.w + spacing]);
+        if (lvl.mode === 'bankomat_survival') {
+            this.spawnLevel7Jetons(lvl.targetGoalCount || 8);
         }
     },
 
@@ -213,6 +256,8 @@ const Course = {
         for (const o of this.obstacles) {
             if (o.move === 'patrol') {
                 o.x = o.baseX + Math.sin(this.animClock * o.spd + o.phase) * o.amp;
+            } else if (o.move === 'float') {
+                o.y = o.baseY + Math.sin(this.animClock * 2.2 + o.phase) * 8;
             } else if (o.move === 'hop') {
                 o.y = o.baseY - Math.abs(Math.sin(this.animClock * o.spd + o.phase)) * o.amp;
             }
@@ -250,7 +295,8 @@ const Course = {
                         rotation: 0, trailColor: '#ff4757'
                     });
                     window.soundManager.playThrow();
-                    this.throwWarn = null;
+                    const follow = !this.throwWarn.follow && ch >= 2 && Math.random() < 0.35;
+                    this.throwWarn = follow ? { lane: high ? 'low' : 'high', timer: 34, follow: true } : null;
                 }
             } else {
                 this.throwTimer--;
@@ -538,11 +584,42 @@ Object.assign(Game.prototype, Course);
     wrap('resetRunStats', function (orig) {
         orig();
         this.resetCourseState();
+        Object.assign(this.player, { coyote: 0, pogoCd: 0, jumpCut: false, airDashUsed: false });
+    });
+
+    wrap('update', function (orig, dt) {
+        if (!this.isPaused) this.tryPogo();
+        orig(dt);
+    });
+
+    // Pickups heal less in the platforming levels, and a hit gives a shorter grace period
+    wrap('onCollectItem', function (orig, type) {
+        const before = this.player.hp;
+        orig(type);
+        const platforming = this.state === GAME_STATE.RUNNING && this.level && (this.isRunCourse() || this.level.mode === 'vertical_climb');
+        if (platforming && this.player.hp > before) {
+            this.player.hp = before + Math.ceil((this.player.hp - before) * 0.4);
+            this.updateBars();
+        }
+    });
+
+    wrap('onPlayerHit', function (orig, damage, reason) {
+        const landed = orig(damage, reason);
+        if (landed && this.state === GAME_STATE.RUNNING && this.player.invulnerableTime > 48) this.player.invulnerableTime = 48;
+        return landed;
+    });
+
+    wrap('startLevel', function (orig, index) {
+        orig(index);
+        const mode = (this.level && this.level.mode) || 'standard';
+        if (this.ui.controlHintPill && mode !== 'rocket_flight' && mode !== 'vertical_climb') {
+            this.ui.controlHintPill.innerHTML = '<span><kbd>SPACE</kbd> halten = höher, 2× &bull; <kbd>SHIFT</kbd> Dash &bull; <kbd>↓</kbd> in der Luft auf Hindernis = Pogo &bull; <kbd>CTRL</kbd> Ducken &bull; <kbd>R</kbd> Block</span>';
+        }
     });
 
     wrap('generateLevelObstacles', function (orig) {
-        orig();
-        this.hardenRunCourse();
+        if (this.level && !this.level.endless && this.level.targetDistance > 0) this.buildRunCourse();
+        else orig();
     });
 
     wrap('initVerticalClimb', function (orig) {
@@ -574,10 +651,11 @@ Object.assign(Game.prototype, Course);
         orig();
         if (this.state !== GAME_STATE.RUNNING) return;
         for (const o of this.obstacles) {
-            if (!o.tall) continue;
+            if (!o.tall && !o.float) continue;
             const sx = o.x - this.worldDistance;
             if (sx > -90 && sx < canvas.width + 90) {
-                this.drawNamePill('⬆⬆ DOPPELSPRUNG', sx + o.w * 0.5, o.y - 10, '#00d2d3');
+                if (o.float) this.drawNamePill('⬇ POGO', sx + o.w * 0.5, o.y - 10, '#2ed573');
+                else this.drawNamePill('⬆⬆ DOPPELSPRUNG', sx + o.w * 0.5, o.y - 10, '#00d2d3');
             }
         }
     });
