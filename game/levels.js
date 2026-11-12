@@ -5,6 +5,8 @@
  *  - Kapitel 1 (Level 1–10):  Bern, GIBB & TukTuk-Ausbruch (Finale: TukTuk MK-I)
  *  - Kapitel 2 (Level 11–20): Mega-Melonen-Rakete, Kloten & Sri Lanka (Tung Sahur & Dual-GPU MK-II)
  *  - Kapitel 3 (Level 21–30): Orbit, Alpenfestung & Ultimatives EFZ 6.0 (Drone-TukTuk MK-III & Monika+Adam)
+ *  - Kapitel 4 (Level 31–40): Alpen-Skilager — Ski-Abfahrt, Slalom, Rennen gegen Herr Adam,
+ *                             Lawinen-Flucht & Schneeballschlacht (keine klassischen Bosskämpfe)
  *
  * Strenge Abwechslung:
  *  - Alle ungeraden Levels (1,3,5,...,29) sind reine Action/Parcours/Turm/Raketen-Stages (`hasBoss: false`).
@@ -50,6 +52,19 @@ const CHAPTERS_CONFIG = [
         bossPreview: "Gesamt-Finale: Aufsicht + Monika & Adam (2230 HP)",
         bossAvatar: "assets/sprites/monika_avatar.png",
         trailerTitle: "KAPITEL 3 TRAILER: TO THE MOON & ZURÜCK ZUM EFZ 6.0"
+    },
+    {
+        chapter: 4,
+        startIndex: 30,
+        endIndex: 39,
+        badge: "KAPITEL 4 • LEVEL 31–40",
+        title: "Alpen-Skilager mit Herr Adam",
+        subtitle: "Frisbee statt Ski: Abfahrt, Slalom, Lawinen, Schneeballschlacht & das Rennen ins Tal!",
+        bgPath: "assets/backgrounds/bg_ski_alps.jpg",
+        accentColor: "#45aaf2",
+        bossPreview: "Kapitel-Finale: Rennen ins Tal gegen Herr Adam",
+        bossAvatar: "assets/sprites/adam_avatar.png",
+        trailerTitle: "KAPITEL 4 TRAILER: NIMM DAS FRISBEE UND FAHR!"
     }
 ];
 window.CHAPTERS_CONFIG = CHAPTERS_CONFIG;
@@ -775,12 +790,14 @@ const LEVELS_CONFIG = [
         id: 15,
         chapter: 2,
         yearText: "KAP. 2 • LEVEL 15",
-        name: "Sri Lanka Dschungel-Express: 73s Marathon (>60s)",
-        mode: "time_attack",
-        modeBadge: "⏱️ 73s DSCHUNGEL",
-        featureTag: "🌴 >1 MINUTE DURCH DEN DSCHUNGEL! WEICHE LAVA & SCHRANKEN AUS IN 73s!",
-        missionBadge: "🌴 BUS ERWISCHEN",
-        timeLimitSec: 73,
+        name: "Sri Lanka Dschungel: Der Boden ist Lava (von der Seite!)",
+        mode: "lava_wall",
+        modeBadge: "🔥 LAVA-WAND",
+        featureTag: "🔥 EINE LAVA-WAND ROLLT VON LINKS HERAN! NICHT STEHEN BLEIBEN — RENN ZUM BUS!",
+        missionBadge: "🔥 LAVA-WAND",
+        modeDesc: "Lava-Wand von der Seite (Kein Boss) &bull; <strong>550m</strong> Flucht-Parcours",
+        winText: "Der Lava-Wand im Dschungel davongelaufen und den Bus erwischt!",
+        sideHazard: { theme: "lava", speed: 5.2, ramp: 0.16, lead: 600, maxLead: 700 },
         hasBoss: false,
         bgType: "srilanka_jungle",
         bgPath: "assets/backgrounds/bg_srilanka_jungle.jpg",
@@ -1251,12 +1268,14 @@ const LEVELS_CONFIG = [
         id: 25,
         chapter: 3,
         yearText: "KAP. 3 • LEVEL 25",
-        name: "Alpenfestung Blitz-Marathon: 78s Vollgas (>60s)",
-        mode: "time_attack",
-        modeBadge: "⏱️ 78s ALPEN-RUSH",
-        featureTag: "🏔️ >1 MINUTE DURCH DIE ALPENFESTUNG! SPRINGE ÜBER LAVA & DUCKE UNTER SCHRANKEN!",
-        missionBadge: "🏔️ FESTUNG TOR",
-        timeLimitSec: 78,
+        name: "Alpenfestung: Lava-Flut im Burggang",
+        mode: "lava_wall",
+        modeBadge: "🔥 LAVA-FLUT",
+        featureTag: "🔥 DIE BURG LÄUFT VOLL LAVA — VON DER SEITE! SPRINGEN, DUCKEN, NIE BREMSEN!",
+        missionBadge: "🔥 LAVA-FLUT",
+        modeDesc: "Lava-Flut von der Seite (Kein Boss) &bull; <strong>590m</strong> Burggang mit breiten Gruben",
+        winText: "Durchs Festungstor gesprintet, bevor die Lava-Flut den Burggang verschluckt hat!",
+        sideHazard: { theme: "lava", speed: 5.5, ramp: 0.17, lead: 580, maxLead: 660 },
         hasBoss: false,
         bgType: "castle_alps",
         bgPath: "assets/backgrounds/bg_castle_alps.jpg",
@@ -1557,5 +1576,443 @@ const LEVELS_CONFIG = [
         ],
         obstacleTypes: ["warning_letter", "frisbee", "basketball", "whistle"],
         collectibleTypes: ["coffee", "diploma_shard", "energy_drink", "law_book"]
+    },
+
+    // =========================================================================
+    // KAPITEL 4 (LEVEL 31–40): ALPEN-SKILAGER MIT HERR ADAM
+    // =========================================================================
+    {
+        id: 31,
+        chapter: 4,
+        yearText: "KAP. 4 • LEVEL 31",
+        name: "Skilager-Abfahrt: Nimm das Frisbee und fahr!",
+        mode: "ski",
+        modeBadge: "🎿 SKI-ABFAHRT",
+        featureTag: "🎿 MIT DEM FRISBEE DIE PISTE RUNTER! LENKEN [A/D], HOCKE [S], SPRUNG [SPACE] — HERR ADAM WIRFT SPORTGERÄTE!",
+        missionBadge: "🎿 TALSTATION",
+        modeDesc: "Ski-Abfahrt (Kein Boss) &bull; <strong>675m</strong> Piste, Herr Adam wirft Frisbees",
+        winText: "Erste Abfahrt auf dem Frisbee überlebt — die Talstation ist erreicht!",
+        ski: { variant: "downhill", goal: 27000, baseSpeed: 8.6, density: 0.42, throwEvery: 330 },
+        hasBoss: false,
+        bgType: "ski_alps",
+        bgPath: "assets/backgrounds/bg_ski_alps.jpg",
+        accentColor: "#45aaf2",
+        ambientStyle: "daylight",
+        targetDistance: 0,
+        music: "assets/music/Optical_Glide.mp3",
+        mechanics: {
+            platforms: false,
+            duckObstacles: false,
+            lavaPits: false,
+            sprintPads: false,
+            platformStyle: "concrete"
+        },
+        bossType: "adam",
+        bossName: "Herr Adam (Skilehrer)",
+        bossAvatar: "assets/sprites/adam_avatar.png",
+        bossHP: 0,
+        bossLines: [
+            { text: "Nimm das Frisbee und fahr!", clip: "adam_nimm_frisbee_fahr" },
+            { text: "Da hast du 20 Frisbees!!", clip: "adam_20_frisbees" }
+        ],
+        playerLines: [
+            { text: "Wo bliibt eigentli de Bus?!", clip: "thenerean_wo_bleibt_bus" },
+            { text: "Herr Adam, ich stah doch da!", clip: "thenerean_stah" },
+            { text: "Das isch e absoluti Frechheit!", clip: "thenerean_frechheit" },
+            { text: "Ich bin komplett verrückt!", clip: "thenerean_komplett_verrueckt" }
+        ],
+        obstacleTypes: [],
+        collectibleTypes: ["coffee", "energy_drink"]
+    },
+    {
+        id: 32,
+        chapter: 4,
+        yearText: "KAP. 4 • LEVEL 32",
+        name: "Slalom-Prüfung: Herr Adams Stoppuhr",
+        mode: "ski",
+        modeBadge: "🚩 SKI-SLALOM",
+        featureTag: "🚩 SLALOM! FAHRE ZWISCHEN DEN STANGEN DURCH — JEDES VERPASSTE TOR KOSTET 3 SEKUNDEN!",
+        missionBadge: "🚩 SLALOM",
+        modeDesc: "Slalom gegen die Stoppuhr &bull; <strong>41 Tore</strong> in <strong>54s</strong>",
+        winText: "Slalom bestanden — Herr Adams Stoppuhr hat nichts mehr zu melden!",
+        ski: { variant: "slalom", goal: 24000, baseSpeed: 8.6, density: 0.38, gateGap: 540, gateWidth: 175, timeLimitSec: 54 },
+        hasBoss: false,
+        bgType: "ski_alps",
+        bgPath: "assets/backgrounds/bg_ski_alps.jpg",
+        accentColor: "#45aaf2",
+        ambientStyle: "daylight",
+        targetDistance: 0,
+        music: "assets/music/Rewrite_The_Sky.mp3",
+        mechanics: {
+            platforms: false,
+            duckObstacles: false,
+            lavaPits: false,
+            sprintPads: false,
+            platformStyle: "concrete"
+        },
+        bossType: "adam",
+        bossName: "Herr Adam (Skilehrer)",
+        bossAvatar: "assets/sprites/adam_avatar.png",
+        bossHP: 0,
+        bossLines: [
+            { text: "Nimm das Frisbee und fahr!", clip: "adam_nimm_frisbee_fahr" },
+            { text: "Da hast du 20 Frisbees!!", clip: "adam_20_frisbees" }
+        ],
+        playerLines: [
+            { text: "Wo bliibt eigentli de Bus?!", clip: "thenerean_wo_bleibt_bus" },
+            { text: "Herr Adam, ich stah doch da!", clip: "thenerean_stah" },
+            { text: "Das isch e absoluti Frechheit!", clip: "thenerean_frechheit" },
+            { text: "Ich bin komplett verrückt!", clip: "thenerean_komplett_verrueckt" }
+        ],
+        obstacleTypes: [],
+        collectibleTypes: ["coffee", "energy_drink"]
+    },
+    {
+        id: 33,
+        chapter: 4,
+        yearText: "KAP. 4 • LEVEL 33",
+        name: "Lawinen-Flucht: Der Berg kommt von der Seite",
+        mode: "lava_wall",
+        modeBadge: "🌨️ LAWINEN-FLUCHT",
+        featureTag: "🌨️ EINE LAWINE ROLLT VON LINKS HERAN! ÜBER DIE GLETSCHERSPALTEN SPRINGEN UND NIE STEHEN BLEIBEN!",
+        missionBadge: "🌨️ LAWINE",
+        modeDesc: "Lawine von der Seite (Kein Boss) &bull; <strong>420m</strong> Parcours über Gletscherspalten",
+        winText: "Der Lawine zu Fuss davongelaufen — die Berghütte ist erreicht!",
+        sideHazard: { theme: "avalanche", speed: 5.45, ramp: 0.17, lead: 580, maxLead: 660 },
+        hasBoss: false,
+        bgType: "castle_alps",
+        bgPath: "assets/backgrounds/bg_castle_alps.jpg",
+        accentColor: "#45aaf2",
+        ambientStyle: "daylight",
+        targetDistance: 16800,
+        music: "assets/music/Cold_Steel_Beams.mp3",
+        mechanics: {
+            platforms: true,
+            duckObstacles: true,
+            lavaPits: true,
+            sprintPads: true,
+            platformStyle: "concrete",
+            pitTheme: "chasm",
+            clearPlatformUnder: true
+        },
+        bossType: "adam",
+        bossName: "Herr Adam (Skilehrer)",
+        bossAvatar: "assets/sprites/adam_avatar.png",
+        bossHP: 0,
+        bossLines: [
+            { text: "Nimm das Frisbee und fahr!", clip: "adam_nimm_frisbee_fahr" },
+            { text: "Da hast du 20 Frisbees!!", clip: "adam_20_frisbees" }
+        ],
+        playerLines: [
+            { text: "Wo bliibt eigentli de Bus?!", clip: "thenerean_wo_bleibt_bus" },
+            { text: "Herr Adam, ich stah doch da!", clip: "thenerean_stah" },
+            { text: "Das isch e absoluti Frechheit!", clip: "thenerean_frechheit" },
+            { text: "Ich bin komplett verrückt!", clip: "thenerean_komplett_verrueckt" }
+        ],
+        obstacleTypes: ["traffic_cone", "frisbee", "basketball"],
+        collectibleTypes: ["coffee", "energy_drink"]
+    },
+    {
+        id: 34,
+        chapter: 4,
+        yearText: "KAP. 4 • LEVEL 34",
+        name: "Rennen zur Mittelstation: Thenerean gegen Herr Adam",
+        mode: "ski",
+        modeBadge: "🏁 SKI-RENNEN",
+        featureTag: "🏁 WER ZUERST IM ZIEL IST, GEWINNT! BREMSE HERR ADAM MIT GESETZESTEXTEN [E] UND DEM MEGA-SCHREI [Q]!",
+        missionBadge: "🏁 RENNEN",
+        modeDesc: "Ski-Rennen gegen <strong>Herr Adam</strong> &bull; <strong>750m</strong> — der Zweite verliert",
+        winText: "Erster im Ziel! Herr Adam schaut nur noch auf dein Frisbee-Heck!",
+        ski: { variant: "race", goal: 30000, baseSpeed: 9.0, rivalSpeed: 9.7, density: 0.48, throwEvery: 280 },
+        hasBoss: false,
+        bgType: "ski_alps",
+        bgPath: "assets/backgrounds/bg_ski_alps.jpg",
+        accentColor: "#45aaf2",
+        ambientStyle: "daylight",
+        targetDistance: 0,
+        music: "assets/music/Override_the_Kill_Switch.mp3",
+        mechanics: {
+            platforms: false,
+            duckObstacles: false,
+            lavaPits: false,
+            sprintPads: false,
+            platformStyle: "concrete"
+        },
+        bossType: "adam",
+        bossName: "Herr Adam (Skilehrer)",
+        bossAvatar: "assets/sprites/adam_avatar.png",
+        bossHP: 0,
+        bossLines: [
+            { text: "Nimm das Frisbee und fahr!", clip: "adam_nimm_frisbee_fahr" },
+            { text: "Da hast du 20 Frisbees!!", clip: "adam_20_frisbees" }
+        ],
+        playerLines: [
+            { text: "Wo bliibt eigentli de Bus?!", clip: "thenerean_wo_bleibt_bus" },
+            { text: "Herr Adam, ich stah doch da!", clip: "thenerean_stah" },
+            { text: "Das isch e absoluti Frechheit!", clip: "thenerean_frechheit" },
+            { text: "Ich bin komplett verrückt!", clip: "thenerean_komplett_verrueckt" }
+        ],
+        obstacleTypes: [],
+        collectibleTypes: ["coffee", "energy_drink"]
+    },
+    {
+        id: 35,
+        chapter: 4,
+        yearText: "KAP. 4 • LEVEL 35",
+        name: "Schneeballschlacht am Pistenrand",
+        mode: "snowball",
+        modeBadge: "❄️ SCHNEEBALLSCHLACHT",
+        featureTag: "❄️ SCHNEEBALLSCHLACHT! TRIFF 18 GEGNER HINTER DEN SCHNEEBURGEN — STELL DICH AUF DIE RICHTIGE HÖHE!",
+        missionBadge: "❄️ TREFFER",
+        modeDesc: "Schneeballschlacht (Schiessbude) &bull; <strong>18 Treffer</strong> in <strong>75s</strong>",
+        winText: "Schneeballschlacht gewonnen — die ganze Klasse liegt im Schnee!",
+        snowball: { hits: 18, timeLimitSec: 75, spawnEvery: 92, maxUp: 2, aimFrames: 62, cast: ["student", "student", "adam"], decoys: 0.1 },
+        hasBoss: false,
+        bgType: "castle_alps",
+        bgPath: "assets/backgrounds/bg_castle_alps.jpg",
+        accentColor: "#45aaf2",
+        ambientStyle: "daylight",
+        targetDistance: 0,
+        music: "assets/music/Crimson_Shell.mp3",
+        mechanics: {
+            platforms: false,
+            duckObstacles: false,
+            lavaPits: false,
+            sprintPads: false,
+            platformStyle: "concrete"
+        },
+        bossType: "adam",
+        bossName: "Herr Adam (Skilehrer)",
+        bossAvatar: "assets/sprites/adam_avatar.png",
+        bossHP: 0,
+        bossLines: [
+            { text: "Nimm das Frisbee und fahr!", clip: "adam_nimm_frisbee_fahr" },
+            { text: "Da hast du 20 Frisbees!!", clip: "adam_20_frisbees" }
+        ],
+        playerLines: [
+            { text: "Wo bliibt eigentli de Bus?!", clip: "thenerean_wo_bleibt_bus" },
+            { text: "Herr Adam, ich stah doch da!", clip: "thenerean_stah" },
+            { text: "Das isch e absoluti Frechheit!", clip: "thenerean_frechheit" },
+            { text: "Ich bin komplett verrückt!", clip: "thenerean_komplett_verrueckt" }
+        ],
+        obstacleTypes: [],
+        collectibleTypes: ["coffee", "energy_drink"]
+    },
+    {
+        id: 36,
+        chapter: 4,
+        yearText: "KAP. 4 • LEVEL 36",
+        name: "Lawinen-Abfahrt: Schneller als der Berg",
+        mode: "ski",
+        modeBadge: "🌨️ LAWINEN-ABFAHRT",
+        featureTag: "🌨️ DIE LAWINE IST HINTER DIR! JEDER STURZ LÄSST SIE AUFHOLEN — HOCKE [S], SCHANZEN UND TURBO [F]!",
+        missionBadge: "🌨️ LAWINE",
+        modeDesc: "Abfahrt vor der Lawine &bull; <strong>800m</strong>, Kühe auf der Piste",
+        winText: "Schneller als die Lawine! Unten im Tal ist alles still.",
+        ski: { variant: "avalanche", goal: 32000, baseSpeed: 9.2, density: 0.6, cows: true, throwEvery: 0, avalanche: { lead: 520, speed: 8.4, ramp: 0.2, maxLead: 560 } },
+        hasBoss: false,
+        bgType: "ski_alps",
+        bgPath: "assets/backgrounds/bg_ski_alps.jpg",
+        accentColor: "#45aaf2",
+        ambientStyle: "daylight",
+        targetDistance: 0,
+        music: "assets/music/Die_Rache_der_Maschine.mp3",
+        mechanics: {
+            platforms: false,
+            duckObstacles: false,
+            lavaPits: false,
+            sprintPads: false,
+            platformStyle: "concrete"
+        },
+        bossType: "adam",
+        bossName: "Herr Adam (Skilehrer)",
+        bossAvatar: "assets/sprites/adam_avatar.png",
+        bossHP: 0,
+        bossLines: [
+            { text: "Nimm das Frisbee und fahr!", clip: "adam_nimm_frisbee_fahr" },
+            { text: "Da hast du 20 Frisbees!!", clip: "adam_20_frisbees" }
+        ],
+        playerLines: [
+            { text: "Wo bliibt eigentli de Bus?!", clip: "thenerean_wo_bleibt_bus" },
+            { text: "Herr Adam, ich stah doch da!", clip: "thenerean_stah" },
+            { text: "Das isch e absoluti Frechheit!", clip: "thenerean_frechheit" },
+            { text: "Ich bin komplett verrückt!", clip: "thenerean_komplett_verrueckt" }
+        ],
+        obstacleTypes: [],
+        collectibleTypes: ["coffee", "energy_drink"]
+    },
+    {
+        id: 37,
+        chapter: 4,
+        yearText: "KAP. 4 • LEVEL 37",
+        name: "Gletscher-Glut: Lava-Wand im Eis",
+        mode: "lava_wall",
+        modeBadge: "🔥 LAVA-WAND EXTREM",
+        featureTag: "🔥 UNTER DEM GLETSCHER BRODELT LAVA — UND SIE KOMMT VON DER SEITE! RIESIGE LÜCKEN: DOPPELSPRUNG + DASH!",
+        missionBadge: "🔥 LAVA-WAND",
+        modeDesc: "Lava-Wand von der Seite, extrem &bull; <strong>500m</strong> mit riesigen Lücken",
+        winText: "Über jede Lücke gekommen, bevor die Lava-Wand zuschlagen konnte!",
+        sideHazard: { theme: "lava", speed: 5.7, ramp: 0.17, lead: 560, maxLead: 640 },
+        hasBoss: false,
+        bgType: "castle_alps",
+        bgPath: "assets/backgrounds/bg_castle_alps.jpg",
+        accentColor: "#ff6348",
+        ambientStyle: "daylight",
+        targetDistance: 20000,
+        music: "assets/music/Motherboard_Bleeding.mp3",
+        mechanics: {
+            platforms: true,
+            duckObstacles: true,
+            lavaPits: true,
+            sprintPads: true,
+            platformStyle: "concrete",
+            pitTheme: "lava",
+            clearPlatformUnder: true
+        },
+        bossType: "adam",
+        bossName: "Herr Adam (Skilehrer)",
+        bossAvatar: "assets/sprites/adam_avatar.png",
+        bossHP: 0,
+        bossLines: [
+            { text: "Nimm das Frisbee und fahr!", clip: "adam_nimm_frisbee_fahr" },
+            { text: "Da hast du 20 Frisbees!!", clip: "adam_20_frisbees" }
+        ],
+        playerLines: [
+            { text: "Wo bliibt eigentli de Bus?!", clip: "thenerean_wo_bleibt_bus" },
+            { text: "Herr Adam, ich stah doch da!", clip: "thenerean_stah" },
+            { text: "Das isch e absoluti Frechheit!", clip: "thenerean_frechheit" },
+            { text: "Ich bin komplett verrückt!", clip: "thenerean_komplett_verrueckt" }
+        ],
+        obstacleTypes: ["traffic_cone", "frisbee", "basketball", "broken_cable"],
+        collectibleTypes: ["coffee", "energy_drink"]
+    },
+    {
+        id: 38,
+        chapter: 4,
+        yearText: "KAP. 4 • LEVEL 38",
+        name: "Nacht-Slalom mit Stirnlampe",
+        mode: "ski",
+        modeBadge: "🌙 NACHT-SLALOM",
+        featureTag: "🌙 SLALOM BEI NACHT! DU SIEHST NUR DEN KEGEL DEINER STIRNLAMPE — UND HERR ADAM WIRFT WEITER!",
+        missionBadge: "🌙 NACHT-SLALOM",
+        modeDesc: "Nacht-Slalom mit Stirnlampe &bull; <strong>56 Tore</strong> in <strong>60s</strong>, Frisbee-Beschuss",
+        winText: "Im Dunkeln durch jedes Tor — der Nacht-Slalom ist geschafft!",
+        ski: { variant: "slalom", goal: 30000, baseSpeed: 9.3, density: 0.5, gateGap: 500, gateWidth: 160, timeLimitSec: 60, night: true, throwEvery: 300 },
+        hasBoss: false,
+        bgType: "ski_alps",
+        bgPath: "assets/backgrounds/bg_ski_alps.jpg",
+        accentColor: "#45aaf2",
+        ambientStyle: "daylight",
+        targetDistance: 0,
+        music: "assets/music/Beyond_the_Frame.mp3",
+        mechanics: {
+            platforms: false,
+            duckObstacles: false,
+            lavaPits: false,
+            sprintPads: false,
+            platformStyle: "concrete"
+        },
+        bossType: "adam",
+        bossName: "Herr Adam (Skilehrer)",
+        bossAvatar: "assets/sprites/adam_avatar.png",
+        bossHP: 0,
+        bossLines: [
+            { text: "Nimm das Frisbee und fahr!", clip: "adam_nimm_frisbee_fahr" },
+            { text: "Da hast du 20 Frisbees!!", clip: "adam_20_frisbees" }
+        ],
+        playerLines: [
+            { text: "Wo bliibt eigentli de Bus?!", clip: "thenerean_wo_bleibt_bus" },
+            { text: "Herr Adam, ich stah doch da!", clip: "thenerean_stah" },
+            { text: "Das isch e absoluti Frechheit!", clip: "thenerean_frechheit" },
+            { text: "Ich bin komplett verrückt!", clip: "thenerean_komplett_verrueckt" }
+        ],
+        obstacleTypes: [],
+        collectibleTypes: ["coffee", "energy_drink"]
+    },
+    {
+        id: 39,
+        chapter: 4,
+        yearText: "KAP. 4 • LEVEL 39",
+        name: "Schneeburg-Belagerung: Alle gegen Thenerean",
+        mode: "snowball",
+        modeBadge: "❄️ SCHNEEBURG-BELAGERUNG",
+        featureTag: "❄️ MONIKA, HERR ADAM UND TUNG SAHUR WERFEN MIT! 26 TREFFER — UND FINGER WEG VON DEN SCHNEEMÄNNERN!",
+        missionBadge: "❄️ TREFFER",
+        modeDesc: "Schneeburg-Belagerung &bull; <strong>26 Treffer</strong> in <strong>80s</strong> gegen das ganze Lehrer-Team",
+        winText: "Belagerung abgewehrt — sogar Tung Sahur hat Schnee im Gesicht!",
+        snowball: { hits: 26, timeLimitSec: 80, spawnEvery: 66, maxUp: 3, aimFrames: 48, cast: ["student", "adam", "monika", "sahur"], decoys: 0.16 },
+        hasBoss: false,
+        bgType: "castle_alps",
+        bgPath: "assets/backgrounds/bg_castle_alps.jpg",
+        accentColor: "#a55eea",
+        ambientStyle: "daylight",
+        targetDistance: 0,
+        music: "assets/music/The_Virus_Is_The_Law.mp3",
+        mechanics: {
+            platforms: false,
+            duckObstacles: false,
+            lavaPits: false,
+            sprintPads: false,
+            platformStyle: "concrete"
+        },
+        bossType: "adam",
+        bossName: "Herr Adam (Skilehrer)",
+        bossAvatar: "assets/sprites/adam_avatar.png",
+        bossHP: 0,
+        bossLines: [
+            { text: "Nimm das Frisbee und fahr!", clip: "adam_nimm_frisbee_fahr" },
+            { text: "Da hast du 20 Frisbees!!", clip: "adam_20_frisbees" }
+        ],
+        playerLines: [
+            { text: "Wo bliibt eigentli de Bus?!", clip: "thenerean_wo_bleibt_bus" },
+            { text: "Herr Adam, ich stah doch da!", clip: "thenerean_stah" },
+            { text: "Das isch e absoluti Frechheit!", clip: "thenerean_frechheit" },
+            { text: "Ich bin komplett verrückt!", clip: "thenerean_komplett_verrueckt" }
+        ],
+        obstacleTypes: [],
+        collectibleTypes: ["coffee", "energy_drink"]
+    },
+    {
+        id: 40,
+        chapter: 4,
+        yearText: "KAP. 4 • LEVEL 40",
+        name: "Grosses Finale: Das Rennen ins Tal",
+        mode: "ski",
+        modeBadge: "🏁 FINAL-RENNEN",
+        featureTag: "🏁 FINALE! HERR ADAM IST SCHNELLER DENN JE, WIRFT DOPPELT — UND HINTER EUCH DONNERT DIE LAWINE!",
+        missionBadge: "🏁 FINALE",
+        modeDesc: "Final-Rennen gegen <strong>Herr Adam</strong> &bull; <strong>1050m</strong>, Doppel-Würfe &amp; Lawine im Nacken",
+        winText: "Skilager-Champion! Thenerean gewinnt das Rennen ins Tal — und der Bus wartet schon.",
+        ski: { variant: "race", goal: 42000, baseSpeed: 10.0, rivalSpeed: 10.8, density: 0.68, cows: true, throwEvery: 220, throwBurst: 2, avalanche: { lead: 700, speed: 8.6, ramp: 0.2, maxLead: 740 } },
+        hasBoss: false,
+        bgType: "ski_alps",
+        bgPath: "assets/backgrounds/bg_ski_alps.jpg",
+        accentColor: "#45aaf2",
+        ambientStyle: "daylight",
+        targetDistance: 0,
+        music: "assets/music/Rewrite_The_Sky_RMX.mp3",
+        mechanics: {
+            platforms: false,
+            duckObstacles: false,
+            lavaPits: false,
+            sprintPads: false,
+            platformStyle: "concrete"
+        },
+        bossType: "adam",
+        bossName: "Herr Adam (Skilehrer)",
+        bossAvatar: "assets/sprites/adam_avatar.png",
+        bossHP: 0,
+        bossLines: [
+            { text: "Nimm das Frisbee und fahr!", clip: "adam_nimm_frisbee_fahr" },
+            { text: "Da hast du 20 Frisbees!!", clip: "adam_20_frisbees" }
+        ],
+        playerLines: [
+            { text: "Wo bliibt eigentli de Bus?!", clip: "thenerean_wo_bleibt_bus" },
+            { text: "Herr Adam, ich stah doch da!", clip: "thenerean_stah" },
+            { text: "Das isch e absoluti Frechheit!", clip: "thenerean_frechheit" },
+            { text: "Ich bin komplett verrückt!", clip: "thenerean_komplett_verrueckt" }
+        ],
+        obstacleTypes: [],
+        collectibleTypes: ["coffee", "energy_drink"]
     }
 ];

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thenerean Selvabankumar - Das GIBB Abenteuer</title>
     <link rel="icon" type="image/png" href="assets/sprites/app_favicon.png">
-    <link rel="stylesheet" href="style.css?v=v9f">
+    <link rel="stylesheet" href="style.css?v=v11">
 </head>
 <body>
     <div id="game-container">
@@ -414,9 +414,9 @@
             <div class="lobby-showcase">
                 <!-- TOP: Großer animierter Titel -->
                 <header class="lobby-hero-header">
-                    <div class="game-badge comic-badge">🇨🇭 GIBB BERUFSSCHULE BERN • EFZ KAMPAGNE • 3 KAPITEL • 30 LEHRJAHRE</div>
+                    <div class="game-badge comic-badge">🇨🇭 GIBB BERUFSSCHULE BERN • EFZ KAMPAGNE • 4 KAPITEL • 40 LEHRJAHRE</div>
                     <h1 class="lobby-big-title">THENEREAN <span>SELVABANKUMAR</span></h1>
-                    <p class="lobby-tagline">ABU-Witze, Mensa-Bankomat, Dual-GPU TukTuk &amp; das grosse <strong>EFZ-Finale 6.0!</strong></p>
+                    <p class="lobby-tagline">ABU-Witze, Dual-GPU TukTuk, das <strong>EFZ-Finale 6.0</strong> &amp; neu: das <strong>Alpen-Skilager!</strong></p>
                 </header>
 
                 <!-- CENTER: Alle 3 Charaktere gross & interaktiv in der Mitte -->
@@ -476,6 +476,15 @@
                             </div>
                             <button id="btn-menu-sound-toggle" class="btn btn-secondary btn-sm">🔊 SPRACHE &amp; EFFEKTE: AN</button>
                             <button id="btn-fullscreen-menu" class="btn btn-secondary btn-sm" title="Vollbild umschalten">⛶</button>
+                        </div>
+
+                        <!-- Song-Timeline: vor- und zurückspulen im laufenden Lobby-Track -->
+                        <div class="lobby-music-timeline" id="lobby-music-timeline">
+                            <button id="btn-music-rewind" class="btn btn-secondary btn-music-step" title="10 Sekunden zurück">⏪</button>
+                            <span id="music-time-current" class="music-time">0:00</span>
+                            <input type="range" id="slider-music-seek" class="music-seek" min="0" max="100" value="0" step="0.5" aria-label="Position im Song">
+                            <span id="music-time-total" class="music-time">0:00</span>
+                            <button id="btn-music-forward" class="btn btn-secondary btn-music-step" title="10 Sekunden vor">⏩</button>
                         </div>
                     </div>
 
@@ -581,14 +590,14 @@
             </div>
         </div>
 
-        <!-- Angry-Birds Chapter Select Modal (Fullscreen Showcase: 3 grosse Kapitel-Kacheln) -->
+        <!-- Angry-Birds Chapter Select Modal (Fullscreen Showcase: grosse Kapitel-Kacheln) -->
         <div id="screen-chapters" class="screen-overlay hidden">
             <div class="menu-card modal-card glass-panel chapter-modal-card chapters-showcase-card">
                 <div class="modal-header-bar">
                     <div>
-                        <span class="game-badge comic-badge">🗺️ KAMPAGNEN-KAPITEL • 3 × 10 LEVELS</span>
+                        <span class="game-badge comic-badge">🗺️ KAMPAGNEN-KAPITEL • 4 × 10 LEVELS</span>
                         <h2>WÄHLE DEIN KAPITEL</h2>
-                        <p id="chapters-summary" class="campaign-summary">Fortschritt: 0 / 30 Lehrjahre abgeschlossen</p>
+                        <p id="chapters-summary" class="campaign-summary">Fortschritt: 0 / 40 Lehrjahre abgeschlossen</p>
                     </div>
                     <div class="lvl-header-right">
                         <div class="reset-progress-group">
@@ -599,7 +608,7 @@
                                 <button type="button" id="btn-chapters-reset-no" class="btn btn-secondary btn-xs">✕</button>
                             </div>
                         </div>
-                        <button id="btn-open-all-levels" class="btn btn-secondary btn-sm">📚 ALLE 30 LEVELS</button>
+                        <button id="btn-open-all-levels" class="btn btn-secondary btn-sm">📚 ALLE 40 LEVELS</button>
                         <button id="btn-close-chapters" class="btn btn-secondary">ZURÜCK</button>
                     </div>
                 </div>
@@ -616,9 +625,9 @@
             <div class="menu-card modal-card glass-panel levels-showcase-card">
                 <div class="modal-header-bar">
                     <div>
-                        <span class="game-badge">GIBB KAMPAGNE • 30 LEVELS</span>
+                        <span class="game-badge">GIBB KAMPAGNE • 40 LEVELS</span>
                         <h2>WÄHLE DEIN LEHRJAHR AN DER GIBB</h2>
-                        <p id="campaign-summary" class="campaign-summary">Fortschritt: 0 / 30 Lehrjahre abgeschlossen</p>
+                        <p id="campaign-summary" class="campaign-summary">Fortschritt: 0 / 40 Lehrjahre abgeschlossen</p>
                     </div>
                     <div class="lvl-header-right">
                         <div class="reset-progress-group">
@@ -637,7 +646,8 @@
                     <button type="button" class="lvl-chap-tab active" data-chap="1">📖 KAPITEL 1 (1–10)</button>
                     <button type="button" class="lvl-chap-tab" data-chap="2">🚀 KAPITEL 2 (11–20)</button>
                     <button type="button" class="lvl-chap-tab" data-chap="3">🛸 KAPITEL 3 (21–30)</button>
-                    <button type="button" class="lvl-chap-tab" data-chap="all">🌟 ALLE 30 LEVELS</button>
+                    <button type="button" class="lvl-chap-tab" data-chap="4">🎿 KAPITEL 4 (31–40)</button>
+                    <button type="button" class="lvl-chap-tab" data-chap="all">🌟 ALLE 40 LEVELS</button>
                 </div>
                 <div id="chapter-overview-banner" class="chapter-overview-banner hidden">
                     <div class="chap-ov-info">
@@ -780,12 +790,16 @@
     </div>
 
     <!-- Scripts -->
-    <script src="audio.js?v=v9f"></script>
-    <script src="levels.js?v=v9f"></script>
-    <script src="game.js?v=v9f"></script>
-    <script src="boss_ai.js?v=v9f"></script>
-    <script src="expansion.js?v=v9f"></script>
-    <script src="course.js?v=v9f"></script>
-    <script src="content.js?v=v9f"></script>
+    <script src="audio.js?v=v11"></script>
+    <script src="levels.js?v=v11"></script>
+    <script src="game.js?v=v11"></script>
+    <script src="boss_ai.js?v=v11"></script>
+    <script src="expansion.js?v=v11"></script>
+    <script src="course.js?v=v11"></script>
+    <script src="content.js?v=v11"></script>
+    <script src="ski.js?v=v11"></script>
+    <script src="modes.js?v=v11"></script>
+    <script src="prologue.js?v=v11"></script>
+    <script src="lobby_extras.js?v=v11"></script>
 </body>
 </html>

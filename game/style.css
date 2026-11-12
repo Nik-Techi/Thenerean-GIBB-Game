@@ -3960,8 +3960,8 @@ body.touch-active #control-hint-pill {
 
 .chapter-cards-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: clamp(14px, 1.8vw, 26px);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(10px, 1.3vw, 20px);
     margin-top: 6px;
 }
 
@@ -4423,7 +4423,7 @@ body.touch-active #control-hint-pill {
     .lvl-header-right .btn,
     .lvl-header-right .btn.btn-sm { padding: 5px 9px; font-size: 10px; white-space: nowrap; }
     .lvl-header-right .btn.btn-reset-subtle { padding: 4px 8px; font-size: 9.5px; }
-    .chapter-cards-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+    .chapter-cards-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
     .chapter-thumb-wrap { height: 78px; }
     .chapter-num-badge, .chapter-clear-badge { font-size: 8.5px; padding: 2px 6px; top: 6px; }
     .chapter-num-badge { left: 6px; }
@@ -4692,3 +4692,97 @@ body.touch-active #control-hint-pill {
 .tut-pips i { width: 22px; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.16); }
 .tut-pips i.ok { background: #2ed573; }
 .tut-pips i.cur { background: #ffa502; }
+
+/* =========================================================================
+   v11: Lobby song timeline, training opponent picker, story intro controls
+   ========================================================================= */
+.lobby-music-timeline {
+    flex: 1 1 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.lobby-music-timeline .music-seek {
+    flex: 1;
+    min-width: 60px;
+    accent-color: #ffd32a;
+    cursor: pointer;
+}
+
+.lobby-music-timeline .music-time {
+    font-size: 11px;
+    font-weight: 800;
+    color: #cbd5e1;
+    font-variant-numeric: tabular-nums;
+    min-width: 30px;
+    text-align: center;
+}
+
+@media (max-width: 900px), (max-height: 520px) {
+    .lobby-music-timeline { gap: 5px; }
+    .lobby-music-timeline .music-time { font-size: 10px; min-width: 26px; }
+}
+
+.training-picker {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 24;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 8px;
+    border-radius: 14px;
+    background: rgba(14, 18, 32, 0.86);
+    border: 2px solid #f39c12;
+    box-shadow: 0 6px 22px rgba(243, 156, 18, 0.25);
+}
+
+.training-picker-title {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.8px;
+    color: #f39c12;
+    text-align: center;
+}
+
+.training-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 9px;
+    border-radius: 9px;
+    border: 1.5px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.06);
+    color: #e2e8f0;
+    font: inherit;
+    font-size: 11.5px;
+    font-weight: 800;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.training-chip:hover { background: rgba(255, 255, 255, 0.14); }
+
+.training-chip.active {
+    background: #f39c12;
+    border-color: #ffd32a;
+    color: #151515;
+}
+
+@media (max-height: 520px) {
+    .training-picker { padding: 5px; gap: 3px; }
+    .training-chip { padding: 3px 7px; font-size: 10px; }
+}
+
+.prologue-controls {
+    position: absolute;
+    right: 18px;
+    bottom: 14px;
+    z-index: 40;
+    display: flex;
+    gap: 8px;
+}

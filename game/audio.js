@@ -24,16 +24,16 @@ class SoundManager {
         // Kuratierter Soundtrack-Katalog (10 neue ~2–3min Epos-Tracks + 6 30s-Beats + 9 Klassiker)
         this.musicCatalog = [
             // Neue ~2–3 Min Epos-Tracks (Lobby Musik-Auswahl Favoriten)
-            { src: 'assets/music/Override_the_Kill_Switch.mp3', title: 'Not-Aus Eskalation: Override The Kill Switch', category: '🔥 Epos (2–3 Min)', duration: '02:56' },
-            { src: 'assets/music/Beyond_the_Frame.mp3', title: 'Sternenflug über Bern: Beyond The Frame', category: '🔥 Epos (2–3 Min)', duration: '02:58' },
-            { src: 'assets/music/Rewrite_The_Sky.mp3', title: 'GIBB Cyber-Hymne: Rewrite The Sky', category: '🔥 Epos (2–3 Min)', duration: '02:38' },
-            { src: 'assets/music/Rewrite_The_Sky_RMX.mp3', title: 'Overdrive Remix: Rewrite The Sky (Ext.)', category: '🔥 Epos (2–3 Min)', duration: '02:57' },
-            { src: 'assets/music/Die_Rache_der_Maschine.mp3', title: 'TukTuk-Aufstand: Die Rache der Maschine', category: '🔥 Epos (2–3 Min)', duration: '02:37' },
-            { src: 'assets/music/Motherboard_Bleeding.mp3', title: 'Dual-GPU Überhitzung: Motherboard Bleeding', category: '🔥 Epos (2–3 Min)', duration: '02:40' },
-            { src: 'assets/music/Cold_Steel_Beams.mp3', title: 'Server-Bunker Nacht: Cold Steel Beams', category: '🔥 Epos (2–3 Min)', duration: '02:27' },
-            { src: 'assets/music/Crimson_Shell.mp3', title: 'Thenu Ascendant: Crimson Shell', category: '🔥 Epos (2–3 Min)', duration: '02:26' },
-            { src: 'assets/music/The_Virus_Is_The_Law.mp3', title: 'OR Art. 321 Hack: The Virus Is The Law', category: '🔥 Epos (2–3 Min)', duration: '02:57' },
-            { src: 'assets/music/Optical_Glide.mp3', title: 'Morgartenstrasse Express: Optical Glide', category: '🔥 Epos (2–3 Min)', duration: '01:39' },
+            { src: 'assets/music/Override_the_Kill_Switch.mp3', title: 'Not-Aus Eskalation: Override The Kill Switch', category: '🎶 Songs (2–3 Min)', duration: '02:56' },
+            { src: 'assets/music/Beyond_the_Frame.mp3', title: 'Sternenflug über Bern: Beyond The Frame', category: '🎶 Songs (2–3 Min)', duration: '02:58' },
+            { src: 'assets/music/Rewrite_The_Sky.mp3', title: 'GIBB Cyber-Hymne: Rewrite The Sky', category: '🎶 Songs (2–3 Min)', duration: '02:38' },
+            { src: 'assets/music/Rewrite_The_Sky_RMX.mp3', title: 'Overdrive Remix: Rewrite The Sky (Ext.)', category: '🎶 Songs (2–3 Min)', duration: '02:57' },
+            { src: 'assets/music/Die_Rache_der_Maschine.mp3', title: 'TukTuk-Aufstand: Die Rache der Maschine', category: '🎶 Songs (2–3 Min)', duration: '02:37' },
+            { src: 'assets/music/Motherboard_Bleeding.mp3', title: 'Dual-GPU Überhitzung: Motherboard Bleeding', category: '🎶 Songs (2–3 Min)', duration: '02:40' },
+            { src: 'assets/music/Cold_Steel_Beams.mp3', title: 'Server-Bunker Nacht: Cold Steel Beams', category: '🎶 Songs (2–3 Min)', duration: '02:27' },
+            { src: 'assets/music/Crimson_Shell.mp3', title: 'Thenu Ascendant: Crimson Shell', category: '🎶 Songs (2–3 Min)', duration: '02:26' },
+            { src: 'assets/music/The_Virus_Is_The_Law.mp3', title: 'OR Art. 321 Hack: The Virus Is The Law', category: '🎶 Songs (2–3 Min)', duration: '02:57' },
+            { src: 'assets/music/Optical_Glide.mp3', title: 'Morgartenstrasse Express: Optical Glide', category: '🎶 Songs (2–3 Min)', duration: '01:39' },
 
             // Neue 30s-Meme-Beats
             { src: 'assets/music/Thanuran_The_Legend.mp3', title: 'Der Bug im System: Thanuran The Legend', category: '⚡ Neue Beats (30s)', duration: '00:31' },
@@ -56,6 +56,10 @@ class SoundManager {
         ];
 
         this.musicTracks = this.musicCatalog.map((item) => item.src);
+        // The lobby jukebox only offers the full-length songs; the 30s loops stay level music
+        const seconds = (mmss) => { const [m, s] = mmss.split(':').map(Number); return m * 60 + s; };
+        this.lobbyCatalog = this.musicCatalog.filter((item) => seconds(item.duration) >= 90);
+        this.lobbyTracks = this.lobbyCatalog.map((item) => item.src);
         this.menuMusicStorageKey = 'thenerean_lobby_music_v1';
         this.defaultMenuMusic = 'assets/music/Override_the_Kill_Switch.mp3';
         this.selectedMenuMusic = this.loadMenuMusicPreference();
@@ -696,7 +700,7 @@ class SoundManager {
     loadMenuMusicPreference() {
         try {
             const saved = localStorage.getItem(this.menuMusicStorageKey);
-            if (saved && this.musicTracks.includes(saved)) {
+            if (saved && this.lobbyTracks.includes(saved)) {
                 return saved;
             }
         } catch (e) {}
@@ -704,18 +708,18 @@ class SoundManager {
     }
 
     getMusicCatalog() {
-        return this.musicCatalog;
+        return this.lobbyCatalog;
     }
 
     getMenuMusic() {
-        if (!this.selectedMenuMusic || !this.musicTracks.includes(this.selectedMenuMusic)) {
+        if (!this.selectedMenuMusic || !this.lobbyTracks.includes(this.selectedMenuMusic)) {
             this.selectedMenuMusic = this.defaultMenuMusic;
         }
         return this.selectedMenuMusic;
     }
 
     setMenuMusic(src, playNow = true) {
-        if (!src || !this.musicTracks.includes(src)) return this.getMenuMusic();
+        if (!src || !this.lobbyTracks.includes(src)) return this.getMenuMusic();
         this.selectedMenuMusic = src;
         try {
             localStorage.setItem(this.menuMusicStorageKey, src);
@@ -728,9 +732,9 @@ class SoundManager {
 
     cycleMenuMusic(delta = 1) {
         const cur = this.getMenuMusic();
-        const idx = Math.max(0, this.musicTracks.indexOf(cur));
-        const nextIdx = (idx + delta + this.musicTracks.length) % this.musicTracks.length;
-        return this.setMenuMusic(this.musicTracks[nextIdx], true);
+        const idx = Math.max(0, this.lobbyTracks.indexOf(cur));
+        const nextIdx = (idx + delta + this.lobbyTracks.length) % this.lobbyTracks.length;
+        return this.setMenuMusic(this.lobbyTracks[nextIdx], true);
     }
 
     playIntroTechiChime() {

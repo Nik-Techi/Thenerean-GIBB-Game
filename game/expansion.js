@@ -49,6 +49,7 @@ const ACHIEVEMENTS = [
     { id: 'chapter1',   icon: '📖', name: 'Bern überlebt',         desc: 'Schliesse alle 10 Levels von Kapitel 1 ab',     reward: 90, test: (s, g) => g.countCleared(1, 10) >= 10 },
     { id: 'chapter2',   icon: '🚀', name: 'Melonen-Pilot',         desc: 'Schliesse alle 10 Levels von Kapitel 2 ab',     reward: 120, test: (s, g) => g.countCleared(11, 20) >= 10 },
     { id: 'chapter3',   icon: '🏆', name: 'EFZ in der Tasche',     desc: 'Schliesse alle 10 Levels von Kapitel 3 ab',     reward: 180, test: (s, g) => g.countCleared(21, 30) >= 10 },
+    { id: 'chapter4',   icon: '🎿', name: 'Pistenkönig',           desc: 'Schliesse alle 10 Levels von Kapitel 4 ab',     reward: 200, test: (s, g) => g.countCleared(31, 40) >= 10 },
     { id: 'grade6',     icon: '💯', name: 'Bestnote 6.0',          desc: 'Beende ein Level mit Note 6.0',                 reward: 60, test: (s) => s.grade6 >= 1 },
     { id: 'combo20',    icon: '🔥', name: 'Kombo-Lehrling',        desc: 'Erreiche eine 20er-Kombo',                      reward: 50,  test: (s) => s.bestCombo >= 20 },
     { id: 'combo50',    icon: '🌋', name: 'Kombo-Meister',         desc: 'Erreiche eine 50er-Kombo',                      reward: 120, test: (s) => s.bestCombo >= 50 },
@@ -530,7 +531,7 @@ const Expansion = {
                 ['Kritische Treffer', s.crits], ['Beste Kombo', s.bestCombo + '×'], ['Dashes', s.dashes],
                 ['Perfekte Ausweicher', s.dodges], ['Pogo-Sprünge', s.pogos], ['Perfekt-Blocks', s.perfectBlocks], ['Niederlagen', s.deaths],
                 ['Nachsitzen: Rekord', s.endlessBest + ' Wellen'], ['Nachsitzen: Versuche', s.endlessRuns],
-                ['Lohn insgesamt', s.coinsEarned + ' CHF'], ['Levels abgeschlossen', this.countCleared(1, 30) + ' / 30']
+                ['Lohn insgesamt', s.coinsEarned + ' CHF'], ['Levels abgeschlossen', this.countCleared(1, LEVELS_CONFIG.length) + ' / ' + LEVELS_CONFIG.length]
             ];
             body.innerHTML = '<div class="stats-grid">' + rows.map(([k, v]) => `<div class="stats-row"><span>${k}</span><strong>${v}</strong></div>`).join('') + '</div>';
         }
@@ -560,7 +561,7 @@ const Expansion = {
         const active = this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO;
         if (!active || this.isPaused || this.isPlayerStunned()) return;
         if (p.dashTimer > 0) return;
-        if (p.dashCooldown > 0 && this.state !== GAME_STATE.DEMO) return;
+        if (p.dashCooldown > 0) return;
         const isRocketMode = this.level && this.level.mode === 'rocket_flight';
         if (!isRocketMode && !p.isGrounded) {
             if (p.airDashUsed) return;
@@ -986,7 +987,7 @@ Game.prototype.mods = { ...DEFAULT_MODS };
         orig();
         if (!this.xui) return;
         const p = this.player;
-        const ready = p.dashCooldown <= 0 || this.state === GAME_STATE.DEMO;
+        const ready = p.dashCooldown <= 0;
         if (this.xui.dashFill) {
             const pct = ready ? 100 : Math.max(0, 100 - (p.dashCooldown / Math.max(1, this.mods.dashCd)) * 100);
             this.xui.dashFill.style.width = `${pct}%`;

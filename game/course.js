@@ -121,6 +121,7 @@ const Course = {
 
     resetCourseState() {
         this.runCoins = [];
+        this.runSigns = [];
         this.throwTimer = 260;
         this.throwWarn = null;
         this.crumbled = [];
@@ -132,7 +133,8 @@ const Course = {
     // RUN LEVELS: harder obstacle course
     // ---------------------------------------------------------------------
     // Builds the whole run course from hand-tuned patterns. Jump physics at run speed:
-    // one jump covers ~300px and peaks at ~170px, a dash adds ~190px.
+    // one jump covers ~300px and peaks at ~170px, the air jump stretches that to ~500-580px
+    // and an air dash adds another ~200px. Pits lose 32px of their width to the edge margin.
     buildRunCourse() {
         const lvl = this.level;
         const gy = this.player.groundY;
@@ -178,8 +180,9 @@ const Course = {
         const hasLava = !!mech.lavaPits;
         const hasPlat = !!mech.platforms;
         const noTall = lvl.mode === 'bankomat_survival';
-        const pitW = 280 + ch * 40;
-        const pogoW = 520 + ch * 40;
+        const pitW = 335 + ch * 45;      // wider than one jump: needs the air jump
+        const pogoW = 560 + ch * 45;
+        const dashGapW = 600 + ch * 10;  // only clears with jump + air jump + air dash
 
         const patterns = [
             { key: 'hurdle', len: 300, w: ch === 1 ? 1 : 0.5, ok: true, place: (x) => { obs(x + 40); if (Math.random() < 0.35) item(x + 135, 150); } },
@@ -192,8 +195,18 @@ const Course = {
             { key: 'duckJump', len: 700, w: 1, ok: hasDuck && id >= 6, place: (x) => { duck(x + 140); obs(x + 424); coin(x + 440, 170); } },
             { key: 'jumpDuck', len: 680, w: 1, ok: hasDuck && id >= 8, place: (x) => { obs(x + 40); duck(x + 392); } },
             { key: 'pit', len: pitW + 300, w: 1.2, ok: hasLava && id >= 6, place: (x) => { pit(x + 60, pitW); coinArc(x + 60, pitW, 4); } },
-            { key: 'bridge', len: 740, w: 1, ok: hasLava && hasPlat, place: (x) => { pit(x + 60, 440); plat(x + 210, 88, 140); item(x + 259, 146); } },
-            { key: 'movingBridge', len: 860, w: 1, ok: hasLava && hasPlat && id >= 7, place: (x) => { pit(x + 60, 560); plat(x + 270, 96, 140, { axis: 'x', amp: 70, speed: 1.9 }); item(x + 319, 154, 'energy_drink'); } },
+            { key: 'bridge', len: 800, w: 1, ok: hasLava && hasPlat, place: (x) => { pit(x + 60, 500); plat(x + 250, 88, 115); item(x + 286, 146); } },
+            { key: 'movingBridge', len: 940, w: 1, ok: hasLava && hasPlat && id >= 7, place: (x) => { pit(x + 60, 640); plat(x + 320, 96, 120, { axis: 'x', amp: 85, speed: 2.1 }); item(x + 359, 154, 'energy_drink'); } },
+            { key: 'islands', len: 1240, w: 1.1, ok: hasLava && hasPlat && id >= 9, place: (x) => {
+                pit(x + 60, 940);
+                plat(x + 300, 84, 96); plat(x + 600, 132, 96, id >= 15 ? { axis: 'y', amp: 26, speed: 2.4 } : null);
+                coin(x + 335, 150); coin(x + 635, 200); item(x + 627, 196);
+            } },
+            { key: 'dashGap', len: dashGapW + 340, w: 1.1, ok: hasLava && id >= 13, place: (x) => {
+                pit(x + 60, dashGapW);
+                coinArc(x + 60, dashGapW, 6);
+                this.runSigns.push({ x: x + 10, text: '⬆⬆ + SHIFT-DASH!' });
+            } },
             { key: 'pogo', len: pogoW + 320, w: 1.2, ok: hasLava && id >= 7, place: (x) => {
                 pit(x + 60, pogoW);
                 const floatTypes = types.filter((t) => t !== 'frisbee');
@@ -216,7 +229,7 @@ const Course = {
             } }
         ].filter((p) => p.ok);
 
-        const gapPad = this.chaser || lvl.mode === 'tuktuk_chase_boss' ? 130 : (ch === 1 ? 80 : (ch === 2 ? 50 : 30));
+        const gapPad = this.chaser || lvl.mode === 'tuktuk_chase_boss' ? 130 : (ch === 1 ? 60 : (ch === 2 ? 36 : (ch === 3 ? 22 : 14)));
         const end = total - 320;
         let x = 700;
         let last = '';
@@ -335,6 +348,11 @@ const Course = {
             ctx.textBaseline = 'middle';
             ctx.fillText('₣', 0, 1);
             ctx.restore();
+        }
+
+        for (const sign of this.runSigns) {
+            const sx = sign.x - this.worldDistance;
+            if (sx > -160 && sx < canvas.width + 160) this.drawNamePill(sign.text, sx, gy - this.player.h - 34, '#00d2d3');
         }
 
         if (this.throwWarn && Math.floor(this.animClock * 10) % 2 === 0) {
@@ -612,7 +630,7 @@ Object.assign(Game.prototype, Course);
     wrap('startLevel', function (orig, index) {
         orig(index);
         const mode = (this.level && this.level.mode) || 'standard';
-        if (this.ui.controlHintPill && mode !== 'rocket_flight' && mode !== 'vertical_climb') {
+        if (this.ui.controlHintPill && mode !== 'rocket_flight' && mode !== 'vertical_climb' && !this.customModes[mode]) {
             this.ui.controlHintPill.innerHTML = '<span><kbd>SPACE</kbd> halten = höher, 2× &bull; <kbd>SHIFT</kbd> Dash &bull; <kbd>↓</kbd> in der Luft auf Hindernis = Pogo &bull; <kbd>CTRL</kbd> Ducken &bull; <kbd>R</kbd> Block</span>';
         }
     });

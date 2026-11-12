@@ -180,6 +180,7 @@ const imageSources = {
     bg_srilanka_jungle: 'assets/backgrounds/bg_srilanka_jungle.jpg',
     bg_orbit_space: 'assets/backgrounds/bg_orbit_space.jpg',
     bg_castle_alps: 'assets/backgrounds/bg_castle_alps.jpg',
+    bg_ski_alps: 'assets/backgrounds/bg_ski_alps.jpg',
 
     // HD Cel-Shaded Items, Obstacles & Projectiles
     frisbee: 'assets/sprites/frisbee.png',
@@ -851,8 +852,12 @@ class Game {
         });
 
         if (this.ui.chaptersSummary) {
-            this.ui.chaptersSummary.textContent = `Fortschritt: ${totalCleared} / ${LEVELS_CONFIG.length} Lehrjahre abgeschlossen • 3 Kapitel (klicke ein Kapitel für die Level-Übersicht)`;
+            this.ui.chaptersSummary.textContent = `Fortschritt: ${totalCleared} / ${LEVELS_CONFIG.length} Lehrjahre abgeschlossen • ${chapters.length} Kapitel (klicke ein Kapitel für die Level-Übersicht)`;
         }
+    }
+
+    isChapterOpenerIndex(idx) {
+        return (window.CHAPTERS_CONFIG || []).some((c) => c.startIndex === idx);
     }
 
     pickRandomChaosClip() {
@@ -1232,7 +1237,7 @@ class Game {
                 const tgt = this.activeChapterBannerTarget || {};
                 if (typeof tgt.resumeIndex === 'number') {
                     const lvl = LEVELS_CONFIG[tgt.resumeIndex] || LEVELS_CONFIG[0];
-                    const isOpener = tgt.resumeIndex === 0 || tgt.resumeIndex === 10 || tgt.resumeIndex === 20;
+                    const isOpener = this.isChapterOpenerIndex(tgt.resumeIndex);
                     this.openDifficultySetupForLaunch({
                         type: isOpener ? 'intro' : 'level',
                         chapter: (lvl && lvl.chapter) || tgt.chapter || 1,
@@ -1341,10 +1346,8 @@ class Game {
         document.getElementById('btn-next-lvl').addEventListener('click', () => {
             this.ui.screenWin.classList.add('hidden');
             const nextIdx = this.currentLevelIndex + 1;
-            if (nextIdx === 10) {
-                this.startCinematicIntro({ chapter: 2, targetLevelIndex: 10 });
-            } else if (nextIdx === 20) {
-                this.startCinematicIntro({ chapter: 3, targetLevelIndex: 20 });
+            if (nextIdx < LEVELS_CONFIG.length && this.isChapterOpenerIndex(nextIdx)) {
+                this.startCinematicIntro({ chapter: LEVELS_CONFIG[nextIdx].chapter, targetLevelIndex: nextIdx });
             } else if (nextIdx < LEVELS_CONFIG.length) {
                 this.startLevel(nextIdx);
             } else {
@@ -1963,7 +1966,7 @@ class Game {
             if (prefs.soundTier && window.soundManager) {
                 window.soundManager.setSoundChaosLevel(prefs.soundTier);
             }
-            if (prefs.menuMusic && window.soundManager && window.soundManager.musicTracks.includes(prefs.menuMusic)) {
+            if (prefs.menuMusic && window.soundManager && window.soundManager.lobbyTracks.includes(prefs.menuMusic)) {
                 window.soundManager.setMenuMusic(prefs.menuMusic, this.state === GAME_STATE.MENU);
                 this.syncLobbyMusicSelect(prefs.menuMusic);
             }
@@ -2195,6 +2198,16 @@ class Game {
             icon = '🚀';
             text = this.level.hasBoss ? `DRONE MK-III IN ${remKm} km` : `KURS-ZIEL: ${remKm} km`;
             highlight = parseFloat(remKm) <= 1.2;
+        } else if (this.customModes[mode] && this.state === GAME_STATE.RUNNING) {
+            // null while the mode is still being set up (level switch)
+            const info = this.customModes[mode].pill.call(this);
+            if (info) {
+                show = true;
+                icon = info.icon;
+                text = info.text;
+                urgent = Boolean(info.urgent);
+                highlight = Boolean(info.highlight);
+            }
         } else if (mode === 'wave_rush' && inBossPhase) {
             const totalW = (this.level.waves && this.level.waves.length) || 3;
             show = true;
@@ -2341,7 +2354,7 @@ class Game {
         grid.innerHTML = '';
         const filter = String(this.selectedChapterFilter || '1');
         const savedLevels = (this.saveData && this.saveData.levels) || {};
-        const chapCounts = { 1: { cleared: 0, total: 0 }, 2: { cleared: 0, total: 0 }, 3: { cleared: 0, total: 0 } };
+        const chapCounts = {};
         let clearedCount = 0;
         let gradeSum = 0;
 
@@ -2361,7 +2374,8 @@ class Game {
             '1': { ico: '📖', label: 'KAPITEL 1' },
             '2': { ico: '🚀', label: 'KAPITEL 2' },
             '3': { ico: '🛸', label: 'KAPITEL 3' },
-            'all': { ico: '🌟', label: 'ALLE 30' }
+            '4': { ico: '🎿', label: 'KAPITEL 4' },
+            'all': { ico: '🌟', label: 'ALLE' }
         };
         if (this.ui.lvlChapTabs) {
             this.ui.lvlChapTabs.forEach((tab) => {
@@ -2407,7 +2421,7 @@ class Game {
                 }
                 if (this.ui.btnChapterPlayStart) {
                     const startLvlNum = activeChap.startIndex + 1;
-                    this.ui.btnChapterPlayStart.textContent = `🎬 KAPITEL ${activeChap.chapter} STARTEN (TRAILER + LEVEL ${startLvlNum}) ▶`;
+                    this.ui.btnChapterPlayStart.textContent = `🎬 KAPITEL ${activeChap.chapter} STARTEN (${activeChap.chapter === 1 ? 'INTRO' : 'TRAILER'} + LEVEL ${startLvlNum}) ▶`;
                 }
                 if (this.ui.btnChapterResume) {
                     if (cCleared > 0 && resumeIdx !== null) {
@@ -2429,7 +2443,7 @@ class Game {
             }
             const rec = savedLevels[String(lvl.id)];
             const isCleared = Boolean(rec && rec.cleared);
-            const isChapterOpener = idx === 0 || idx === 10 || idx === 20;
+            const isChapterOpener = this.isChapterOpenerIndex(idx);
 
             const statusHtml = isCleared
                 ? `<div class="lvl-save-row">
@@ -2475,6 +2489,7 @@ class Game {
             } else if (lvl.mode === 'duo_finale_platforms') {
                 modeDesc = `Plattform-Duo: <strong>${lvl.bossName} + ${lvl.partnerName || 'Partner'}</strong> (${sBossHP + sPartnerHP} HP)`;
             }
+            if (lvl.modeDesc) modeDesc = lvl.modeDesc;
 
             const div = document.createElement('div');
             div.className = `level-btn-card${isCleared ? ' level-cleared' : ''}`;
@@ -2696,11 +2711,8 @@ class Game {
             }
         }
 
-        // Instant free recharge in Demo Mode
+        // Training keeps HP topped up, but attacks run on their real cooldowns and energy costs
         this.player.hp = this.player.maxHp;
-        this.player.megaEnergy = 100;
-        if (this.player.frisbeeCooldown > 0) this.player.frisbeeCooldown = Math.max(0, this.player.frisbeeCooldown - 5);
-        if (this.player.blockCooldown > 0) this.player.blockCooldown = 0; if (this.player.lawBookCooldown > 0) this.player.lawBookCooldown = Math.max(0, this.player.lawBookCooldown - 2);
         this.updateBars();
 
         if (this.boss) {
@@ -3149,6 +3161,23 @@ class Game {
             }
         };
 
+        CHAPTER_TRAILERS[4] = {
+            badgeText: '🎿 KAPITEL 4 TRAILER • LEVEL 31–40',
+            title: 'ALPEN-SKILAGER MIT HERR ADAM',
+            context: 'EFZ in der Tasche — zur Belohnung geht es ins Skilager. Nur hat niemand Skis dabei: gefahren wird auf dem Frisbee!',
+            bgPath: 'assets/backgrounds/bg_ski_alps.jpg',
+            bgKey: 'bg_ski_alps',
+            left: 'adam',
+            right: 'thenerean',
+            beats: [
+                { side: 'right', actor: 'thenerean', pose: 'idle',   text: "Wo bliibt eigentli de Bus?! Und warum isch es da obe so chalt?!", clip: 'thenerean_wo_bleibt_bus', emoji: '🚌', quote: 'ANKUNFT IM SKILAGER!', dur: 4.4 },
+                { side: 'left',  actor: 'adam',      pose: 'throw',  text: "Silvankumar! Skis gits keini — nimm das Frisbee und fahr!", clip: 'adam_nimm_frisbee_fahr', emoji: '🥏', quote: 'FRISBEE STATT SKI!', dur: 4.5 },
+                { side: 'right', actor: 'thenerean', pose: 'jump',   text: "Das isch e absoluti Frechheit! Aber guet — Slalom, Schanze, alles!", clip: 'thenerean_frechheit', emoji: '🎿', quote: 'ABFAHRT, SLALOM & RENNEN!', dur: 4.4 },
+                { side: 'left',  actor: 'monika',    pose: 'point',  text: "Und Pünktlichkeit gilt au am Berg! D'Lawine wartet nöd uf di!", clip: 'monika_puenktlichkeit', emoji: '🌨️', quote: 'LAWINE VON DER SEITE!', dur: 4.4 },
+                { side: 'right', actor: 'thenerean', pose: 'block',  text: "Kapitel 4 (Level 31–40): Wer zerscht im Tal isch, gwünnt — und das bin ICH!", clip: 'thenerean_niemert_verbi', emoji: '🏁', quote: 'RENNEN INS TAL!', dur: 4.5 }
+            ]
+        };
+
         const ch = CHAPTER_TRAILERS[chapterNum] || CHAPTER_TRAILERS[1];
         const beats = ch.beats.map((b) => ({ ...b }));
         const totalDuration = beats.reduce((acc, b) => acc + (b.dur || 4.4), 0);
@@ -3324,7 +3353,8 @@ class Game {
         if (this.ui.introFxLayer) this.ui.introFxLayer.innerHTML = '';
 
         window.soundManager.setMusicQuietMode(true);
-        window.soundManager.playMusic(chapter === 2 ? 'assets/music/Beyond_the_Frame.mp3' : (chapter === 3 ? 'assets/music/Rewrite_The_Sky.mp3' : 'assets/music/That_s_The_One.mp3'));
+        const introMusic = { 2: 'assets/music/Beyond_the_Frame.mp3', 3: 'assets/music/Rewrite_The_Sky.mp3', 4: 'assets/music/Optical_Glide.mp3' };
+        window.soundManager.playMusic(introMusic[chapter] || 'assets/music/That_s_The_One.mp3');
         this.applyIntroBeat(0);
     }
 
@@ -3478,7 +3508,8 @@ class Game {
         window.soundManager.stopAllClips();
 
         this.currentLevelIndex = index;
-        this.level = index === 'endless' ? this.buildEndlessLevel() : LEVELS_CONFIG[index];
+        this.level = index === 'endless' ? this.buildEndlessLevel()
+            : (index === 'training' ? this.buildTrainingLevel() : LEVELS_CONFIG[index]);
 
         this.resizeCanvas();
         const groundPos = this.player.groundY;
@@ -3588,6 +3619,17 @@ class Game {
 
         if (mode === 'rocket_flight') {
             this.initRocketFlight();
+            this.state = GAME_STATE.RUNNING;
+            this.updateMissionPill();
+            this.updateTouchControlsVisibility();
+            return;
+        }
+
+        // Self-contained mini-game modes (ski, snowball fight, ...) registered in customModes
+        const custom = this.customModes[mode];
+        if (custom) {
+            if (this.ui.controlHintPill && custom.hint) this.ui.controlHintPill.innerHTML = `<span>${custom.hint}</span>`;
+            custom.init.call(this);
             this.state = GAME_STATE.RUNNING;
             this.updateMissionPill();
             this.updateTouchControlsVisibility();
@@ -4226,7 +4268,7 @@ class Game {
     // ATTACK 1 (E): Straight-ahead Gesetzestext (or Melonen-Laser in rocket_flight!)
     playerAttackLawBook() {
         if (this.player.lawBookCooldown > 0) return;
-        this.player.lawBookCooldown = this.state === GAME_STATE.DEMO ? 10 : this.player.maxLawBookCooldown;
+        this.player.lawBookCooldown = this.player.maxLawBookCooldown;
         this.updateBars();
         this.player.attackAnimTimer = 18;
         const dir = this.player.facing || 1;
@@ -4279,14 +4321,12 @@ class Game {
 
     // ATTACK 2 (Q / Shift): "ICH STAH DOCH DA!" Mega Shockwave
     playerAttackMegaShout() {
-        if (this.player.megaEnergy < this.mods.megaCost && this.state !== GAME_STATE.DEMO) {
+        if (this.player.megaEnergy < this.mods.megaCost) {
             this.addFloatingText("Energie lädt auf!", this.player.x + 20, this.player.y - 14, '#ff4757', 17);
             return;
         }
 
-        if (this.state !== GAME_STATE.DEMO) {
-            this.player.megaEnergy -= this.mods.megaCost;
-        }
+        this.player.megaEnergy -= this.mods.megaCost;
         this.updateBars();
 
         this.player.attackAnimTimer = 28;
@@ -4340,14 +4380,12 @@ class Game {
 
     // ATTACK 3 (F): "DA HAST DU 20 FRISBEES!" 20-Frisbee Rapid Barrage
     playerAttackFrisbeeVolley() {
-        if (this.player.frisbeeCooldown > 0 && this.state !== GAME_STATE.DEMO) {
+        if (this.player.frisbeeCooldown > 0) {
             this.addFloatingText("20 Frisbees laden nach...", this.player.x + 20, this.player.y - 14, '#ffa502', 17);
             return;
         }
 
-        if (this.state !== GAME_STATE.DEMO) {
-            this.player.frisbeeCooldown = this.player.maxFrisbeeCooldown;
-        }
+        this.player.frisbeeCooldown = this.player.maxFrisbeeCooldown;
 
         this.player.attackAnimTimer = 28;
         this.shoutAvatarTimer = 50;
@@ -4394,16 +4432,14 @@ class Game {
 
     // DEFENSE (R): Tactical Shield Block ("Niemert chunt an mir verbi!")
     playerBlock() {
-        if (this.player.blockCooldown > 0 && this.state !== GAME_STATE.DEMO) {
+        if (this.player.blockCooldown > 0) {
             this.addFloatingText("Schild lädt nach...", this.player.x + 20, this.player.y - 14, '#00d2d3', 17);
             return;
         }
 
         this.player.isBlocking = true;
         this.player.blockTimer = 34; // ~0.55s active blocking
-        if (this.state !== GAME_STATE.DEMO) {
-            this.player.blockCooldown = this.player.maxBlockCooldown;
-        }
+        this.player.blockCooldown = this.player.maxBlockCooldown;
         this.player.attackAnimTimer = 30;
 
         window.soundManager.playBlockSfx();
@@ -5489,6 +5525,10 @@ class Game {
             this.updateRocketFlight(dt);
             return;
         }
+        if (this.level && this.customModes[this.level.mode]) {
+            this.customModes[this.level.mode].update.call(this, dt);
+            return;
+        }
         if (this.level && this.level.mode === 'time_attack') {
             this.timeRemaining = Math.max(0, this.timeRemaining - dt);
             const secCeil = Math.ceil(this.timeRemaining);
@@ -6496,7 +6536,7 @@ class Game {
         this.ui.energyValText.textContent = `${Math.round(energyPct)}%`;
         this.ui.scoreVal.textContent = this.player.score.toFixed(1);
 
-        const megaReady = this.player.megaEnergy >= this.mods.megaCost || this.state === GAME_STATE.DEMO;
+        const megaReady = this.player.megaEnergy >= this.mods.megaCost;
         if (this.ui.hudEnergyFill) {
             this.ui.hudEnergyFill.style.width = `${energyPct}%`;
         }
@@ -6505,14 +6545,14 @@ class Game {
             this.ui.slotMega.classList.toggle('cooldown', !megaReady);
         }
         if (this.ui.touchMegaFill) {
-            this.ui.touchMegaFill.style.width = `${this.state === GAME_STATE.DEMO ? 100 : energyPct}%`;
+            this.ui.touchMegaFill.style.width = `${energyPct}%`;
         }
         if (this.ui.touchBtnMega) {
             this.ui.touchBtnMega.classList.toggle('ready', megaReady);
             this.ui.touchBtnMega.classList.toggle('cooldown', !megaReady);
         }
 
-        const fReady = this.player.frisbeeCooldown <= 0 || this.state === GAME_STATE.DEMO;
+        const fReady = this.player.frisbeeCooldown <= 0;
         if (this.ui.hudFrisbeeFill) {
             this.ui.hudFrisbeeFill.style.width = `${frisbeeReady}%`;
         }
@@ -6521,7 +6561,7 @@ class Game {
             this.ui.slotFrisbee.classList.toggle('cooldown', !fReady);
         }
         if (this.ui.touchFrisbeeFill) {
-            this.ui.touchFrisbeeFill.style.width = `${this.state === GAME_STATE.DEMO ? 100 : frisbeeReady}%`;
+            this.ui.touchFrisbeeFill.style.width = `${frisbeeReady}%`;
         }
         if (this.ui.touchBtnFrisbee) {
             this.ui.touchBtnFrisbee.classList.toggle('ready', fReady);
@@ -6531,7 +6571,7 @@ class Game {
         const shieldReady = this.player.blockCooldown <= 0
             ? 100
             : Math.max(0, 100 - (this.player.blockCooldown / this.player.maxBlockCooldown) * 100);
-        const sReady = this.player.blockCooldown <= 0 || this.state === GAME_STATE.DEMO;
+        const sReady = this.player.blockCooldown <= 0;
         if (this.ui.hudShieldFill) {
             this.ui.hudShieldFill.style.width = `${shieldReady}%`;
         }
@@ -6540,7 +6580,7 @@ class Game {
             this.ui.slotShield.classList.toggle('cooldown', !sReady);
         }
         if (this.ui.touchShieldFill) {
-            this.ui.touchShieldFill.style.width = `${this.state === GAME_STATE.DEMO ? 100 : shieldReady}%`;
+            this.ui.touchShieldFill.style.width = `${shieldReady}%`;
         }
         if (this.ui.touchBtnBlock) {
             this.ui.touchBtnBlock.classList.toggle('ready', sReady);
@@ -6615,7 +6655,9 @@ class Game {
         if (this.ui.winTime) this.ui.winTime.textContent = this.formatTime(this.elapsedSeconds);
         if (this.ui.winCombo) this.ui.winCombo.textContent = `${this.maxCombo}×`;
         if (this.ui.winDesc) {
-            if (this.level.mode === 'vertical_climb') {
+            if (this.level.winText) {
+                this.ui.winDesc.textContent = this.level.winText;
+            } else if (this.level.mode === 'vertical_climb') {
                 this.ui.winDesc.textContent = `Gipfel auf ${this.level.climbGoalMeters || 120}m im ${this.level.yearText} erklommen und der ${this.level.climbHazardName || 'Gefahr'} entkommen!`;
             } else if (this.level.mode === 'rocket_flight') {
                 this.ui.winDesc.textContent = this.level.hasBoss
@@ -6635,10 +6677,10 @@ class Game {
         }
         if (this.ui.btnNextLvl) {
             const nextIdx = this.currentLevelIndex + 1;
-            if (nextIdx === 10) {
-                this.ui.btnNextLvl.textContent = '🚀 KAPITEL 2 TRAILER STARTEN ▶';
-            } else if (nextIdx === 20) {
-                this.ui.btnNextLvl.textContent = '🛸 KAPITEL 3 TRAILER STARTEN ▶';
+            if (nextIdx < LEVELS_CONFIG.length && this.isChapterOpenerIndex(nextIdx)) {
+                const nextChap = LEVELS_CONFIG[nextIdx].chapter;
+                const chapIcon = { 2: '🚀', 3: '🛸', 4: '🎿' }[nextChap] || '🎬';
+                this.ui.btnNextLvl.textContent = `${chapIcon} KAPITEL ${nextChap} TRAILER STARTEN ▶`;
             } else if (nextIdx < LEVELS_CONFIG.length) {
                 this.ui.btnNextLvl.textContent = 'NÄCHSTES LEHRJAHR ANTRETEN ▶';
             } else {
@@ -6725,6 +6767,11 @@ class Game {
             quote = '"Silvankumar, ist der Thenerean da?! Da hast du 20 Frisbees!"';
         }
 
+        const customLose = this.customLoseTexts[reason];
+        if (customLose) {
+            ({ badge, title, desc, quote } = customLose);
+        }
+
         if (this.ui.loseBadge) this.ui.loseBadge.textContent = badge;
         if (this.ui.loseTitle) this.ui.loseTitle.textContent = title;
         if (this.ui.loseReason) this.ui.loseReason.textContent = desc;
@@ -6748,6 +6795,7 @@ class Game {
         } else if (reason === 'floor_zone') {
             loseClip = 'monika_abu_eingesperrt';
         }
+        if (customLose && customLose.clip) loseClip = customLose.clip;
         window.soundManager.playClip(loseClip);
     }
 
@@ -6797,7 +6845,9 @@ class Game {
             this.state === GAME_STATE.PRE_BOSS_DIALOGUE ||
             this.state === GAME_STATE.BOSS_FIGHT;
 
-        if (isClimb) {
+        if (this.customModes[mode]) {
+            this.customModes[mode].render.call(this);
+        } else if (isClimb) {
             ctx.save();
             ctx.translate(0, -this.climbCameraY);
             if ((this.player.groundY - this.climbCameraY) < canvas.height + 60) {
@@ -6932,6 +6982,7 @@ class Game {
         if (bg === 'srilanka_jungle') return 'bg_srilanka_jungle';
         if (bg === 'orbit_space') return 'bg_orbit_space';
         if (bg === 'castle_alps') return 'bg_castle_alps';
+        if (bg === 'ski_alps') return 'bg_ski_alps';
         return 'bg_gibb_entrance';
     }
 
@@ -7625,7 +7676,7 @@ class Game {
     drawGoalArch() {
         if (!this.level || !this.level.targetDistance || this.level.targetDistance <= 0) return;
         const mode = this.level.mode || 'standard';
-        if (mode !== 'time_attack' && mode !== 'tuktuk_chase_boss' && mode !== 'target_run_clear') return;
+        if (mode !== 'time_attack' && mode !== 'tuktuk_chase_boss' && mode !== 'target_run_clear' && mode !== 'lava_wall') return;
 
         const screenX = (this.level.targetDistance - this.worldDistance) + canvas.width * 0.35 + this.player.w;
         if (screenX < -120 || screenX > canvas.width + 140) return;
@@ -8176,6 +8227,10 @@ class Game {
         requestAnimationFrame((t) => this.loop(t));
     }
 }
+
+// Registries filled by the mode files loaded after game.js (ski.js, modes.js)
+Game.prototype.customModes = {};
+Game.prototype.customLoseTexts = {};
 
 window.addEventListener('load', () => {
     window.game = new Game();
