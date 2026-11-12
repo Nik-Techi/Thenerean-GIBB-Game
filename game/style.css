@@ -4060,12 +4060,12 @@ body.touch-active #control-hint-pill {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: clamp(9px, 1.3vh, 16px);
-    padding: clamp(14px, 1.8vh, 24px) clamp(16px, 1.7vw, 24px);
+    gap: clamp(7px, 1vh, 13px);
+    padding: clamp(11px, 1.4vh, 18px) clamp(12px, 1.3vw, 18px);
 }
 
 .chapter-title {
-    font-size: clamp(17px, 1.55vw, 25px);
+    font-size: clamp(15px, 1.35vw, 21px);
     font-weight: 900;
     color: #ffffff;
     line-height: 1.18;
@@ -4073,9 +4073,9 @@ body.touch-active #control-hint-pill {
 }
 
 .chapter-desc {
-    font-size: clamp(12px, 1.02vw, 15px);
+    font-size: clamp(11.5px, 0.92vw, 14px);
     color: #b4c0d4;
-    line-height: 1.42;
+    line-height: 1.38;
     margin: 0;
 }
 
@@ -4202,9 +4202,9 @@ body.touch-active #control-hint-pill {
     }
 
     .chapters-showcase-card .chapter-thumb-wrap {
-        flex: 1 1 44%;
+        flex: 0 1 38%;
         height: auto;
-        min-height: clamp(160px, 25vh, 380px);
+        min-height: clamp(120px, 19vh, 240px);
     }
 
     .levels-showcase-card {
