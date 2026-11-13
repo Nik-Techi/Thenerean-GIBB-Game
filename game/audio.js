@@ -59,6 +59,11 @@ class SoundManager {
         // The lobby jukebox only offers the full-length songs; the 30s loops stay level music
         const seconds = (mmss) => { const [m, s] = mmss.split(':').map(Number); return m * 60 + s; };
         this.lobbyCatalog = this.musicCatalog.filter((item) => seconds(item.duration) >= 90);
+        // Songs the Discord media bot added (discord_tracks.js, 2–3 min only). Jukebox only,
+        // so the level music rotation above stays unchanged.
+        const knownTracks = new Set(this.musicTracks);
+        const discordTracks = (window.DISCORD_TRACKS || []).filter((item) => item && item.src && !knownTracks.has(item.src));
+        this.lobbyCatalog = this.lobbyCatalog.concat(discordTracks);
         this.lobbyTracks = this.lobbyCatalog.map((item) => item.src);
         this.menuMusicStorageKey = 'thenerean_lobby_music_v1';
         this.defaultMenuMusic = 'assets/music/Override_the_Kill_Switch.mp3';
