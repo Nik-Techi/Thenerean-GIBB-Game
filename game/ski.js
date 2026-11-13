@@ -160,7 +160,7 @@ const Ski = {
             maxSpeed: cfg.maxSpeed || 700,
             speed: (cfg.baseSpeed || 400) * 0.72,
             px: subMode === 'slalom' ? SKI_VW * 0.5 : (subMode === 'ski_lift' ? 140 : 280),
-            py: subMode === 'slalom' ? 232 : (subMode === 'ski_lift' ? Ski.liftSlopeY(140) - 4 : Ski.slopeY(280)),
+            py: subMode === 'slalom' ? 172 : (subMode === 'ski_lift' ? Ski.liftSlopeY(140) - 4 : Ski.slopeY(280)),
             vx: 0,
             vy: 0,
             z: 0,
@@ -182,23 +182,35 @@ const Ski = {
             obstacles: [],
             gates: [],
             gatesPassed: 0,
-            gatesRequired: cfg.gatesRequired || 14,
-            gatesTotal: cfg.gatesTotal || 20,
+            gatesRequired: cfg.gatesRequired || 11,
+            gatesTotal: cfg.gatesTotal || 16,
+            slalomSec: 0,
+            slalomSections: 1,
+            secTransition: 0,
             gateCombo: 0,
+            downhillPhase: 'run1',
+            run1Length: Math.round((cfg.length || 8400) * 0.45),
+            cutsceneTimer: 0,
+            cutsceneDuration: 3.6,
+            adamTalkCd: 1.5,
+            adamQuote: '',
+            adamQuoteTimer: 0,
             projectiles: [],
             collectibles: [],
             frisbees: [],
-            frisbeeCd: cfg.frisbeeInterval || 2.5,
+            frisbeeCd: cfg.frisbeeInterval || 3.2,
             icicles: [],
-            icicleCd: 2.8,
+            icicleCd: 2.3,
             rival: cfg.rival ? {
-                x: subMode === 'slalom' ? SKI_VW * 0.5 + 90 : 350,
-                y: subMode === 'slalom' ? 215 : Ski.slopeY(350),
-                dist: subMode === 'slalom' ? 110 : 120,
-                speed: (cfg.baseSpeed || 410) * (cfg.rivalPace || 0.92),
+                x: subMode === 'slalom' ? SKI_VW * 0.5 + 88 : 340,
+                y: subMode === 'slalom' ? 164 : Ski.slopeY(340),
+                py: 164,
+                sec: 0,
+                dist: subMode === 'slalom' ? 0 : 95,
+                speed: (cfg.baseSpeed || 410) * (cfg.rivalPace || 0.94),
                 stunTimer: 0,
                 tilt: 0,
-                throwCd: 2.4,
+                throwCd: 2.8,
                 throwAnimTimer: 0
             } : null,
             avalanche: cfg.avalanche ? {
@@ -234,21 +246,26 @@ const Ski = {
     // SUBMODE GENERATORS
     // =========================================================================
     populateDownhill(g, s) {
-        const sp = s.cfg.obstacleSpacing || 260;
-        let d = 750;
+        const sp = Math.max(460, s.cfg.obstacleSpacing || 500);
+        const midStop = s.run1Length || Math.round(s.length * 0.45);
+        let d = 840;
         let idx = 0;
-        while (d < s.length - 520) {
+        while (d < s.length - 560) {
+            // Leave clean landing/boarding zones around Abfahrt 1 Finish & Abfahrt 2 Start
+            if (Math.abs(d - midStop) < 420 || (d > midStop && d < midStop + 560)) {
+                d += sp * 0.85;
+                continue;
+            }
             const roll = Math.random();
             let kind = 'rock';
-            if (roll < 0.24) kind = 'ramp';
-            else if (roll < 0.45) kind = 'ice_pine';
-            else if (roll < 0.63) kind = 'rock';
-            else if (roll < 0.78) kind = 'fence_gap';
-            else if (roll < 0.90) kind = 'snowman';
-            else kind = 'chalet';
+            if (roll < 0.42) kind = 'ramp';
+            else if (roll < 0.60) kind = 'rock';
+            else if (roll < 0.76) kind = 'ice_pine';
+            else if (roll < 0.89) kind = 'snowman';
+            else kind = 'fence_gap';
 
-            const w = kind === 'chalet' ? 126 : (kind === 'ramp' ? 114 : (kind === 'fence_gap' ? 92 : 56));
-            const h = kind === 'chalet' ? 98 : (kind === 'ice_pine' ? 112 : (kind === 'ramp' ? 48 : (kind === 'fence_gap' ? 54 : 46)));
+            const w = kind === 'ramp' ? 124 : (kind === 'fence_gap' ? 90 : 54);
+            const h = kind === 'ice_pine' ? 104 : (kind === 'ramp' ? 48 : (kind === 'fence_gap' ? 50 : 44));
             s.obstacles.push({
                 id: idx++,
                 kind,
@@ -259,39 +276,48 @@ const Ski = {
                 triggered: false,
                 passed: false
             });
-            if (Math.random() < 0.60) {
+            if (Math.random() < 0.74) {
                 const cRoll = Math.random();
                 s.collectibles.push({
-                    dist: d + (kind === 'ramp' ? 95 : 135),
-                    z: kind === 'ramp' ? 95 + Math.random() * 55 : (Math.random() < 0.4 ? 48 : 8),
+                    dist: d + (kind === 'ramp' ? 105 : 155),
+                    z: kind === 'ramp' ? 92 + Math.random() * 48 : (Math.random() < 0.35 ? 36 : 8),
                     kind: cRoll < 0.34 ? 'coffee' : (cRoll < 0.68 ? 'energy' : 'frisbee_gold'),
                     collected: false
                 });
             }
-            d += sp * (0.85 + Math.random() * 0.42);
+            d += sp * (0.90 + Math.random() * 0.38);
         }
     },
 
     populateSlalom(g, s) {
-        const total = s.gatesTotal;
-        const startDist = 760;
-        const endDist = s.length - 560;
-        const spacing = (endDist - startDist) / Math.max(1, total - 1);
+        // Stationary Slalom: 4 gates planted per mountain section! Skiers travel Top -> Bottom.
+        const total = s.gatesTotal || 16;
+        const gatesPerSec = 4;
+        const numSections = Math.max(1, Math.ceil(total / gatesPerSec));
+        s.slalomSections = numSections;
+        s.slalomSec = 0;
+        s.secTransition = 0;
+
+        const yRows = [252, 358, 464, 570];
         const halfW = s.cfg.gateHalfWidth || 116;
 
         let prevCenter = SKI_VW * 0.5;
         for (let i = 0; i < total; i++) {
-            const d = startDist + i * spacing;
+            const sec = Math.floor(i / gatesPerSec);
+            const row = i % gatesPerSec;
+            const y = yRows[row];
             const side = i % 2 === 0 ? -1 : 1;
-            const rawTarget = SKI_VW * 0.5 + side * (105 + Math.sin(i * 1.15) * 45 + (Math.random() * 48));
-            // Strict maximum step delta guarantee so every consecutive gate is 100% smoothly reachable
-            const delta = Math.max(-255, Math.min(255, rawTarget - prevCenter));
-            const centerX = Math.max(330, Math.min(950, prevCenter + delta));
+            const rawTarget = SKI_VW * 0.5 + side * (102 + Math.sin(i * 1.15) * 44 + Math.random() * 46);
+            const delta = Math.max(-245, Math.min(245, rawTarget - prevCenter));
+            const centerX = Math.max(335, Math.min(945, prevCenter + delta));
             prevCenter = centerX;
 
             s.gates.push({
                 index: i + 1,
-                dist: d,
+                sec,
+                row,
+                y,
+                dist: sec * 520 + (row + 1) * 105,
                 centerX,
                 halfW,
                 color: side < 0 ? 'red' : 'blue',
@@ -299,9 +325,11 @@ const Ski = {
                 hit: false,
                 poleWhip: 0
             });
-            if (i % 2 === 1 && Math.random() < 0.72) {
+            if (row % 2 === 1 && Math.random() < 0.78) {
                 s.collectibles.push({
-                    dist: d + spacing * 0.48,
+                    sec,
+                    y: y + 52,
+                    dist: sec * 520 + (row + 1) * 105 + 50,
                     x: (centerX + SKI_VW * 0.5) * 0.5,
                     kind: Math.random() < 0.48 ? 'coffee' : (Math.random() < 0.78 ? 'energy' : 'frisbee_gold'),
                     collected: false
@@ -311,13 +339,14 @@ const Ski = {
     },
 
     setupSkiLift(g, s) {
-        const length = s.length || 6200;
-        const slopeSpeed = s.cfg.cableSpeed || 115;
+        const length = s.length || 6400;
+        const slopeSpeed = s.cfg.cableSpeed || 120;
+        const isHardLift = (s.cfg && s.cfg.id >= 37);
 
-        // Deterministic uphill sector layout: guarantees every jump gap <= 235px (single jump ~300px, double ~550px)
+        // Deterministic uphill sector layout with MIXED fixed steel platforms + smooth ping-pong moving chairs (ZERO teleports!)
         const platforms = [];
         const grindWires = [];
-        const sectorSpan = 1050;
+        const sectorSpan = 1160;
         const numSectors = Math.max(5, Math.round(length / sectorSpan));
         const actualLength = numSectors * sectorSpan;
         s.length = actualLength;
@@ -326,84 +355,103 @@ const Ski = {
         platforms.push({
             id: 'start_station',
             kind: 'pylon',
+            isFixed: true,
             x: -110,
             w: 440,
             h: 34,
             offsetY: 0,
+            vx: 0,
             isStation: true,
             label: 'TALSTATION • SPRINGEN [SPACE / W]'
         });
 
         for (let sec = 0; sec < numSectors; sec++) {
             const xStart = sec * sectorSpan + 350;
-            const xEnd = (sec + 1) * sectorSpan - 60;
-
-            // Fixed sturdy steel Mast catwalk at end of every sector (safe checkpoint + icicles)
             const pylonX = (sec + 1) * sectorSpan - 80;
             const isFinish = sec === numSectors - 1;
             platforms.push({
                 id: `mast_${sec}`,
                 kind: 'pylon',
+                isFixed: true,
                 x: isFinish ? actualLength - 120 : pylonX,
-                w: isFinish ? 460 : 210,
+                w: isFinish ? 460 : 205,
                 h: 30,
                 offsetY: 0,
+                vx: 0,
                 isFinish,
                 label: isFinish ? '🏁 BERGSTATION ZIEL!' : `MAST ${sec + 1}`
             });
 
-            // Sector platforms bridging xStart -> pylonX cleanly in 3 hops
+            // 4 hops per sector mixing stationary anchored decks with ping-pong chairs, gondolas & timed ice chairs
             const spanLen = (isFinish ? actualLength - 130 : pylonX) - xStart;
-            const hopCount = 3;
+            const hopCount = 4;
             const step = spanLen / hopCount;
 
             for (let hIdx = 0; hIdx < hopCount; hIdx++) {
                 const segStart = xStart + hIdx * step;
-                const roll = (sec + hIdx) % 4;
-                if (hIdx === 1 && sec % 2 === 1 && step > 210) {
-                    // Add an optional gleaming Express-Grind Zipwire over a panoramic gondola gap!
+                if (hIdx === 1 && sec % 2 === 1 && step > 165) {
                     grindWires.push({
-                        x1: segStart - 30,
-                        x2: segStart + step * 0.95,
-                        offsetY: -55
+                        x1: segStart - 20,
+                        x2: segStart + step * 1.15,
+                        offsetY: -56
                     });
                 }
 
+                // Clear, fair mix: fixed steel decks vs smooth ping-pong chairs/gondolas/crumbling ice chairs
                 let kind = 'chair';
-                let w = 132;
+                let isFixed = false;
+                let w = 122;
                 let offsetY = -12 - (hIdx % 2) * 18;
-                if (roll === 2) {
-                    kind = 'gondola';
-                    w = 152;
-                    offsetY = -28;
-                } else if (roll === 1 && (sec > 0 || hIdx > 0)) {
+                let moveSpeed = slopeSpeed * (isHardLift ? 0.80 : 0.68);
+
+                if (hIdx === 0 || (hIdx === 2 && sec % 2 === 0)) {
+                    kind = 'fixed_deck';
+                    isFixed = true;
+                    w = 126;
+                    offsetY = hIdx === 0 ? -10 : -24;
+                    moveSpeed = 0;
+                } else if ((sec + hIdx) % 3 === 1 && (sec > 0 || hIdx > 1)) {
                     kind = 'ice_chair';
-                    w = 128;
-                    offsetY = -16;
+                    isFixed = (hIdx % 2 === 0);
+                    w = 114;
+                    offsetY = -18;
+                    moveSpeed = isFixed ? 0 : slopeSpeed * 0.60;
+                } else if (hIdx === 3) {
+                    kind = 'gondola';
+                    isFixed = false;
+                    w = 138;
+                    offsetY = -30;
+                    moveSpeed = slopeSpeed * (isHardLift ? 0.62 : 0.48);
                 }
 
-                const platX = segStart + 35;
+                const minX = segStart - 12;
+                const maxX = Math.min(pylonX - w - 26, segStart + step - w + 18);
+                const clampedMax = Math.max(minX + (isFixed ? 0 : 75), maxX);
+                const platX = isFixed ? (segStart + (step - w) * 0.35) : ((hIdx % 2 === 0) ? minX + 10 : clampedMax - 10);
+
                 platforms.push({
                     id: `p_${sec}_${hIdx}`,
                     kind,
+                    isFixed,
                     x: platX,
                     baseX: platX,
-                    minX: segStart - 25,
-                    maxX: Math.min(pylonX - w - 35, segStart + step * 0.58),
+                    minX,
+                    maxX: clampedMax,
                     w,
                     h: kind === 'gondola' ? 26 : 20,
                     offsetY,
-                    vx: (kind === 'chair' || kind === 'ice_chair') ? slopeSpeed * 0.48 : (kind === 'gondola' ? slopeSpeed * 0.34 : 0),
+                    vx: moveSpeed,
+                    dir: (hIdx % 2 === 0) ? 1 : -1,
                     bobPhase: (sec * 1.7 + hIdx * 1.1),
                     iceTimer: 0,
-                    iceLimit: 2.0,
+                    iceLimit: isHardLift ? 1.15 : 1.35,
                     fallenTimer: 0
                 });
 
-                if (Math.random() < 0.72) {
+                if (Math.random() < 0.68) {
                     s.collectibles.push({
                         x: platX + w * 0.5,
-                        offsetY: offsetY - 78,
+                        offsetY: offsetY - 76,
                         kind: Math.random() < 0.35 ? 'energy' : (Math.random() < 0.7 ? 'coffee' : 'frisbee_gold'),
                         collected: false
                     });
@@ -468,7 +516,9 @@ const Ski = {
             phase: 'inrun',
             inrunX: 140,
             inrunSpeed: 280,
-            balance: (Math.random() - 0.5) * 0.25,
+            balance: (Math.random() - 0.5) * 0.22,
+            landBalance: 0,
+            landBalanceBonusM: 0,
             balanceVel: 0,
             windGustPhase: Math.random() * 6,
             takeoffTimer: 0,
@@ -479,7 +529,7 @@ const Ski = {
             vx: 280,
             vy: 0,
             pitchDeg: 6,
-            windMs: (Math.random() - 0.5) * 3.4,
+            windMs: (Math.random() - 0.5) * 3.0,
             windShiftCd: 1.2,
             rings,
             stuntsDone: 0,
@@ -513,7 +563,6 @@ const Ski = {
         const safeDt = Math.min(0.05, Math.max(0.001, dt));
         const inputs = Ski.readInputs(g, s);
 
-        s.timeLeft = Math.max(0, s.timeLeft - safeDt);
         s.voiceCd = Math.max(0, s.voiceCd - safeDt);
         s.invuln = Math.max(0, s.invuln - safeDt);
         s.hurtFlash = Math.max(0, s.hurtFlash - safeDt * 2.5);
@@ -521,17 +570,27 @@ const Ski = {
         s.dashCd = Math.max(0, s.dashCd - safeDt);
         s.dashTimer = Math.max(0, s.dashTimer - safeDt);
         s.attackAnimTimer = Math.max(0, (s.attackAnimTimer || 0) - safeDt);
+        if (s.adamQuoteTimer > 0) s.adamQuoteTimer = Math.max(0, s.adamQuoteTimer - safeDt);
         if (s.rival && s.rival.throwAnimTimer > 0) {
             s.rival.throwAnimTimer = Math.max(0, s.rival.throwAnimTimer - safeDt);
         }
 
+        // Story/Lift/Debrief cutscenes between Talabfahrt Run 1 and Run 2 pause the countdown timer
+        if (s.subMode === 'downhill' && (s.downhillPhase === 'cutscene_lift' || s.downhillPhase === 'cutscene_debrief')) {
+            Ski.updateSnowParticles(g, s, safeDt);
+            Ski.updateDownhillCutscene(g, s, inputs, safeDt);
+            Ski.updateHUDProgress(g, s);
+            return;
+        }
+
+        s.timeLeft = Math.max(0, s.timeLeft - safeDt);
         if (s.timeLeft <= 6 && Math.ceil(s.timeLeft) !== Math.ceil(s.timeLeft + safeDt)) {
             if (window.soundManager) window.soundManager.playWarningTick();
         }
         if (s.timeLeft <= 0) {
             if (s.subMode === 'slalom') {
                 g.lastDamageReason = s.gatesPassed >= s.gatesRequired ? 'timeout' : 'ski_slalom';
-                if (s.gatesPassed >= s.gatesRequired && s.dist >= s.length * 0.92) {
+                if (s.gatesPassed >= s.gatesRequired && s.slalomSec >= (s.slalomSections || 1) - 1 && s.py >= 620) {
                     Ski.win(g, s);
                     return;
                 }
@@ -557,6 +616,7 @@ const Ski = {
 
     handleAbilities(g, s, inputs) {
         const p = g.player;
+        const slalomSX = s.subMode === 'slalom' ? Ski.slalomScreenX(s.px, s.py) : s.px;
 
         // [E] OR-Gesetzbuch Attack (aimed forward in active submode direction)
         if (inputs.lawPressed && p.lawBookCooldown <= 0) {
@@ -568,8 +628,8 @@ const Ski = {
             else if (s.subMode === 'ski_lift') { dirX = 0.96; dirY = -0.22; }
             else if (s.subMode === 'ski_jump') { dirX = 0.96; dirY = 0.14; }
 
-            const spawnX = (s.subMode === 'ski_lift') ? s.px + 20 : (s.subMode === 'ski_jump' ? s.jumpState.wx + 24 : s.px + 28);
-            const spawnY = (s.subMode === 'ski_lift') ? s.py - 32 : (s.subMode === 'ski_jump' ? s.jumpState.wy - 28 : s.py - s.z - 28);
+            const spawnX = (s.subMode === 'ski_lift') ? s.px + 20 : (s.subMode === 'ski_jump' ? s.jumpState.wx + 24 : (s.subMode === 'slalom' ? slalomSX : s.px + 28));
+            const spawnY = (s.subMode === 'ski_lift') ? s.py - 32 : (s.subMode === 'ski_jump' ? s.jumpState.wy - 28 : (s.subMode === 'slalom' ? s.py + 12 : s.py - s.z - 28));
 
             s.projectiles.push({
                 kind: 'law_book',
@@ -597,8 +657,8 @@ const Ski = {
             }
             const dirY = s.subMode === 'slalom' ? 1 : 0;
             const dirX = s.subMode === 'slalom' ? 0 : 1;
-            const baseX = (s.subMode === 'ski_lift') ? s.px + 18 : (s.subMode === 'ski_jump' ? s.jumpState.wx + 22 : s.px + 22);
-            const baseY = (s.subMode === 'ski_lift') ? s.py - 28 : (s.subMode === 'ski_jump' ? s.jumpState.wy - 26 : s.py - s.z - 26);
+            const baseX = (s.subMode === 'ski_lift') ? s.px + 18 : (s.subMode === 'ski_jump' ? s.jumpState.wx + 22 : (s.subMode === 'slalom' ? slalomSX : s.px + 22));
+            const baseY = (s.subMode === 'ski_lift') ? s.py - 28 : (s.subMode === 'ski_jump' ? s.jumpState.wy - 26 : (s.subMode === 'slalom' ? s.py + 10 : s.py - s.z - 26));
             for (const ang of [-0.14, 0, 0.14]) {
                 const vx = (dirX * Math.cos(ang) - dirY * Math.sin(ang)) * 840;
                 const vy = (dirX * Math.sin(ang) + dirY * Math.cos(ang)) * 840;
@@ -778,18 +838,41 @@ const Ski = {
             }
         }
 
-        // Herr Adam Rival & Frisbees
+        // Herr Adam Companion (flies/carves alongside Thenerean & comments with real audio clips!)
         if (s.rival) {
             const r = s.rival;
             if (r.stunTimer > 0) r.stunTimer -= dt;
             else {
-                const targetRSpeed = s.baseSpeed * (s.cfg.rivalPace || 0.91) * (diff.speedMult || 1);
-                r.speed += (targetRSpeed - r.speed) * 2.5 * dt;
+                const targetRel = 140 + Math.sin(s.dist * 0.0024) * 55;
+                const desiredRDist = s.dist + targetRel;
+                const baseRSpeed = s.baseSpeed * (s.cfg.rivalPace || 0.94) * (diff.speedMult || 1);
+                // Smooth companion rubberband so Herr Adam stays visible beside/ahead of Thenerean
+                const catchup = Math.max(-135, Math.min(260, (desiredRDist - r.dist) * 2.2));
+                r.speed += (baseRSpeed + catchup - r.speed) * 3.0 * dt;
                 r.dist += r.speed * dt;
             }
+
+            // Periodic companion encouragement & audio clips from Herr Adam
+            s.adamTalkCd = (s.adamTalkCd || 0) - dt;
+            if (s.adamTalkCd <= 0 && r.stunTimer <= 0) {
+                s.adamTalkCd = 5.6 + Math.random() * 2.4;
+                const banter = [
+                    { clip: 'adam_nimm_frisbee_fahr', text: '„Nimm d’Frisbee & fahr abe, Thenerean!“' },
+                    { clip: 'adam_setup_genehmigt', text: '„Setup isch genehmigt — sauberi Linie!“' },
+                    { clip: 'adam_20_frisbees', text: '„20 Frisbees bereit! Kanten setzen!“' },
+                    { clip: 'adam_silvankumar', text: '„Selvankumar! Vollgas ins Tal!“' }
+                ];
+                const pick = banter[Math.floor(Math.random() * banter.length)];
+                s.adamQuote = pick.text;
+                s.adamQuoteTimer = 3.1;
+                if (window.soundManager) {
+                    window.soundManager.playClip(pick.clip, null, 0.92, { lowPriority: true });
+                }
+            }
+
             r.throwCd -= dt;
-            if (r.throwCd <= 0 && Math.abs(r.dist - s.dist) < 880) {
-                r.throwCd = Math.max(1.4, (s.cfg.frisbeeInterval || 2.5) / (diff.aggroMult || 1));
+            if (r.throwCd <= 0 && Math.abs(r.dist - s.dist) < 760) {
+                r.throwCd = Math.max(2.6, (s.cfg.frisbeeInterval || 4.2) / (diff.aggroMult || 1));
                 r.throwAnimTimer = 0.45;
                 const rx = s.px + (r.dist - s.dist);
                 const clampX = Math.max(85, Math.min(SKI_VW - 65, rx));
@@ -800,11 +883,11 @@ const Ski = {
                     fromPlayer: false,
                     worldSpace: false,
                     x: clampX,
-                    y: ry - (Math.random() < 0.35 ? 42 : 0),
-                    vx: toLeft ? -510 : 510,
-                    vy: -65,
+                    y: ry - (Math.random() < 0.35 ? 38 : 0),
+                    vx: toLeft ? -485 : 485,
+                    vy: -60,
                     r: 18,
-                    life: 2.6
+                    life: 2.5
                 });
                 if (window.soundManager) window.soundManager.playThrow();
             }
@@ -813,7 +896,7 @@ const Ski = {
         // Avalanche
         if (s.avalanche) {
             const av = s.avalanche;
-            const targetAvSpeed = s.baseSpeed * (s.cfg.avalanchePace || 0.90) * (diff.speedMult || 1);
+            const targetAvSpeed = s.baseSpeed * (s.cfg.avalanchePace || 0.89) * (diff.speedMult || 1);
             av.speed += (targetAvSpeed - av.speed) * 2 * dt;
             av.dist += av.speed * dt;
             if (s.dist - av.dist > 560) av.dist = s.dist - 560; // Rubberband tension
@@ -827,68 +910,149 @@ const Ski = {
             }
         }
 
-        if (s.dist >= s.length) Ski.win(g, s);
+        // End of Run 1 -> Trigger animated Chairlift return + Monika Schneider Debrief -> Run 2!
+        if (s.downhillPhase === 'run1' && s.dist >= s.run1Length) {
+            s.downhillPhase = 'cutscene_lift';
+            s.cutsceneTimer = 0;
+            s.cutsceneDuration = 3.6;
+            s.debriefAdamPlayed = false;
+            s.projectiles = [];
+            s.z = 0;
+            s.vz = 0;
+            if (s.avalanche) s.avalanche.dist = s.dist - 540;
+            s.adamQuote = '„Ab in den Sessel — wir fahren wieder hoch!“';
+            s.adamQuoteTimer = 3.4;
+            if (window.soundManager) window.soundManager.playClip('adam_setup_genehmigt', null, 0.92, { lowPriority: true });
+            g.addFloatingText('🚡 ABFAHRT 1 ZIEL! RÜCKFAHRT IM SKILIFT...', SKI_VW * 0.5, 195, '#00d2d3', 22);
+            return;
+        }
+
+        if (s.downhillPhase === 'run2' && s.dist >= s.length) Ski.win(g, s);
+    },
+
+    updateDownhillCutscene(g, s, inputs, dt) {
+        s.cutsceneTimer += dt;
+        const canSkip = s.cutsceneTimer >= 0.70 && inputs.jumpPressed;
+
+        if (s.downhillPhase === 'cutscene_lift') {
+            if (canSkip || s.cutsceneTimer >= s.cutsceneDuration) {
+                s.downhillPhase = 'cutscene_debrief';
+                s.cutsceneTimer = 0;
+                s.cutsceneDuration = 4.6;
+                s.debriefAdamPlayed = false;
+                if (window.soundManager) {
+                    window.soundManager.playClip('monika_adam_korrigiere', null, 0.95, { lowPriority: true });
+                }
+            }
+        } else if (s.downhillPhase === 'cutscene_debrief') {
+            if (s.cutsceneTimer >= 2.25 && !s.debriefAdamPlayed) {
+                s.debriefAdamPlayed = true;
+                if (window.soundManager) {
+                    window.soundManager.playClip('adam_nimm_frisbee_fahr', null, 0.92, { lowPriority: true });
+                }
+            }
+            if (canSkip || s.cutsceneTimer >= s.cutsceneDuration) {
+                s.downhillPhase = 'run2';
+                s.cutsceneTimer = 0;
+                s.dist = Math.max(s.dist, s.run1Length + 30);
+                s.speed = s.baseSpeed * 0.85;
+                s.invuln = 1.6;
+                if (s.rival) {
+                    s.rival.dist = s.dist + 130;
+                    s.rival.throwCd = 2.4;
+                }
+                if (s.avalanche) {
+                    s.avalanche.dist = s.dist - 520;
+                }
+                g.player.hp = Math.min(g.player.maxHp, g.player.hp + 20);
+                g.updateBars();
+                if (window.soundManager) window.soundManager.playPowerUp();
+                g.addFloatingText('⛷️ ABFAHRT 2/2 VOLLGAS! (+20 HP)', SKI_VW * 0.5, 195, '#2ed573', 23);
+            }
+        }
     },
 
     // =========================================================================
-    // 2. LIVE SLALOM VS HERR ADAM (Oben ↓ Unten, realistisch erreichbar)
+    // 2. LIVE SLALOM VS HERR ADAM (Oben ↓ Unten, Tore FEST im Schnee!)
     // =========================================================================
     updateSlalom(g, s, inputs, dt) {
         const diff = g.getActiveDifficulty ? g.getActiveDifficulty() : { speedMult: 1, aggroMult: 1 };
+
+        // Smooth section transition wipe (when crossing bottom of one slope section to top of next)
+        if (s.secTransition > 0) {
+            s.secTransition = Math.max(0, s.secTransition - dt);
+            if (s.secTransition <= 0) {
+                s.slalomSec = Math.min((s.slalomSections || 1) - 1, s.slalomSec + 1);
+                s.py = 172;
+                s.projectiles = [];
+                if (s.rival && s.rival.sec < s.slalomSec) {
+                    s.rival.sec = s.slalomSec;
+                    s.rival.py = 164;
+                }
+            }
+            return;
+        }
 
         if (inputs.dashPressed && s.dashCd <= 0) {
             s.dashTimer = 0.42;
             s.dashCd = 2.8;
             if (window.soundManager) window.soundManager.playPowerUp();
-            g.addFloatingText('💨 CARVE-DASH!', s.px, s.py - 55, '#00d2d3', 18);
+            g.addFloatingText('💨 CARVE-DASH!', Ski.slalomScreenX(s.px, s.py), s.py - 55, '#00d2d3', 18);
         }
 
-        // Forward speed & Tuck / Precision Brake
+        // Downhill speed & Tuck [S] / Precision Brake [W]
         const tuck = inputs.down;
         const precisionBrake = inputs.up;
-        let targetSpeed = s.baseSpeed * (tuck ? 1.24 : (precisionBrake ? 0.78 : 1.0));
+        let targetSpeed = s.baseSpeed * (tuck ? 1.24 : (precisionBrake ? 0.74 : 1.0));
         if (s.boostTimer > 0) targetSpeed = Math.max(targetSpeed, s.maxSpeed * 0.98);
-        if (s.gateCombo >= 3) targetSpeed += Math.min(85, s.gateCombo * 14);
+        if (s.gateCombo >= 3) targetSpeed += Math.min(80, s.gateCombo * 14);
 
         // Drafting behind Herr Adam gives visible slipstream boost!
         let inSlipstream = false;
-        if (s.rival) {
-            const gapD = s.rival.dist - s.dist;
-            if (gapD > 35 && gapD < 240 && Math.abs(s.rival.x - s.px) < 95) {
+        if (s.rival && s.rival.sec === s.slalomSec) {
+            const gapY = s.rival.py - s.py;
+            if (gapY > 24 && gapY < 180 && Math.abs(s.rival.x - s.px) < 95) {
                 inSlipstream = true;
-                targetSpeed += 80;
+                targetSpeed += 75;
             }
         }
         s.inSlipstream = inSlipstream;
         s.speed += (Math.min(s.maxSpeed, targetSpeed) - s.speed) * Math.min(1, 5.5 * dt);
 
-        // Responsive snappy lateral carving
+        // Responsive snappy lateral carving [A / D]
         const steer = (inputs.right ? 1 : 0) - (inputs.left ? 1 : 0);
-        const latMax = s.dashTimer > 0 ? 1040 : (precisionBrake ? 810 : 735);
+        const latMax = s.dashTimer > 0 ? 1040 : (precisionBrake ? 830 : 755);
         s.vx += (steer * latMax - s.vx) * Math.min(1, 17 * dt);
         s.px = Math.max(255, Math.min(SKI_VW - 255, s.px + s.vx * dt));
         s.tilt = Math.max(-0.52, Math.min(0.52, s.vx / 700));
-        s.dist += s.speed * dt;
-        s.bgOffset += s.speed * dt;
+
+        // Skiers physically glide TOP -> BOTTOM past stationary gates!
+        const downSpeed = Math.max(125, s.speed * 0.42);
+        s.py += downSpeed * dt;
+        const secProgress = Math.max(0, Math.min(1, (s.py - 172) / 496));
+        s.dist = ((s.slalomSec + secProgress) / Math.max(1, s.slalomSections || 1)) * s.length;
+        const heroSX = Ski.slalomScreenX(s.px, s.py);
 
         // Carve ice spray
         if (Math.abs(s.vx) > 95 && Math.random() < 0.75) {
             s.snowSpray.push({
-                x: s.px - Math.sign(s.vx) * 16,
-                y: s.py - 8,
-                vx: -s.vx * 0.25 + (Math.random() - 0.5) * 45,
-                vy: -90 - Math.random() * 80,
-                life: 0.35
+                x: heroSX - Math.sign(s.vx) * 14,
+                y: s.py - 6,
+                vx: -s.vx * 0.22 + (Math.random() - 0.5) * 40,
+                vy: -80 - Math.random() * 70,
+                life: 0.34
             });
         }
 
-        // Gate Passage Resolution
+        // Gate Passage Resolution for current stationary section
         for (const gt of s.gates) {
             if (gt.poleWhip > 0) gt.poleWhip = Math.max(0, gt.poleWhip - dt * 3);
-            if (!gt.resolved && s.dist >= gt.dist) {
+            if (gt.sec !== s.slalomSec || gt.resolved) continue;
+            if (s.py >= gt.y) {
                 gt.resolved = true;
                 const dx = Math.abs(s.px - gt.centerX);
-                if (dx <= gt.halfW + 14) {
+                const fx = Ski.slalomScreenX(gt.centerX, gt.y);
+                if (dx <= gt.halfW + 16) {
                     gt.hit = true;
                     gt.poleWhip = 1;
                     s.gatesPassed++;
@@ -896,16 +1060,16 @@ const Ski = {
                     s.score += 120 + s.gateCombo * 25;
                     s.boostTimer = Math.max(s.boostTimer, 0.75);
                     if (window.soundManager) window.soundManager.playCollect();
-                    g.spawnBurst(s.px, s.py + 12, 10, gt.color === 'red' ? '#ff6b81' : '#70a1ff', 5, 16);
+                    g.spawnBurst(fx, gt.y + 8, 10, gt.color === 'red' ? '#ff6b81' : '#70a1ff', 5, 16);
                     g.addFloatingText(
                         s.gateCombo >= 3 ? `✅ TOR #${gt.index} (×${s.gateCombo} KOMBO!)` : `✅ TOR #${gt.index}`,
-                        s.px, s.py - 46, '#2ed573', 19
+                        heroSX, s.py - 46, '#2ed573', 19
                     );
                 } else {
                     gt.hit = false;
                     s.gateCombo = 0;
                     s.speed = Math.max(270, s.speed * 0.76);
-                    g.addFloatingText(`❌ TOR #${gt.index} VERPASST!`, s.px, s.py - 46, '#ff6b81', 18);
+                    g.addFloatingText(`❌ TOR #${gt.index} VERPASST!`, heroSX, s.py - 46, '#ff6b81', 18);
                     if (Math.random() < 0.45 && window.soundManager) {
                         window.soundManager.playClip('adam_strafe_verpasst', null, 0.9, { lowPriority: true });
                     }
@@ -913,60 +1077,74 @@ const Ski = {
             }
         }
 
-        // Collectibles
+        // Collectibles in active section (stationary!)
         for (const col of s.collectibles) {
-            if (col.collected) continue;
-            const cy = s.py + (col.dist - s.dist) * 0.68;
-            if (Math.abs(s.px - col.x) < 42 && Math.abs(s.py - cy) < 44) {
+            if (col.collected || col.sec !== s.slalomSec) continue;
+            if (Math.abs(s.px - col.x) < 48 && Math.abs(s.py - col.y) < 38) {
                 col.collected = true;
-                Ski.collectItem(g, s, col.kind, col.x, cy);
+                Ski.collectItem(g, s, col.kind, Ski.slalomScreenX(col.x, col.y), col.y);
             }
         }
 
-        // Herr Adam Live Slalom AI: smoothly carves gate-to-gate right on the mountain!
+        // Herr Adam Live Slalom AI: carves stationary gates Top -> Bottom section by section!
         if (s.rival) {
             const r = s.rival;
             if (r.stunTimer > 0) r.stunTimer -= dt;
             else {
                 const targetRSpeed = s.baseSpeed * (s.cfg.rivalPace || 0.92) * (diff.speedMult || 1);
                 r.speed += (targetRSpeed - r.speed) * 2.8 * dt;
-                r.dist += r.speed * dt;
+                const rDown = Math.max(115, r.speed * 0.42);
+                r.py = (r.py || 164) + rDown * dt;
+                r.y = r.py;
 
-                // Interpolate smoothly along the actual S-curve gates around Adam
+                // Smooth S-curve between stationary gates of Adam's active section
+                const secGates = s.gates.filter(gt => gt.sec === (r.sec || 0));
                 let targetAX = SKI_VW * 0.5;
-                for (let i = 0; i < s.gates.length; i++) {
-                    const gCur = s.gates[i];
-                    if (gCur.dist >= r.dist) {
-                        const gPrev = s.gates[i - 1] || { dist: 0, centerX: SKI_VW * 0.5 };
-                        const frac = Math.max(0, Math.min(1, (r.dist - gPrev.dist) / Math.max(1, gCur.dist - gPrev.dist)));
+                for (let i = 0; i < secGates.length; i++) {
+                    const gCur = secGates[i];
+                    if (gCur.y >= r.py) {
+                        const prevY = i === 0 ? 164 : secGates[i - 1].y;
+                        const prevX = i === 0 ? SKI_VW * 0.5 : secGates[i - 1].centerX;
+                        const frac = Math.max(0, Math.min(1, (r.py - prevY) / Math.max(1, gCur.y - prevY)));
                         const smooth = frac * frac * (3 - 2 * frac);
-                        targetAX = gPrev.centerX + (gCur.centerX - gPrev.centerX) * smooth;
+                        targetAX = prevX + (gCur.centerX - prevX) * smooth;
                         break;
+                    } else if (i === secGates.length - 1) {
+                        targetAX = gCur.centerX;
                     }
                 }
                 const oldX = r.x;
-                r.x += (targetAX - r.x) * Math.min(1, 5.2 * dt);
+                r.x += (targetAX - r.x) * Math.min(1, 5.5 * dt);
                 r.tilt = Math.max(-0.48, Math.min(0.48, (r.x - oldX) * 0.25));
+
+                if (r.py >= 668) {
+                    if ((r.sec || 0) < (s.slalomSections || 1) - 1) {
+                        r.sec = (r.sec || 0) + 1;
+                        r.py = 164;
+                    } else {
+                        r.py = 668;
+                    }
+                }
             }
 
-            // Herr Adam occasionally tosses snow-frisbees up/sideways toward you if near screen
+            // Herr Adam tosses frisbees when in the same visible mountain section
             r.throwCd -= dt;
-            if (r.throwCd <= 0 && r.stunTimer <= 0 && Math.abs(r.dist - s.dist) < 580) {
+            if (r.throwCd <= 0 && r.stunTimer <= 0 && r.sec === s.slalomSec) {
                 r.throwCd = Math.max(2.3, 3.6 / (diff.aggroMult || 1));
                 r.throwAnimTimer = 0.45;
-                const ry = s.py + (r.dist - s.dist) * 0.68;
-                if (ry > 110 && ry < SKI_VH - 50) {
-                    const dx = s.px - r.x;
-                    const dy = s.py - ry;
+                const rSX = Ski.slalomScreenX(r.x, r.py);
+                if (r.py > 120 && r.py < SKI_VH - 55) {
+                    const dx = heroSX - rSX;
+                    const dy = s.py - r.py;
                     const len = Math.max(1, Math.hypot(dx, dy));
                     s.projectiles.push({
                         kind: 'adam_frisbee',
                         fromPlayer: false,
                         worldSpace: false,
-                        x: r.x,
-                        y: ry,
-                        vx: (dx / len) * 390,
-                        vy: (dy / len) * 390,
+                        x: rSX,
+                        y: r.py,
+                        vx: (dx / len) * 380,
+                        vy: (dy / len) * 380,
                         r: 17,
                         life: 2.0
                     });
@@ -975,44 +1153,56 @@ const Ski = {
             }
         }
 
-        if (s.dist >= s.length) {
-            if (s.gatesPassed >= s.gatesRequired) {
-                Ski.win(g, s);
+        // Reached bottom of current section -> snow wipe to next section OR final finish!
+        if (s.py >= 668) {
+            if (s.slalomSec < (s.slalomSections || 1) - 1) {
+                s.secTransition = 0.55;
+                g.addFloatingText(`⛷️ HANG ${s.slalomSec + 1} FERTIG — WEITER!`, SKI_VW * 0.5, 210, '#00d2d3', 21);
             } else {
-                g.lastDamageReason = 'ski_slalom';
-                g.showMemePopup(`❌ NUR ${s.gatesPassed}/${s.gatesRequired} TORE — DISQUALIFIZIERT!`);
-                g.triggerGameOver();
+                if (s.gatesPassed >= s.gatesRequired) {
+                    Ski.win(g, s);
+                } else {
+                    g.lastDamageReason = 'ski_slalom';
+                    g.showMemePopup(`❌ NUR ${s.gatesPassed}/${s.gatesRequired} TORE — DISQUALIFIZIERT!`);
+                    g.triggerGameOver();
+                }
             }
         }
     },
 
     // =========================================================================
-    // 3. AKTIVER SKILIFT BERGAUF (Klare Plattformen + Tod bei Schluchtsturz)
+    // 3. AKTIVER SKILIFT BERGAUF (Feste Decks + Ping-Pong Sessel, kein Teleport!)
     // =========================================================================
     updateSkiLift(g, s, inputs, dt) {
         const ls = s.liftState;
         const diff = g.getActiveDifficulty ? g.getActiveDifficulty() : { aggroMult: 1 };
 
-        // Update moving uphill chairs / ice-chairs / gondolas within each sector
+        // Fixed decks stay rock-solid (vx===0); moving chairs/gondolas glide smoothly Ping-Pong (ZERO teleport!)
         for (const p of ls.platforms) {
             p.dx = 0;
-            if (p.vx > 0 && p.fallenTimer <= 0) {
+            if (!p.isFixed && p.vx > 0 && p.fallenTimer <= 0) {
                 const prevX = p.x;
-                p.x += p.vx * dt;
-                // When reaching end of cable sector, gently loop back along the return line!
-                if (p.x > p.maxX) {
+                p.dir = p.dir || 1;
+                p.x += p.vx * p.dir * dt;
+                if (p.x >= p.maxX) {
+                    p.x = p.maxX;
+                    p.dir = -1;
+                } else if (p.x <= p.minX) {
                     p.x = p.minX;
+                    p.dir = 1;
                 }
-                p.dx = (p.x >= prevX) ? (p.x - prevX) : 0;
+                p.dx = p.x - prevX;
             }
             if (p.fallenTimer > 0) {
                 p.fallenTimer -= dt;
                 if (p.fallenTimer <= 0) {
                     p.iceTimer = 0;
                     p.x = p.baseX;
+                    p.dir = 1;
                 }
             }
-            p.topY = Ski.liftSlopeY(p.x + p.w * 0.5) + p.offsetY + Math.sin(s.timeLeft * 2.8 + (p.bobPhase || 0)) * (p.vx > 0 ? 5 : 0);
+            const bob = (!p.isFixed && p.vx > 0) ? Math.sin(s.timeLeft * 2.4 + (p.bobPhase || 0)) * 3.5 : 0;
+            p.topY = Ski.liftSlopeY(p.x + p.w * 0.5) + p.offsetY + bob;
         }
 
         // Cooldowns & timers
@@ -1197,14 +1387,14 @@ const Ski = {
         // Telegraphed Icicles over canyon / Masts
         s.icicleCd -= dt;
         if (s.icicleCd <= 0) {
-            s.icicleCd = Math.max(1.5, 2.5 / (diff.aggroMult || 1));
-            const dropX = s.px + 120 + Math.random() * 290;
+            s.icicleCd = Math.max(1.3, 2.15 / (diff.aggroMult || 1));
+            const dropX = s.px + 100 + Math.random() * 290;
             if (dropX < ls.goalDist - 120) {
                 s.icicles.push({
                     x: dropX,
                     y: Ski.liftSlopeY(dropX) - 290,
                     vy: 0,
-                    telegraph: 0.85,
+                    telegraph: 0.78,
                     falling: false,
                     hit: false
                 });
@@ -1230,7 +1420,7 @@ const Ski = {
         // Descending rival Frisbees from ahead uphill
         s.frisbeeCd -= dt;
         if (s.frisbeeCd <= 0) {
-            s.frisbeeCd = Math.max(2.1, 3.3 / (diff.aggroMult || 1));
+            s.frisbeeCd = Math.max(1.85, 2.95 / (diff.aggroMult || 1));
             s.projectiles.push({
                 kind: 'adam_frisbee',
                 fromPlayer: false,
@@ -1321,47 +1511,37 @@ const Ski = {
                 );
             }
         } else if (js.phase === 'flight') {
-            // Wind shifts dynamically during flight -> destabilizes pitch angle!
+            // Live wind gusts drift landing balance -> player corrects smoothly with [A / D] so landing is ALWAYS controlled!
             js.windShiftCd -= dt;
             if (js.windShiftCd <= 0) {
-                js.windShiftCd = 0.85 + Math.random() * 0.85;
-                js.windMs = Math.max(-5.5, Math.min(5.5, js.windMs + (Math.random() - 0.5) * 4.4));
+                js.windShiftCd = 0.9 + Math.random() * 0.9;
+                js.windMs = Math.max(-4.8, Math.min(4.8, js.windMs + (Math.random() - 0.5) * 3.6));
             }
-            const windTorque = Math.sin(js.windGustPhase * 1.7) * 14 + js.windMs * 3.8;
-            const pitchCtrl = (inputs.up ? 42 : 0) - (inputs.down ? 44 : 0);
-            js.pitchDeg += (pitchCtrl + windTorque) * dt;
-            js.pitchDeg = Math.max(-28, Math.min(44, js.pitchDeg));
+            const balDrift = Math.sin(js.windGustPhase * 1.45) * 0.44 + js.windMs * 0.14;
+            const balCtrl = (inputs.right ? 1 : 0) - (inputs.left ? 1 : 0);
+            js.landBalance = Math.max(-1, Math.min(1, (js.landBalance || 0) + (balDrift + balCtrl * 2.35) * dt));
+            js.balance = js.landBalance;
 
-            // Horizontal aero trim [A/D] + one mid-air Wing-Dash [SHIFT]
-            const aeroTrim = (inputs.right ? 95 : 0) - (inputs.left ? 70 : 0);
+            // Self-stabilized aerodynamic flight pitch (+14° V-Style sweet spot, optionally trimmed via [W / S])
+            const pitchCtrl = (inputs.up ? 28 : 0) - (inputs.down ? 28 : 0);
+            js.pitchDeg += (pitchCtrl + (14 - js.pitchDeg) * 1.65) * dt;
+            js.pitchDeg = Math.max(-4, Math.min(26, js.pitchDeg));
+
+            // One mid-air Wing-Dash [SHIFT] + extra glide speed when [A / D] keeps landing balanced!
             if (inputs.dashPressed && js.dashReady) {
                 js.dashReady = false;
-                js.vx += 130;
-                js.vy -= 85;
+                js.vx += 115;
+                js.vy -= 75;
                 if (window.soundManager) window.soundManager.playPowerUp();
                 g.addFloatingText('⚡ TURBO-FLÜGELSTOSS!', SKI_VW * 0.5, 220, '#00d2d3', 20);
             }
 
-            // Lift vs Stall vs Dive aerodynamics
-            const p = js.pitchDeg;
-            const isStall = p > 28;
-            const isDive = p < -8;
-            let liftRatio = 0;
-            let drag = 18;
-            if (p >= 6 && p <= 23) {
-                liftRatio = 1 - Math.abs(p - 15) / 14; // Sweet V-Style Lift!
-                drag = 10;
-            } else if (isStall) {
-                liftRatio = 0.05;
-                drag = 155;
-            } else if (isDive) {
-                liftRatio = 0.08;
-                js.vy += 135 * dt;
-                drag = 10;
-            }
+            const balBalanced = Math.abs(js.landBalance) <= 0.45;
+            const liftRatio = Math.max(0.35, 1 - Math.abs(js.pitchDeg - 14) / 18) * (balBalanced ? 1.12 : 0.92);
+            const drag = balBalanced ? 8 : 22;
 
-            const grav = 625 * (1 - liftRatio * 0.44);
-            js.vx = Math.max(300, js.vx + (aeroTrim + js.windMs * 10 - drag) * dt);
+            const grav = 615 * (1 - liftRatio * 0.44);
+            js.vx = Math.max(300, js.vx + ((balBalanced ? 42 : -12) + js.windMs * 8 - drag) * dt);
             js.vy += grav * dt;
             js.wx += js.vx * dt;
             js.wy += js.vy * dt;
@@ -1373,7 +1553,7 @@ const Ski = {
             if (inputs.jumpPressed && altY > 82 && js.stuntsDone < 2 && s.spinAngle <= 0) {
                 js.stuntsDone++;
                 s.spinAngle = 0.05;
-                js.vy -= 42;
+                js.vy -= 40;
                 js.vx += 24;
                 if (window.soundManager) window.soundManager.playPowerUp();
                 g.addFloatingText('🌀 360° V-STYLE STUNT! (+10m)', SKI_VW * 0.5, 282, '#ffd32a', 21);
@@ -1386,10 +1566,10 @@ const Ski = {
             // Thermal Updraft Rings
             for (const rg of js.rings) {
                 if (rg.hit) continue;
-                if (Math.hypot(js.wx - rg.x, js.wy - rg.y) < rg.r + 30) {
+                if (Math.hypot(js.wx - rg.x, js.wy - rg.y) < rg.r + 32) {
                     rg.hit = true;
-                    js.vx += 48;
-                    js.vy -= 40;
+                    js.vx += 46;
+                    js.vy -= 38;
                     js.stuntsDone += 0.6;
                     g.player.megaEnergy = Math.min(g.player.maxMegaEnergy, g.player.megaEnergy + 22);
                     if (window.soundManager) window.soundManager.playCollect();
@@ -1397,58 +1577,38 @@ const Ski = {
                 }
             }
 
-            // Herr Adam mid-air Frisbee patrol
-            js.frisbeeAirCd -= dt;
-            if (js.frisbeeAirCd <= 0) {
-                js.frisbeeAirCd = Math.max(1.5, 2.5 / (diff.aggroMult || 1));
-                s.projectiles.push({
-                    kind: 'adam_frisbee',
-                    fromPlayer: false,
-                    worldSpace: true,
-                    x: js.wx + 560,
-                    y: js.wy + (Math.random() - 0.5) * 140,
-                    vx: -280,
-                    vy: (Math.random() - 0.5) * 60,
-                    r: 20,
-                    life: 2.5
-                });
-            }
-
-            // Active Telemark Flare Check just before touching down!
-            if (altY < 62 && inputs.jumpPressed && !js.flarePressed) {
-                js.flarePressed = true;
-                g.addFloatingText('🦵 TELEMARK BEREIT!', SKI_VW * 0.5, 245, '#2ed573', 19);
-            }
-
-            // Touchdown!
+            // Controlled Touchdown: landing is ALWAYS clean & controlled — [A/D] balance earns Telemark bonus meters!
             if (altY <= 4) {
                 js.wy = groundY;
-                const goodPitch = js.pitchDeg >= -9 && js.pitchDeg <= 26;
-                const cleanSpin = s.spinAngle === 0;
-                const cleanLand = js.flarePressed && goodPitch && cleanSpin;
+                const balErr = Math.abs(js.landBalance || 0);
+                const balBonus = balErr <= 0.44 ? 18 : (balErr <= 0.78 ? 8 : 0);
+                js.landBalanceBonusM = balBonus;
+                js.landedTelemark = true;
+                js.crashed = false;
 
-                const rawMeters = Math.max(25, (js.wx - 1460) / 14.5 + js.stuntsDone * 10);
-                if (cleanLand) {
-                    js.landedTelemark = true;
-                    js.flightMeters = Math.round(rawMeters + 12);
-                    js.bestMeters = Math.max(js.bestMeters, js.flightMeters);
-                    js.totalMeters += js.flightMeters;
+                const rawMeters = Math.max(30, (js.wx - 1460) / 14.5 + js.stuntsDone * 10);
+                js.flightMeters = Math.round(rawMeters + balBonus);
+                js.bestMeters = Math.max(js.bestMeters, js.flightMeters);
+                js.totalMeters += js.flightMeters;
+
+                g.spawnBurst(SKI_VW * 0.45, SKI_VH * 0.65, 14, '#ffffff', 6, 18);
+                if (balErr <= 0.44) {
                     if (window.soundManager) window.soundManager.playWaveClear();
-                    g.addFloatingText(`⭐ SAUBERER TELEMARK: ${js.flightMeters}m!`, SKI_VW * 0.5, 200, '#2ed573', 26);
+                    g.addFloatingText(`⭐ PERFEKTE LANDUNG (A/D +${balBonus}m): ${js.flightMeters}m!`, SKI_VW * 0.5, 200, '#2ed573', 25);
+                } else if (balErr <= 0.78) {
+                    if (window.soundManager) window.soundManager.playWaveClear();
+                    g.addFloatingText(`✅ SAUBERE LANDUNG (+${balBonus}m): ${js.flightMeters}m!`, SKI_VW * 0.5, 200, '#70a1ff', 24);
                 } else {
-                    js.crashed = true;
-                    js.flightMeters = Math.max(20, Math.round(rawMeters - 30));
-                    js.totalMeters += js.flightMeters;
-                    Ski.damagePlayer(g, s, 26, `💥 STURZ BEI LANDUNG! (${js.flightMeters}m)`, 'ski_crash');
-                    if (g.state !== GAME_STATE.RUNNING) return;
+                    if (window.soundManager) window.soundManager.playCollect();
+                    g.addFloatingText(`🎿 KONTROLLIERTE LANDUNG: ${js.flightMeters}m!`, SKI_VW * 0.5, 200, '#ffd32a', 23);
                 }
 
                 js.phase = 'outrun';
-                js.outRunTimer = 1.65;
+                js.outRunTimer = 1.55;
                 s.spinAngle = 0;
 
                 if (js.bestMeters >= js.targetSingleMeters || js.totalMeters >= js.targetTotalMeters) {
-                    setTimeout(() => { if (g.state === GAME_STATE.RUNNING) Ski.win(g, s); }, 750);
+                    setTimeout(() => { if (g.state === GAME_STATE.RUNNING) Ski.win(g, s); }, 700);
                 }
             }
         } else if (js.phase === 'outrun') {
@@ -1519,9 +1679,9 @@ const Ski = {
                     }
                 }
                 // Stun Herr Adam in Slalom or Downhill
-                if (s.rival && s.rival.stunTimer <= 0) {
-                    const rx = s.subMode === 'slalom' ? s.rival.x : s.px + (s.rival.dist - s.dist);
-                    const ry = s.subMode === 'slalom' ? s.py + (s.rival.dist - s.dist) * 0.68 : Ski.slopeY(rx) - 30;
+                if (s.rival && s.rival.stunTimer <= 0 && (s.subMode !== 'slalom' || s.rival.sec === s.slalomSec)) {
+                    const rx = s.subMode === 'slalom' ? Ski.slalomScreenX(s.rival.x, s.rival.py) : s.px + (s.rival.dist - s.dist);
+                    const ry = s.subMode === 'slalom' ? s.rival.py : Ski.slopeY(rx) - 30;
                     if (Math.hypot(p.x - rx, p.y - ry) < 54) {
                         s.rival.stunTimer = 2.2;
                         s.rival.speed *= 0.65;
@@ -1533,7 +1693,8 @@ const Ski = {
             } else {
                 // Hit check vs Thenerean
                 let tx = s.px, ty = s.py - s.z - 28;
-                if (s.subMode === 'ski_lift') { tx = s.px; ty = s.py - 28; }
+                if (s.subMode === 'slalom') { tx = Ski.slalomScreenX(s.px, s.py); ty = s.py - 22; }
+                else if (s.subMode === 'ski_lift') { tx = s.px; ty = s.py - 28; }
                 else if (s.subMode === 'ski_jump' && s.jumpState) { tx = s.jumpState.wx; ty = s.jumpState.wy - 22; }
 
                 if (Math.hypot(p.x - tx, p.y - ty) < p.r + 22) {
@@ -1586,13 +1747,21 @@ const Ski = {
 
         ctx.save();
         ctx.scale(canvas.width / SKI_VW, canvas.height / SKI_VH);
-        if (s.subMode === 'downhill') Ski.renderDownhill(g, s);
+        if (s.subMode === 'downhill') {
+            if (s.downhillPhase === 'cutscene_lift' || s.downhillPhase === 'cutscene_debrief') {
+                Ski.renderDownhillCutscene(g, s);
+            } else {
+                Ski.renderDownhill(g, s);
+            }
+        }
         else if (s.subMode === 'slalom') Ski.renderSlalom(g, s);
         else if (s.subMode === 'ski_lift') Ski.renderSkiLift(g, s);
         else if (s.subMode === 'ski_jump') Ski.renderSkiJump(g, s);
 
         Ski.renderSnowParticles(s);
-        Ski.renderProjectiles(g, s);
+        if (!(s.subMode === 'downhill' && (s.downhillPhase === 'cutscene_lift' || s.downhillPhase === 'cutscene_debrief'))) {
+            Ski.renderProjectiles(g, s);
+        }
 
         // Ensure standard particles, shockwaves & floating feedback popups always draw visibly!
         if (g.drawShockwaves) g.drawShockwaves();
@@ -2140,24 +2309,52 @@ const Ski = {
             ctx.stroke();
         }
 
-        // Finish Talstation Banner approaching at s.length
-        const finX = s.px + (s.length - s.dist);
-        if (finX < SKI_VW + 180) {
+        // Trail Guidance Signboard near start of Run 1 & Run 2
+        const signDists = [
+            { d: 460, text: '[S] HOCKE • [SPACE] SPRINGEN!' },
+            { d: (s.run1Length || 3600) + 260, text: 'ABFAHRT 2/2 • VOLLGAS!' }
+        ];
+        for (const sg of signDists) {
+            const sgX = s.px + (sg.d - s.dist);
+            if (sgX > -120 && sgX < SKI_VW + 120) {
+                const sy = Ski.slopeY(sgX);
+                ctx.save();
+                ctx.fillStyle = '#5c3c1e';
+                ctx.fillRect(sgX - 4, sy - 66, 8, 68);
+                ctx.fillStyle = '#ffd32a';
+                ctx.strokeStyle = '#151c2c';
+                ctx.lineWidth = 2.4;
+                ctx.beginPath();
+                ctx.roundRect(sgX - 108, sy - 96, 216, 32, 8);
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle = '#151c2c';
+                ctx.font = '900 12px Outfit, Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(sg.text, sgX, sy - 76);
+                ctx.restore();
+            }
+        }
+
+        // Finish / Mid-Run Talstation Banner
+        const goalDist = s.downhillPhase === 'run1' ? (s.run1Length || Math.round(s.length * 0.45)) : s.length;
+        const finX = s.px + (goalDist - s.dist);
+        if (finX < SKI_VW + 180 && finX > -220) {
             const fy = Ski.slopeY(finX);
-            ctx.fillStyle = '#e8293b';
+            ctx.fillStyle = s.downhillPhase === 'run1' ? '#0984e3' : '#e8293b';
             ctx.strokeStyle = '#151c2c';
             ctx.lineWidth = 3;
             ctx.fillRect(finX, fy - 140, 14, 142);
             ctx.strokeRect(finX, fy - 140, 14, 142);
             ctx.fillStyle = '#ffd32a';
-            ctx.fillRect(finX + 14, fy - 140, 175, 42);
-            ctx.strokeRect(finX + 14, fy - 140, 175, 42);
+            ctx.fillRect(finX + 14, fy - 140, 210, 42);
+            ctx.strokeRect(finX + 14, fy - 140, 210, 42);
             ctx.fillStyle = '#151c2c';
-            ctx.font = '900 18px Outfit, Arial';
+            ctx.font = '900 16px Outfit, Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('🏁 TALSTATION!', finX + 102, fy - 113);
-            Ski.drawSpriteChar('monika_point', finX + 75, fy + 2, 104, 1, 0, 1, 1, 0);
-            Ski.drawSpriteChar('gibb_student_idle', finX + 145, fy + 8, 98, 1, 0, 1, 1, 0);
+            ctx.fillText(s.downhillPhase === 'run1' ? '🚡 SESSEL-LIFT 1!' : '🏁 ZIEL TALSTATION!', finX + 119, fy - 113);
+            Ski.drawSpriteChar('monika_point', finX + 82, fy + 2, 104, 1, 0, 1, 1, 0);
+            Ski.drawSpriteChar('gibb_student_idle', finX + 155, fy + 8, 98, 1, 0, 1, 1, 0);
         }
 
         // Obstacles
@@ -2235,16 +2432,35 @@ const Ski = {
             Ski.drawCollectibles(cx, Ski.slopeY(cx) - col.z - 22, col.kind, s.timeLeft);
         }
 
-        // Rival Herr Adam
+        // Companion Herr Adam + Live Speech Bubble!
         if (s.rival) {
-            const rx = Math.max(70, Math.min(SKI_VW - 60, s.px + (s.rival.dist - s.dist)));
-            Ski.drawAdamRival(rx, Ski.slopeY(rx) - 4, {
+            const rx = Math.max(82, Math.min(SKI_VW - 75, s.px + (s.rival.dist - s.dist)));
+            const ry = Ski.slopeY(rx) - 4;
+            Ski.drawAdamRival(rx, ry, {
                 t: s.timeLeft,
                 stunned: s.rival.stunTimer > 0,
                 throwing: s.rival.throwAnimTimer > 0,
                 windup: s.rival.throwCd < 0.38,
                 throwLeft: rx > s.px
             });
+            if (s.adamQuoteTimer > 0 && s.adamQuote) {
+                ctx.save();
+                ctx.font = '900 13px Outfit, Arial';
+                const tw = Math.min(360, Math.max(170, ctx.measureText(s.adamQuote).width + 38));
+                const bx = Math.max(20, Math.min(SKI_VW - tw - 20, rx - tw * 0.5));
+                const by = ry - 156;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
+                ctx.strokeStyle = '#151c2c';
+                ctx.lineWidth = 2.6;
+                ctx.beginPath();
+                ctx.roundRect(bx, by, tw, 34, 12);
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle = '#151c2c';
+                ctx.textAlign = 'center';
+                ctx.fillText(s.adamQuote, bx + tw * 0.5, by + 22);
+                ctx.restore();
+            }
         }
 
         // Hero Thenerean
@@ -2270,6 +2486,136 @@ const Ski = {
 
         // Volumetric Roaring Multi-Wave Comic Avalanche!
         if (s.avalanche) Ski.renderAvalanche(s);
+    },
+
+    renderDownhillCutscene(g, s) {
+        const prog = Math.min(1, s.cutsceneTimer / Math.max(0.1, s.cutsceneDuration));
+        if (s.downhillPhase === 'cutscene_lift') {
+            Ski.drawSeamlessBackdrop('bg_ski_lift_gorge', s.cutsceneTimer * 55);
+
+            // Diagonal haul cable climbing bottom-left -> top-right
+            const cableY = (x) => 560 - (x / SKI_VW) * 330;
+            // Support steel pylons
+            for (const tx of [220, 640, 1060]) {
+                const ty = cableY(tx);
+                ctx.strokeStyle = '#2d3748';
+                ctx.lineWidth = 10;
+                ctx.beginPath();
+                ctx.moveTo(tx, ty);
+                ctx.lineTo(tx, SKI_VH);
+                ctx.stroke();
+                ctx.strokeStyle = '#718096';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+            }
+            ctx.strokeStyle = '#151c2c';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(0, cableY(0));
+            ctx.lineTo(SKI_VW, cableY(SKI_VW));
+            ctx.stroke();
+
+            // 2-Seater Chair gliding smoothly uphill carrying Thenerean & Herr Adam!
+            const chairX = 240 + prog * 790;
+            const chairY = cableY(chairX) + 88;
+            ctx.strokeStyle = '#1e272e';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(chairX, cableY(chairX));
+            ctx.lineTo(chairX, chairY - 65);
+            ctx.stroke();
+
+            // Seated Riders inside double-chairlift seat
+            Ski.drawSpriteChar('thenerean_idle', chairX - 36, chairY + 6, 98, 1, 0, 1, 1, -0.04);
+            Ski.drawSpriteChar('adam_idle', chairX + 36, chairY + 6, 102, -1, 0, 1, 1, -0.04);
+
+            // Chair seat frame & dangling skis
+            ctx.fillStyle = '#e8293b';
+            ctx.strokeStyle = '#151c2c';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.roundRect(chairX - 78, chairY - 2, 156, 20, 8);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#2f3542';
+            ctx.fillRect(chairX - 72, chairY - 68, 144, 14);
+            ctx.strokeRect(chairX - 72, chairY - 68, 144, 14);
+
+            // Dynamic comic speech bubble from Herr Adam
+            const liftMsg = 'Adam: „Top Lauf! Ab im Sessel zurück auf den Gipfel!“';
+            ctx.font = '900 14px Outfit, Arial';
+            const lbW = Math.max(360, ctx.measureText(liftMsg).width + 38);
+            const lbX = Math.max(20, Math.min(SKI_VW - lbW - 20, chairX - lbW * 0.5));
+            ctx.fillStyle = 'rgba(255,255,255,0.96)';
+            ctx.strokeStyle = '#151c2c';
+            ctx.lineWidth = 2.6;
+            ctx.beginPath();
+            ctx.roundRect(lbX, chairY - 148, lbW, 40, 14);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#151c2c';
+            ctx.textAlign = 'center';
+            ctx.fillText(liftMsg, lbX + lbW * 0.5, chairY - 123);
+
+            // Top Banner strictly below mission pill (clear of bottom HUD!)
+            ctx.fillStyle = 'rgba(11, 16, 30, 0.92)';
+            ctx.strokeStyle = '#00d2d3';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(SKI_VW * 0.5 - 325, 148, 650, 38, 13);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#00d2d3';
+            ctx.font = '900 15px Outfit, Arial';
+            ctx.fillText('🚡 SKILIFT-RÜCKFAHRT ZUR GIPFELHÜTTE... [LEERTASTE = WEITER]', SKI_VW * 0.5, 172);
+        } else {
+            // Summit Hut Debrief with Monika Schneider, Herr Adam & Thenerean!
+            Ski.drawSeamlessBackdrop('bg_ski_downhill', 0);
+            ctx.fillStyle = '#dceeff';
+            ctx.strokeStyle = '#151c2c';
+            ctx.lineWidth = 3.5;
+            ctx.fillRect(-10, 520, SKI_VW + 20, 210);
+            ctx.strokeRect(-10, 520, SKI_VW + 20, 210);
+
+            Ski.drawComicChalet(980, 524, 240, 175);
+            Ski.drawSpriteChar('thenerean_idle', 360, 528, 150, 1, 0, 1, 1, 0);
+            Ski.drawSpriteChar('adam_idle', 575, 530, 154, -1, 0, 1, 1, 0);
+            Ski.drawSpriteChar('monika_point', 810, 530, 152, 1, 0, 1, 1, 0);
+
+            const step2 = s.cutsceneTimer >= 2.25;
+            const speaker = step2 ? 'HERR ADAM' : 'MONIKA SCHNEIDER';
+            const line = step2
+                ? '„Setup isch genehmigt — nimm d’Frisbee & Vollgas in Abfahrt 2!“'
+                : '„Sauberi Kanten jetzt, Thenerean! In Abfahrt 2 wird voll angegriffen!“';
+            const borderCol = step2 ? '#00d2d3' : '#ff6b81';
+
+            ctx.fillStyle = 'rgba(12, 18, 34, 0.92)';
+            ctx.strokeStyle = borderCol;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.roundRect(SKI_VW * 0.5 - 390, 162, 780, 94, 18);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = borderCol;
+            ctx.font = '900 14px Outfit, Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`🎙️ TAKTIK-BESPRECHUNG • ${speaker}`, SKI_VW * 0.5, 192);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 20px Outfit, Arial';
+            ctx.fillText(line, SKI_VW * 0.5, 228);
+
+            ctx.fillStyle = 'rgba(11, 16, 30, 0.92)';
+            ctx.strokeStyle = '#2ed573';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(SKI_VW * 0.5 - 290, 266, 580, 38, 13);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#2ed573';
+            ctx.font = '900 15px Outfit, Arial';
+            ctx.fillText('⛷️ NÄCHSTE ABFAHRT (2/2) STARTET GLEICH • [LEERTASTE]', SKI_VW * 0.5, 290);
+        }
     },
 
     renderAvalanche(s) {
@@ -2353,35 +2699,33 @@ const Ski = {
     },
 
     // =========================================================================
-    // LIVE SLALOM RENDER (Oben ↓ Unten auf Olympischer Perspektiv-Piste)
+    // LIVE SLALOM RENDER (Oben ↓ Unten, Tore FEST im Schnee verankert!)
     // =========================================================================
     renderSlalom(g, s) {
         Ski.drawStaticFitBackdrop('bg_ski_slalom');
 
-        // Animated downward perspective speed lines inside groomed corridor
-        const stripeStep = 85;
-        const shiftY = (s.dist * 0.68) % stripeStep;
-        ctx.strokeStyle = 'rgba(70, 130, 200, 0.22)';
+        // Subtle stationary groomed snow contour lines (gates do NOT move!)
+        ctx.strokeStyle = 'rgba(70, 130, 200, 0.16)';
         ctx.lineWidth = 2;
-        for (let sy = 235 - shiftY; sy < SKI_VH; sy += stripeStep) {
+        for (let sy = 250; sy < SKI_VH; sy += 106) {
             const xl = Ski.slalomScreenX(360, sy);
             const xr = Ski.slalomScreenX(920, sy);
             ctx.beginPath();
             ctx.moveTo(xl, sy);
-            ctx.lineTo(xr, sy + 10);
+            ctx.lineTo(xr, sy + 6);
             ctx.stroke();
         }
 
-        // Subtle glowing Ice-Blue Ideallinie projected cleanly down the perspective piste!
-        const upcoming = s.gates.filter(gt => gt.dist >= s.dist - 60).slice(0, 4);
+        // Subtle glowing Ice-Blue Ideallinie through remaining stationary gates in active section!
+        const secGates = s.gates.filter(gt => gt.sec === s.slalomSec);
+        const upcoming = secGates.filter(gt => !gt.resolved);
         const heroSX = Ski.slalomScreenX(s.px, s.py);
         if (upcoming.length > 0) {
             ctx.save();
             ctx.beginPath();
             ctx.moveTo(heroSX, s.py + 10);
             for (const gt of upcoming) {
-                const gy = s.py + (gt.dist - s.dist) * 0.68;
-                ctx.lineTo(Ski.slalomScreenX(gt.centerX, gy), gy);
+                ctx.lineTo(Ski.slalomScreenX(gt.centerX, gt.y), gt.y);
             }
             ctx.strokeStyle = 'rgba(0, 210, 211, 0.34)';
             ctx.lineWidth = 14;
@@ -2396,34 +2740,52 @@ const Ski = {
             ctx.restore();
         }
 
-        // Finish Arena Banner at s.length
-        const finY = s.py + (s.length - s.dist) * 0.68;
-        if (finY >= 210 && finY <= SKI_VH + 90) {
-            const flx = Ski.slalomScreenX(290, finY);
-            const frx = Ski.slalomScreenX(990, finY);
-            const fscale = Ski.slalomScale(finY);
+        // Bottom of current slope section: either Section Transition Gate OR Final Finish Arena!
+        const isLastSec = s.slalomSec >= (s.slalomSections || 1) - 1;
+        const finY = 668;
+        const flx = Ski.slalomScreenX(290, finY);
+        const frx = Ski.slalomScreenX(990, finY);
+        const fscale = Ski.slalomScale(finY);
+        if (isLastSec) {
             ctx.save();
             ctx.fillStyle = '#e8293b';
             ctx.strokeStyle = '#151c2c';
             ctx.lineWidth = 3.5;
-            ctx.fillRect(flx, finY - 76 * fscale, frx - flx, 42 * fscale);
-            ctx.strokeRect(flx, finY - 76 * fscale, frx - flx, 42 * fscale);
+            ctx.fillRect(flx, finY - 70 * fscale, frx - flx, 40 * fscale);
+            ctx.strokeRect(flx, finY - 70 * fscale, frx - flx, 40 * fscale);
             ctx.fillStyle = '#ffd32a';
-            ctx.font = `900 ${Math.max(12, Math.round(22 * fscale))}px Outfit, Arial`;
+            ctx.font = `900 ${Math.max(12, Math.round(21 * fscale))}px Outfit, Arial`;
             ctx.textAlign = 'center';
-            ctx.fillText('🏁 ZIEL-ARENA • ALPEN-SLALOM 🏁', (flx + frx) * 0.5, finY - 49 * fscale);
+            ctx.fillText('🏁 ZIEL-ARENA • ALPEN-SLALOM 🏁', (flx + frx) * 0.5, finY - 43 * fscale);
             ctx.restore();
-            Ski.drawSpriteChar('monika_point', flx - 16 * fscale, finY + 4, 98 * fscale, -1, 0, 1, 1, 0);
-            Ski.drawSpriteChar('gibb_student_walk', frx + 16 * fscale, finY + 4, 94 * fscale, 1, 0, 1, 1, 0);
+            Ski.drawSpriteChar('monika_point', flx - 16 * fscale, finY + 4, 96 * fscale, -1, 0, 1, 1, 0);
+            Ski.drawSpriteChar('gibb_student_walk', frx + 16 * fscale, finY + 4, 92 * fscale, 1, 0, 1, 1, 0);
+        } else {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(0, 210, 211, 0.82)';
+            ctx.lineWidth = 5;
+            ctx.setLineDash([14, 10]);
+            ctx.beginPath();
+            ctx.moveTo(flx, finY);
+            ctx.lineTo(frx, finY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = 'rgba(11, 16, 30, 0.84)';
+            ctx.beginPath();
+            ctx.roundRect((flx + frx) * 0.5 - 125, finY - 30, 250, 24, 10);
+            ctx.fill();
+            ctx.fillStyle = '#00d2d3';
+            ctx.font = '900 12px Outfit, Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`▼ HANG ${s.slalomSec + 1} / ${s.slalomSections} ENDE ▼`, (flx + frx) * 0.5, finY - 14);
+            ctx.restore();
         }
 
-        // Dual-Pole Articulated Olympic Slalom Gates (strictly projected onto snow piste!)
-        for (const gt of s.gates) {
-            const gy = s.py + (gt.dist - s.dist) * 0.68;
-            if (gy < 224 || gy > SKI_VH + 85) continue;
-
+        // Dual-Pole Articulated Olympic Slalom Gates (Stationary in active section!)
+        for (const gt of secGates) {
+            const gy = gt.y;
             const pScale = Ski.slalomScale(gy);
-            const poleScale = 0.52 + pScale * 0.65;
+            const poleScale = 0.54 + pScale * 0.62;
             const colHex = gt.color === 'red' ? '#ff4757' : '#2e86de';
             const lx = Ski.slalomScreenX(gt.centerX - gt.halfW, gy);
             const rx = Ski.slalomScreenX(gt.centerX + gt.halfW, gy);
@@ -2458,42 +2820,41 @@ const Ski = {
             }
         }
 
-        // Collectibles
+        // Stationary Collectibles in active section
         for (const col of s.collectibles) {
-            if (col.collected) continue;
-            const cy = s.py + (col.dist - s.dist) * 0.68;
-            if (cy < 224 || cy > SKI_VH + 50) continue;
-            Ski.drawCollectibles(Ski.slalomScreenX(col.x, cy), cy, col.kind, s.timeLeft);
+            if (col.collected || col.sec !== s.slalomSec) continue;
+            Ski.drawCollectibles(Ski.slalomScreenX(col.x, col.y), col.y, col.kind, s.timeLeft);
         }
 
-        // Herr Adam Live Rival
+        // Herr Adam Live Rival (same section OR HUD lead/trail badge!)
         if (s.rival) {
-            const ry = s.py + (s.rival.dist - s.dist) * 0.68;
-            const adamSX = Ski.slalomScreenX(s.rival.x, Math.max(s.py, Math.min(SKI_VH - 25, ry)));
-            if (ry >= 210 && ry <= SKI_VH - 20) {
-                Ski.drawAdamRival(adamSX, ry, {
+            const r = s.rival;
+            const rSec = r.sec || 0;
+            const adamSX = Ski.slalomScreenX(r.x, Math.max(164, Math.min(668, r.py || 170)));
+            if (rSec === s.slalomSec) {
+                Ski.drawAdamRival(adamSX, r.py || 170, {
                     slalom: true,
                     t: s.timeLeft,
-                    scale: 0.64 + Ski.slalomScale(ry) * 0.42,
-                    tilt: s.rival.tilt,
-                    stunned: s.rival.stunTimer > 0,
-                    throwing: s.rival.throwAnimTimer > 0,
-                    windup: s.rival.throwCd < 0.38
+                    scale: 0.64 + Ski.slalomScale(r.py || 170) * 0.42,
+                    tilt: r.tilt,
+                    stunned: r.stunTimer > 0,
+                    throwing: r.throwAnimTimer > 0,
+                    windup: r.throwCd < 0.38
                 });
             } else {
-                const ahead = s.rival.dist > s.dist;
-                const badgeY = ahead ? SKI_VH - 50 : 165;
-                ctx.fillStyle = 'rgba(20, 28, 46, 0.88)';
+                const ahead = rSec > s.slalomSec;
+                const badgeY = ahead ? SKI_VH - 56 : 162;
+                ctx.fillStyle = 'rgba(20, 28, 46, 0.90)';
                 ctx.strokeStyle = '#ff4757';
                 ctx.lineWidth = 2.5;
                 ctx.beginPath();
-                ctx.roundRect(adamSX - 85, badgeY - 16, 170, 30, 14);
+                ctx.roundRect(adamSX - 98, badgeY - 16, 196, 30, 14);
                 ctx.fill();
                 ctx.stroke();
                 ctx.fillStyle = '#fff';
                 ctx.font = '900 12px Outfit, Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText(ahead ? `👇 ADAM +${Math.round((s.rival.dist - s.dist) / 25)}m VORAUS` : `👆 ADAM ${Math.round((s.rival.dist - s.dist) / 25)}m HINTERHER`, adamSX, badgeY + 4);
+                ctx.fillText(ahead ? `👇 ADAM HANG ${rSec + 1}/${s.slalomSections} VORAUS` : `👆 ADAM HANG ${rSec + 1}/${s.slalomSections}`, adamSX, badgeY + 4);
             }
         }
 
@@ -2514,7 +2875,7 @@ const Ski = {
         Ski.drawHeroRider(heroSX, s.py, {
             slalom: true,
             t: s.timeLeft,
-            scale: 0.78,
+            scale: 0.64 + Ski.slalomScale(s.py) * 0.42,
             tilt: s.tilt,
             tuck: Math.abs(s.tilt) > 0.34,
             attacking: s.attackAnimTimer > 0,
@@ -2522,6 +2883,13 @@ const Ski = {
             hurtFlash: s.hurtFlash > 0,
             boost: s.boostTimer > 0
         });
+
+        // Smooth white alpine snow-wipe between sections
+        if (s.secTransition > 0) {
+            const alpha = Math.sin((1 - s.secTransition / 0.55) * Math.PI) * 0.85;
+            ctx.fillStyle = `rgba(226, 243, 255, ${Math.max(0, Math.min(0.85, alpha))})`;
+            ctx.fillRect(0, 0, SKI_VW, SKI_VH);
+        }
     },
 
     // =========================================================================
@@ -2626,63 +2994,93 @@ const Ski = {
                     }
                 }
             } else if (p.fallenTimer <= 0) {
-                // Hanger arm up to carrier cable
-                ctx.strokeStyle = '#1e272e';
-                ctx.lineWidth = 4;
-                ctx.beginPath();
-                ctx.moveTo(cx, cableY);
-                ctx.lineTo(cx, cy);
-                ctx.stroke();
+                if (p.kind === 'fixed_deck') {
+                    // Riveted fixed mountain steel deck anchored by twin diagonal cables!
+                    ctx.strokeStyle = '#2d3748';
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.moveTo(p.x + 12, cy + p.h);
+                    ctx.lineTo(p.x - 16, cy + 165);
+                    ctx.moveTo(p.x + p.w - 12, cy + p.h);
+                    ctx.lineTo(p.x + p.w + 16, cy + 165);
+                    ctx.stroke();
 
-                // Warning near sector endstation
-                const nearEnd = p.maxX && p.x >= p.maxX - 75;
-
-                if (p.kind === 'gondola') {
-                    // Red Swiss Panorama Glass Cabin + Glowing Green Trampoline Roof
-                    ctx.fillStyle = '#e8293b';
+                    ctx.fillStyle = '#4a5568';
                     ctx.strokeStyle = '#151c2c';
                     ctx.lineWidth = 2.8;
                     ctx.beginPath();
-                    ctx.roundRect(p.x, cy, p.w, 68, 12);
+                    ctx.roundRect(p.x, cy, p.w, p.h + 4, 6);
                     ctx.fill();
                     ctx.stroke();
-                    // Glass windows
-                    ctx.fillStyle = '#70a1ff';
-                    ctx.fillRect(p.x + 14, cy + 16, p.w * 0.36, 30);
-                    ctx.fillRect(p.x + p.w * 0.56, cy + 16, p.w * 0.32, 30);
-                    // Green Bounce Pad Roof
-                    ctx.fillStyle = '#2ed573';
-                    ctx.fillRect(p.x + 8, cy - 5, p.w - 16, 10);
-                    ctx.strokeRect(p.x + 8, cy - 5, p.w - 16, 10);
-                    ctx.fillStyle = '#2ed573';
-                    ctx.font = '900 12px Outfit, Arial';
+                    // Gold/slate rivet trim so fixed platforms look unmistakably permanent!
+                    ctx.fillStyle = '#ffd32a';
+                    ctx.fillRect(p.x + 8, cy + 3, p.w - 16, 4);
+                    ctx.fillStyle = 'rgba(15, 22, 38, 0.85)';
+                    ctx.beginPath();
+                    ctx.roundRect(cx - 28, cy - 22, 56, 17, 6);
+                    ctx.fill();
+                    ctx.fillStyle = '#ffd32a';
+                    ctx.font = '900 10px Outfit, Arial';
                     ctx.textAlign = 'center';
-                    ctx.fillText('▲ BOUNCE-DACH', cx, cy - 13);
+                    ctx.fillText('⚓ FEST', cx, cy - 10);
                 } else {
-                    const isIce = p.kind === 'ice_chair';
-                    const shake = (isIce && p.iceTimer > 0) ? Math.sin(p.iceTimer * 35) * 4 : 0;
-                    ctx.fillStyle = nearEnd ? '#ffa502' : (isIce ? '#70a1ff' : '#dfe6e9');
-                    ctx.strokeStyle = '#151c2c';
-                    ctx.lineWidth = 2.8;
+                    // Hanger arm up to carrier cable
+                    ctx.strokeStyle = '#1e272e';
+                    ctx.lineWidth = 4;
                     ctx.beginPath();
-                    ctx.roundRect(p.x + shake, cy, p.w, p.h, 8);
-                    ctx.fill();
+                    ctx.moveTo(cx, cableY);
+                    ctx.lineTo(cx, cy);
                     ctx.stroke();
 
-                    // Chair backrest
-                    ctx.fillStyle = isIce ? '#00a8ff' : '#2f3542';
-                    ctx.fillRect(p.x + 8 + shake, cy - 38, p.w - 16, 12);
-                    ctx.strokeRect(p.x + 8 + shake, cy - 38, p.w - 16, 12);
-
-                    if (isIce && p.iceTimer > 0) {
-                        const frac = Math.max(0, 1 - p.iceTimer / p.iceLimit);
-                        ctx.fillStyle = '#ff4757';
-                        ctx.fillRect(p.x + 10, cy + 6, (p.w - 20) * frac, 6);
-                    } else if (nearEnd) {
-                        ctx.fillStyle = '#ff4757';
+                    if (p.kind === 'gondola') {
+                        // Red Swiss Panorama Glass Cabin + Glowing Green Trampoline Roof
+                        ctx.fillStyle = '#e8293b';
+                        ctx.strokeStyle = '#151c2c';
+                        ctx.lineWidth = 2.8;
+                        ctx.beginPath();
+                        ctx.roundRect(p.x, cy, p.w, 68, 12);
+                        ctx.fill();
+                        ctx.stroke();
+                        ctx.fillStyle = '#70a1ff';
+                        ctx.fillRect(p.x + 14, cy + 16, p.w * 0.36, 30);
+                        ctx.fillRect(p.x + p.w * 0.56, cy + 16, p.w * 0.32, 30);
+                        ctx.fillStyle = '#2ed573';
+                        ctx.fillRect(p.x + 8, cy - 5, p.w - 16, 10);
+                        ctx.strokeRect(p.x + 8, cy - 5, p.w - 16, 10);
+                        ctx.fillStyle = '#2ed573';
                         ctx.font = '900 12px Outfit, Arial';
                         ctx.textAlign = 'center';
-                        ctx.fillText('▶ JETZT SPRINGEN!', cx, cy - 48);
+                        ctx.fillText('▲ BOUNCE-DACH ⇄', cx, cy - 13);
+                    } else {
+                        const isIce = p.kind === 'ice_chair';
+                        const shake = (isIce && p.iceTimer > 0) ? Math.sin(p.iceTimer * 35) * 4 : 0;
+                        ctx.fillStyle = isIce ? '#70a1ff' : '#dfe6e9';
+                        ctx.strokeStyle = '#151c2c';
+                        ctx.lineWidth = 2.8;
+                        ctx.beginPath();
+                        ctx.roundRect(p.x + shake, cy, p.w, p.h, 8);
+                        ctx.fill();
+                        ctx.stroke();
+
+                        // Chair backrest
+                        ctx.fillStyle = isIce ? '#00a8ff' : '#2f3542';
+                        ctx.fillRect(p.x + 8 + shake, cy - 38, p.w - 16, 12);
+                        ctx.strokeRect(p.x + 8 + shake, cy - 38, p.w - 16, 12);
+
+                        if (isIce && p.iceTimer > 0) {
+                            const frac = Math.max(0, 1 - p.iceTimer / p.iceLimit);
+                            ctx.fillStyle = '#ff4757';
+                            ctx.fillRect(p.x + 10, cy + 6, (p.w - 20) * frac, 6);
+                        } else if (!p.isFixed && p.vx > 0) {
+                            ctx.fillStyle = 'rgba(15, 22, 38, 0.85)';
+                            ctx.beginPath();
+                            ctx.roundRect(cx - 42, cy - 60, 84, 17, 6);
+                            ctx.fill();
+                            ctx.fillStyle = '#00d2d3';
+                            ctx.font = '900 10.5px Outfit, Arial';
+                            ctx.textAlign = 'center';
+                            ctx.fillText(p.dir > 0 ? '⇄ FÄHRT ▶' : '◀ FÄHRT ⇄', cx, cy - 48);
+                        }
                     }
                 }
             }
@@ -2995,55 +3393,55 @@ const Ski = {
             ctx.stroke();
 
             ctx.fillStyle = '#2ed573';
-            ctx.fillRect(mx + 360 * 0.78, my + 20, 360 * 0.19, 12);
+            ctx.fillRect(mx + 360 * 0.72, my + 20, 360 * 0.25, 12);
             ctx.fillStyle = '#fff';
             ctx.fillRect(mx + 360 * Math.min(1, js.takeoffPos) - 3, my + 16, 6, 20);
             ctx.font = '900 12px Outfit, Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('⚡ JETZT ABSPRINGEN! [LEERTASTE / W] ⚡', SKI_VW * 0.5, my + 14);
+            ctx.fillText('⚡ SCHRITT 1: OPTIMALER ABSPRUNG! [LEERTASTE / W] ⚡', SKI_VW * 0.5, my + 14);
         }
 
         if (js.phase === 'flight') {
             const altY = Ski.jumpValleyY(js.wx) - js.wy;
             const curM = Math.max(0, Math.round((js.wx - 1460) / 14.5 + js.stuntsDone * 10));
-            const stall = js.pitchDeg > 28;
-            const dive = js.pitchDeg < -8;
+            const bal = js.landBalance || 0;
+            const balGood = Math.abs(bal) <= 0.44;
 
-            // Pitch & Wind Telemetry Card Top-Center Below Mission Pill
-            ctx.fillStyle = 'rgba(12, 18, 34, 0.88)';
-            ctx.strokeStyle = (stall || dive) ? '#ff4757' : '#00d2d3';
+            // Step 2 HUD Card: V-Style & Controlled [A/D] Landing Balance Meter!
+            ctx.fillStyle = 'rgba(12, 18, 34, 0.90)';
+            ctx.strokeStyle = balGood ? '#2ed573' : '#ffd32a';
             ctx.lineWidth = 2.5;
             ctx.beginPath();
-            ctx.roundRect(SKI_VW * 0.5 - 195, 148, 390, 56, 14);
+            ctx.roundRect(SKI_VW * 0.5 - 248, 148, 496, 76, 14);
             ctx.fill();
             ctx.stroke();
-            ctx.fillStyle = (stall || dive) ? '#ff6b81' : '#ffd32a';
-            ctx.font = '900 14px Outfit, Arial';
-            ctx.textAlign = 'center';
-            const statusStr = stall ? '⚠️ STRÖMUNGSABRISS! [S] DRÜCKEN!' : (dive ? '⚠️ STURZFLUG! [W] ZIEHEN!' : `V-STIL: ${js.pitchDeg.toFixed(0)}° • WIND ${js.windMs >= 0 ? '➡' : '⬅'} ${Math.abs(js.windMs).toFixed(1)} m/s`);
-            ctx.fillText(statusStr, SKI_VW * 0.5, 170);
-            ctx.fillStyle = '#fff';
-            ctx.font = '800 13px Outfit, Arial';
-            ctx.fillText(`WEITE: ${curM}m • HÖHE: ${Math.max(0, Math.round(altY / 10))}m • [SPACE] STUNT / LANDUNG`, SKI_VW * 0.5, 192);
 
-            // Mandatory Telemark Landing Flare Warning!
-            if (altY < 105) {
-                const inFlare = altY <= 58;
-                ctx.fillStyle = inFlare ? 'rgba(46, 213, 115, 0.92)' : 'rgba(255, 165, 2, 0.90)';
-                ctx.strokeStyle = '#151c2c';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.roundRect(SKI_VW * 0.5 - 210, 218, 420, 44, 16);
-                ctx.fill();
-                ctx.stroke();
-                ctx.fillStyle = '#151c2c';
-                ctx.font = '900 17px Outfit, Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText(
-                    js.flarePressed ? '⭐ TELEMARK EINGERASTET — SAUBER!' : (inFlare ? '🦵 JETZT [LEERTASTE / W] LANDEN!' : '⬇️ LANDUNG VORBEREITEN [LEERTASTE]'),
-                    SKI_VW * 0.5, 246
-                );
-            }
+            ctx.fillStyle = balGood ? '#2ed573' : '#ffd32a';
+            ctx.font = '900 13px Outfit, Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(
+                `SCHRITT 2: LANDUNG MIT [A / D] KONTROLLIEREN! • WIND ${js.windMs >= 0 ? '➡' : '⬅'} ${Math.abs(js.windMs).toFixed(1)} m/s`,
+                SKI_VW * 0.5, 169
+            );
+
+            // Balance gauge inside card
+            const gx = SKI_VW * 0.5 - 140;
+            const gy = 179;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.14)';
+            ctx.fillRect(gx, gy, 280, 14);
+            ctx.fillStyle = 'rgba(46, 213, 115, 0.48)';
+            ctx.fillRect(gx + 140 - 62, gy, 124, 14);
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(gx + 140 + bal * 124, gy + 7, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#dfe6e9';
+            ctx.font = '800 12.5px Outfit, Arial';
+            ctx.fillText(
+                `WEITE: ${curM}m • HÖHE: ${Math.max(0, Math.round(altY / 10))}m • ${balGood ? '⭐ TELEMARK-BALANCE (+18m)' : '◀ [A] / [D] ▶ ZUR MITTE'}`,
+                SKI_VW * 0.5, 212
+            );
         }
     },
 
@@ -3106,11 +3504,11 @@ const Ski = {
 
         // Left Metric: Speed or Altitude/Best
         let leftBig = `${Math.round(s.speed * 0.22)} km/h`;
-        let rightBadge = 'TALABFAHRT →';
+        let rightBadge = s.downhillPhase === 'run2' ? 'ABFAHRT 2/2 →' : (s.downhillPhase === 'cutscene_lift' ? 'SKILIFT ↗' : (s.downhillPhase === 'cutscene_debrief' ? 'BESPRECHUNG' : 'ABFAHRT 1/2 →'));
         let subLine = `DISTANZ: ${Math.floor(s.dist / 10)}m / ${Math.floor(s.length / 10)}m`;
 
         if (s.subMode === 'slalom') {
-            rightBadge = 'SLALOM ↓';
+            rightBadge = `HANG ${s.slalomSec + 1}/${s.slalomSections} ↓`;
             subLine = `TORE: ${s.gatesPassed} / ${s.gatesRequired} • KOMBO ×${s.gateCombo}`;
         } else if (s.subMode === 'ski_lift' && s.liftState) {
             leftBig = `${Math.floor(s.liftState.progress / 10)}m`;
@@ -3162,19 +3560,22 @@ const Ski = {
             };
         }
         if (s.subMode === 'slalom') {
-            const gapM = s.rival ? Math.round((s.dist - s.rival.dist) / 25) : 0;
-            const gapStr = s.rival ? (gapM >= 0 ? ` • 🥇 +${gapM}m vs. Adam` : ` • 🥈 ${gapM}m vs. Adam`) : '';
+            const rSec = s.rival ? (s.rival.sec || 0) : 0;
+            const gapStr = s.rival ? (s.slalomSec > rSec || (s.slalomSec === rSec && s.py >= (s.rival.py || 0)) ? ' • 🥇 VOR ADAM' : ' • 🥈 HINTER ADAM') : '';
             return {
                 icon: '🚩',
-                text: `LIVE-SLALOM • TORE: ${s.gatesPassed}/${s.gatesRequired}${gapStr} • ⏱️ ${Math.ceil(s.timeLeft)}s`,
+                text: `LIVE-SLALOM HANG ${s.slalomSec + 1}/${s.slalomSections} • TORE: ${s.gatesPassed}/${s.gatesRequired}${gapStr} • ⏱️ ${Math.ceil(s.timeLeft)}s`,
                 urgent: s.timeLeft < 15,
                 highlight: s.gatesPassed >= s.gatesRequired
             };
         }
         const pct = Math.min(100, Math.floor((s.dist / s.length) * 100));
+        const phaseTxt = s.downhillPhase === 'cutscene_lift' ? 'SKILIFT-RÜCKFAHRT ↗'
+            : (s.downhillPhase === 'cutscene_debrief' ? 'MONIKA & ADAM BESPRECHUNG'
+            : (s.downhillPhase === 'run2' ? `ABFAHRT 2/2: ${pct}%` : `ABFAHRT 1/2: ${pct}%`));
         return {
             icon: '🥏',
-            text: `TALABFAHRT INS TAL: ${pct}%${s.avalanche ? ' • 🏔️ LAWINE!' : ''} • ⏱️ ${Math.ceil(s.timeLeft)}s`,
+            text: `${phaseTxt}${s.avalanche ? ' • 🏔️ LAWINE!' : ''} • ⏱️ ${Math.ceil(s.timeLeft)}s`,
             urgent: s.timeLeft < 15 || Boolean(s.avalanche && s.dist - s.avalanche.dist < 180),
             highlight: pct >= 85
         };
