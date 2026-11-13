@@ -659,6 +659,17 @@ html, body {
     top: 158px;
 }
 
+body.ski-mode-active #meme-popup {
+    top: 134px;
+    left: 18px;
+    right: auto;
+    transform: none;
+    max-width: 380px;
+    font-size: 13.5px;
+    padding: 6px 16px;
+    animation: none;
+}
+
 #dialogue-box {
     position: absolute;
     bottom: 28px;

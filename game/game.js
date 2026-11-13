@@ -181,6 +181,10 @@ const imageSources = {
     bg_orbit_space: 'assets/backgrounds/bg_orbit_space.jpg',
     bg_castle_alps: 'assets/backgrounds/bg_castle_alps.jpg',
     bg_ski_alps: 'assets/backgrounds/bg_ski_alps.jpg',
+    bg_ski_downhill: 'assets/backgrounds/bg_ski_downhill.jpg',
+    bg_ski_slalom: 'assets/backgrounds/bg_ski_slalom.jpg',
+    bg_ski_lift_gorge: 'assets/backgrounds/bg_ski_lift_gorge.jpg',
+    bg_ski_jump_valley: 'assets/backgrounds/bg_ski_jump_valley.jpg',
 
     // HD Cel-Shaded Items, Obstacles & Projectiles
     frisbee: 'assets/sprites/frisbee.png',
@@ -1037,26 +1041,29 @@ class Game {
                 if (lower === 'r') this.playerBlock();
                 if (lower === 's' || lower === 'x') this.triggerSprintBurst(75);
             } else if ((this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT) && !this.isPlayerStunned()) {
+                const isSki = this.level && this.level.mode === 'ski';
                 const isRocket = this.level && this.level.mode === 'rocket_flight';
                 const isClimb = this.level && this.level.mode === 'vertical_climb';
-                if (isRocket) {
-                    if (!e.repeat && (lower === 'e' || e.code === 'Space')) this.playerAttackLawBook();
-                    if (lower === 'q') this.playerAttackMegaShout();
-                    if (lower === 'f') this.playerAttackFrisbeeVolley();
-                    if (lower === 'r') this.playerBlock();
-                    if (lower === 'x') this.triggerSprintBurst(75);
-                } else {
-                    if (e.code === 'Space' || (isClimb && (lower === 'w' || lower === 'arrowup'))) this.playerJump();
-                    if (!e.repeat && lower === 'e') this.playerAttackLawBook();
-                    if (lower === 'q') this.playerAttackMegaShout();
-                    if (lower === 'f') this.playerAttackFrisbeeVolley();
-                    if (lower === 'r') this.playerBlock();
-                    if (lower === 's' || lower === 'x') this.triggerSprintBurst(75);
-                }
-                if (!e.repeat && (lower === 'd' || e.code === 'ArrowRight')) {
-                    const now = performance.now();
-                    if (now - this.player.lastRightTapTime < 280) this.triggerSprintBurst(75);
-                    this.player.lastRightTapTime = now;
+                if (!isSki) {
+                    if (isRocket) {
+                        if (!e.repeat && (lower === 'e' || e.code === 'Space')) this.playerAttackLawBook();
+                        if (lower === 'q') this.playerAttackMegaShout();
+                        if (lower === 'f') this.playerAttackFrisbeeVolley();
+                        if (lower === 'r') this.playerBlock();
+                        if (lower === 'x') this.triggerSprintBurst(75);
+                    } else {
+                        if (e.code === 'Space' || (isClimb && (lower === 'w' || lower === 'arrowup'))) this.playerJump();
+                        if (!e.repeat && lower === 'e') this.playerAttackLawBook();
+                        if (lower === 'q') this.playerAttackMegaShout();
+                        if (lower === 'f') this.playerAttackFrisbeeVolley();
+                        if (lower === 'r') this.playerBlock();
+                        if (lower === 's' || lower === 'x') this.triggerSprintBurst(75);
+                    }
+                    if (!e.repeat && (lower === 'd' || e.code === 'ArrowRight')) {
+                        const now = performance.now();
+                        if (now - this.player.lastRightTapTime < 280) this.triggerSprintBurst(75);
+                        this.player.lastRightTapTime = now;
+                    }
                 }
             }
         });
@@ -1080,6 +1087,7 @@ class Game {
             } else if (this.state === GAME_STATE.PRE_BOSS_DIALOGUE) {
                 this.advancePreBossDialogue();
             } else if ((this.state === GAME_STATE.RUNNING || this.state === GAME_STATE.BOSS_FIGHT || this.state === GAME_STATE.DEMO) && !this.isPlayerStunned()) {
+                if (this.level && this.level.mode === 'ski') return;
                 if (e.button === 0) this.playerAttackLawBook();
                 else if (e.button === 2) this.playerAttackMegaShout();
                 else if (e.button === 1) this.playerAttackFrisbeeVolley();
@@ -2346,6 +2354,7 @@ class Game {
         if (this.ui.memePopup) this.ui.memePopup.classList.add('hidden');
         if (this.ui.touchOverlay) this.ui.touchOverlay.classList.add('hidden');
         document.body.classList.remove('touch-active');
+        document.body.classList.remove('ski-mode-active');
         if (this.ui.btnDemoExit) this.ui.btnDemoExit.classList.add('hidden');
     }
 
@@ -3590,6 +3599,7 @@ class Game {
             this.ui.controlHintPill.classList.remove('hidden');
         }
         this.updateTouchControlsForMode(mode);
+        document.body.classList.toggle('ski-mode-active', mode === 'ski');
         clearTimeout(this.hintTimeout);
         this.hintTimeout = setTimeout(() => {
             if (this.ui.controlHintPill) this.ui.controlHintPill.classList.add('hidden');
